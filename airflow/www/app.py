@@ -20,10 +20,11 @@
 import logging
 import socket
 
-from flask import Flask
+from flask import Flask, g, request
 from flask_appbuilder import AppBuilder, SQLA
 from flask_caching import Cache
 from flask_wtf.csrf import CSRFProtect
+from flask_babel import Babel, gettext as _
 from typing import Any
 from urllib.parse import urlparse
 from werkzeug.contrib.fixers import ProxyFix
@@ -58,6 +59,23 @@ def create_app(config=None, session=None, testing=False, app_name="Airflow"):
     app.config['SESSION_COOKIE_SECURE'] = conf.getboolean('webserver', 'COOKIE_SECURE')
     app.config['SESSION_COOKIE_SAMESITE'] = conf.get('webserver', 'COOKIE_SAMESITE')
 
+    babel = Babel(app)
+    @babel.localeselector
+    def get_locale():
+        # if a user is logged in, use the locale from the user settings
+        user = getattr(g, 'user', None)
+        if user is not None:
+            return user.locale
+        # otherwise try to guess the language from the user accept
+        # header the browser transmits.  We support de/fr/en in this
+        # example.  The best match wins.
+        return request.accept_languages.best_match(['zh', 'zh-cn', 'en'])
+
+    @babel.timezoneselector
+    def get_timezone():
+        user = getattr(g, 'user', None)
+        if user is not None:
+            return user.timezone
     if config:
         app.config.from_mapping(config)
 

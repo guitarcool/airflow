@@ -32,7 +32,7 @@
 <form method="get" id="daform">
     <input name="_csrf_token" type="hidden" value="{{ csrf_token() }}">
     <div class="form-inline">
-            <span style='color:#AAA;'>Task Instance: </span>
+            <span style='color:#AAA;'>{{_('Task Instance')}}: </span>
             <span>
               {{ task_id }}
               <input type="hidden" value="{{ dag.dag_id }}" name="dag_id">
@@ -45,16 +45,16 @@
   <ul class="nav nav-pills">
     <li><a href="{{ url_for("Airflow.task", dag_id=dag.dag_id, task_id=task_id, execution_date=execution_date) }}">
         <span class="glyphicon glyphicon-certificate" aria-hidden="true"></span>
-      Task Instance Details</a></li>
+        {{_('Task Instance Details')}}</a></li>
     <li><a href="{{ url_for("Airflow.rendered", dag_id=dag.dag_id, task_id=task_id, execution_date=execution_date) }}">
         <span class="glyphicon glyphicon-certificate" aria-hidden="true"></span>
-      Rendered Template</a></li>
+        {{_('Rendered Template')}}</a></li>
     <li><a href="{{ url_for("Airflow.log", dag_id=dag.dag_id, task_id=task_id, execution_date=execution_date) }}">
         <span class="glyphicon glyphicon-certificate" aria-hidden="true"></span>
-      Log</a></li>
+        {{_('Log')}}</a></li>
     <li><a href="{{ url_for("Airflow.xcom", dag_id=dag.dag_id, task_id=task_id, execution_date=execution_date) }}">
         <span class="glyphicon glyphicon-certificate" aria-hidden="true"></span>
-      XCom</a></li>
+        {{_('XCom')}}</a></li>
   </ul>
   <hr>
 {% endblock %}

@@ -37,35 +37,35 @@
     <br>
     <table class="table table-striped table-bordered">
       <tr>
-        <th>schedule_interval</td>
+        <th>{{_('schedule_interval')}}</td>
         <td>{{ dag.schedule_interval }}</td>
       </tr>
       <tr>
-        <th>max_active_runs</td>
+        <th>{{_('max_active_runs')}}</td>
         <td>{{ active_runs | length }} / {{ dag.max_active_runs }}</td>
       </tr>
       <tr>
-        <th>concurrency</td>
+        <th>{{_('concurrency')}}</td>
         <td>{{ dag.concurrency }}</td>
       </tr>
       <tr>
-        <th>default_args</td>
+        <th>{{_('default_args')}}</td>
         <td><code>{{ dag.default_args }}</code></td>
       </tr>
       <tr>
-        <th>tasks count</td>
+        <th>{{_('tasks count')}}</td>
         <td>{{ dag.tasks|length }}</td>
       </tr>
       <tr>
-        <th>task ids</td>
+        <th>{{_('task ids')}}</td>
         <td>{{ dag.task_ids }}</td>
       </tr>
       <tr>
-        <th>filepath</td>
+        <th>{{_('filepath')}}</td>
         <td>{{ dag.filepath }}</td>
       </tr>
       <tr>
-        <th>owner</td>
+        <th>{{_('owner')}}</td>
         <td>{{ dag.owner }}</td>
       </tr>
     </table >

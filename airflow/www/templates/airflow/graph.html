@@ -32,11 +32,11 @@
 <div class="form-inline">
   <form method="get" style="float:left;">
     {{ state_token }}
-    Base date: {{ form.base_date(class_="form-control") }}
-    Number of runs: {{ form.num_runs(class_="form-control") }}
-    Run:
+    {{_('Base date')}}: {{ form.base_date(class_="form-control") }}
+    {{_('Number of runs')}}: {{ form.num_runs(class_="form-control") }}
+    {{_('Run')}}:
     {{ form.execution_date(class_="form-control") | safe }}
-    Layout:
+    {{_('Layout')}}:
     {{ form.arrange(class_="form-control") | safe }}
     <input type="hidden" name="root" value="{{ root }}">
     <input type="hidden" value="{{ dag.dag_id }}" name="dag_id">
@@ -44,7 +44,7 @@
     <input type="submit" value="Go" class="btn btn-default">
   </form>
   <div class="input-group" style="float: right;">
-    <input type="text" id="searchbox" class="form-control" placeholder="Search for...">
+    <input type="text" id="searchbox" class="form-control" placeholder="{{_('Search for...')}}">
   </div>
   <div style="clear: both;"></div>
 </div>
@@ -58,20 +58,20 @@
   {% endfor %}
 
   <div>
-    <div class="legend_item state" style="border-color:white;">no_status</div>
-    <div class="legend_item state" style="border-color:grey;">queued</div>
-    <div class="legend_item state" style="border-color:gold;">up_for_retry</div>
-    <div class="legend_item state" style="border-color:turquoise;">up_for_reschedule</div>
-    <div class="legend_item state" style="border-color:pink;">skipped</div>
-    <div class="legend_item state" style="border-color:red;">failed</div>
-    <div class="legend_item state" style="border-color:lime;">running</div>
-    <div class="legend_item state" style="border-color:green;">success</div>
+    <div class="legend_item state" style="border-color:white;">{{_('no_status')}}</div>
+    <div class="legend_item state" style="border-color:grey;">{{_('queued')}}</div>
+    <div class="legend_item state" style="border-color:gold;">{{_('up_for_retry')}}</div>
+    <div class="legend_item state" style="border-color:turquoise;">{{_('up_for_reschedule')}}</div>
+    <div class="legend_item state" style="border-color:pink;">{{_('skipped')}}</div>
+    <div class="legend_item state" style="border-color:red;">{{_('failed')}}</div>
+    <div class="legend_item state" style="border-color:lime;">{{_('running')}}</div>
+    <div class="legend_item state" style="border-color:green;">{{_('success')}}</div>
   </div>
   <div style="clear:both;"></div>
 </div>
 <div id="error" style="display: none; margin-top: 10px;" class="alert alert-danger" role="alert">
   <span class="glyphicon glyphicon-exclamation-sign" aria-hidden="true"></span>
-  <span id="error_msg">Oops.</span>
+  <span id="error_msg">{{_('Oops.')}}</span>
 </div>
 <hr style="margin-bottom: 0px;"/>
 <button class="btn btn-default pull-right" id="refresh_button">

@@ -27,9 +27,9 @@
     {% if airflow_version %}
         <h4>{{ version_label }} : <a href="https://pypi.python.org/pypi/apache-airflow/{{ airflow_version }}">{{ airflow_version }}</a></h4>
     {% else %}
-        <h4>{{ version_label }} : Not Available</h4>
+        <h4>{{ version_label }} : {{_('Not Available')}}</h4>
     {% endif %}
-	<h4>Git Version :{% if git_version %} {{ git_version }} {% else %} Not Available {% endif %}</h4>
+	<h4>{{_('Git Version')}} :{% if git_version %} {{ git_version }} {% else %} {{_('Not Available')}} {% endif %}</h4>
     <hr>
 
 {% endblock %}

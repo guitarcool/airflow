@@ -39,7 +39,7 @@ from flask import (
 from flask_appbuilder import BaseView, ModelView, expose, has_access
 from flask_appbuilder.actions import action
 from flask_appbuilder.models.sqla.filters import BaseFilter
-from flask_babel import lazy_gettext
+from flask_babel import lazy_gettext, gettext as _
 import lazy_object_proxy
 from pygments import highlight, lexers
 from pygments.formatters import HtmlFormatter
@@ -74,7 +74,6 @@ if os.environ.get('SKIP_DAGS_PARSING') != 'True':
     dagbag = models.DagBag(settings.DAGS_FOLDER)
 else:
     dagbag = models.DagBag(os.devnull, include_examples=False)
-
 
 def get_date_time_num_runs_dag_runs_form_data(request, session, dag):
     dttm = request.args.get('execution_date')
@@ -257,13 +256,13 @@ class Airflow(AirflowBaseView):
 
         for ie in import_errors:
             flash(
-                "Broken DAG: [{ie.filename}] {ie.stacktrace}".format(ie=ie),
+                lazy_gettext("Broken DAG: [{ie.filename}] {ie.stacktrace}").format(ie=ie),
                 "error")
 
         from airflow.plugins_manager import import_errors as plugin_import_errors
         for filename, stacktrace in plugin_import_errors.items():
             flash(
-                "Broken plugin: [{filename}] {stacktrace}".format(
+                lazy_gettext("Broken plugin: [{filename}] {stacktrace}").format(
                     stacktrace=stacktrace,
                     filename=filename),
                 "error")
@@ -471,7 +470,7 @@ class Airflow(AirflowBaseView):
         try:
             ti.render_templates()
         except Exception as e:
-            flash("Error rendering template: " + str(e), "error")
+            flash(lazy_gettext("Error rendering template: " )+ str(e), "error")
         title = "Rendered Template"
         html_dict = {}
         for template_field in task.__class__.template_fields:
@@ -656,8 +655,8 @@ class Airflow(AirflowBaseView):
 
         if not dag or task_id not in dag.task_ids:
             flash(
-                "Task [{}.{}] doesn't seem to exist"
-                " at the moment".format(dag_id, task_id),
+                lazy_gettext("Task [{}.{}] doesn't seem to exist"
+                " at the moment").format(dag_id, task_id),
                 "error")
             return redirect(url_for('Airflow.index'))
         task = copy.copy(dag.get_task(task_id))
@@ -738,8 +737,8 @@ class Airflow(AirflowBaseView):
 
         if not ti:
             flash(
-                "Task [{}.{}] doesn't seem to exist"
-                " at the moment".format(dag_id, task_id),
+                lazy_gettext("Task [{}.{}] doesn't seem to exist"
+                " at the moment").format(dag_id, task_id),
                 "error")
             return redirect(url_for('Airflow.index'))
 
@@ -797,7 +796,7 @@ class Airflow(AirflowBaseView):
             pass
 
         if not valid_celery_config and not valid_kubernetes_config:
-            flash("Only works with the Celery or Kubernetes executors, sorry", "error")
+            flash(lazy_gettext("Only works with the Celery or Kubernetes executors, sorry"), "error")
             return redirect(origin)
 
         ti = models.TaskInstance(task=task, execution_date=execution_date)
@@ -813,8 +812,8 @@ class Airflow(AirflowBaseView):
         if failed_deps:
             failed_deps_str = ", ".join(
                 ["{}: {}".format(dep.dep_name, dep.reason) for dep in failed_deps])
-            flash("Could not queue task instance for execution, dependencies not met: "
-                  "{}".format(failed_deps_str),
+            flash(lazy_gettext("Could not queue task instance for execution, dependencies not met: "
+                  "{}").format(failed_deps_str),
                   "error")
             return redirect(origin)
 
@@ -826,8 +825,8 @@ class Airflow(AirflowBaseView):
             ignore_ti_state=ignore_ti_state)
         executor.heartbeat()
         flash(
-            "Sent {} to the message queue, "
-            "it should start any moment now.".format(ti))
+            lazy_gettext("Sent {} to the message queue, "
+            "it should start any moment now.").format(ti))
         return redirect(origin)
 
     @expose('/delete', methods=['POST'])
@@ -844,21 +843,21 @@ class Airflow(AirflowBaseView):
         try:
             delete_dag.delete_dag(dag_id)
         except DagNotFound:
-            flash("DAG with id {} not found. Cannot delete".format(dag_id), 'error')
+            flash(lazy_gettext("DAG with id {} not found. Cannot delete").format(dag_id), 'error')
             return redirect(request.referrer)
         except DagFileExists:
-            flash("Dag id {} is still in DagBag. "
-                  "Remove the DAG file first.".format(dag_id),
+            flash(lazy_gettext("Dag id {} is still in DagBag. "
+                  "Remove the DAG file first.").format(dag_id),
                   'error')
             return redirect(request.referrer)
 
-        flash("Deleting DAG with id {}. May take a couple minutes to fully"
-              " disappear.".format(dag_id))
+        flash(lazy_gettext("Deleting DAG with id {}. May take a couple minutes to fully"
+              " disappear.").format(dag_id))
 
         # Upon success return to origin.
         return redirect(origin)
 
-    @expose('/trigger', methods=['POST'])
+    @expose('/trigger', methods=['GET'])
     @has_dag_access(can_dag_edit=True)
     @has_access
     @action_logging
@@ -868,7 +867,7 @@ class Airflow(AirflowBaseView):
         origin = request.values.get('origin') or url_for('Airflow.index')
         dag = session.query(models.DagModel).filter(models.DagModel.dag_id == dag_id).first()
         if not dag:
-            flash("Cannot find dag {}".format(dag_id))
+            flash(lazy_gettext("Cannot find dag {}").format(dag_id))
             return redirect(origin)
 
         execution_date = timezone.utcnow()
@@ -876,7 +875,7 @@ class Airflow(AirflowBaseView):
 
         dr = DagRun.find(dag_id=dag_id, run_id=run_id)
         if dr:
-            flash("This run_id {} already exists".format(run_id))
+            flash(lazy_gettext("This run_id {} already exists").format(run_id))
             return redirect(origin)
 
         run_conf = {}
@@ -890,8 +889,8 @@ class Airflow(AirflowBaseView):
         )
 
         flash(
-            "Triggered {}, "
-            "it should start any moment now.".format(dag_id))
+            lazy_gettext("Triggered {}, "
+            "it should start any moment now.").format(dag_id))
         return redirect(origin)
 
     def _clear_dag_tis(self, dag, start_date, end_date, origin,
@@ -904,7 +903,7 @@ class Airflow(AirflowBaseView):
                 include_parentdag=recursive,
             )
 
-            flash("{0} task instances have been cleared".format(count))
+            flash(lazy_gettext("{0} task instances have been cleared").format(count))
             return redirect(origin)
 
         tis = dag.clear(
@@ -915,7 +914,7 @@ class Airflow(AirflowBaseView):
             dry_run=True,
         )
         if not tis:
-            flash("No task instances to clear", 'error')
+            flash(lazy_gettext("No task instances to clear"), 'error')
             response = redirect(origin)
         else:
             details = "\n".join([str(t) for t in tis])
@@ -1097,11 +1096,11 @@ class Airflow(AirflowBaseView):
         execution_date = pendulum.parse(execution_date)
 
         if not dag:
-            flash("Cannot find DAG: {}".format(dag_id))
+            flash(lazy_gettext("Cannot find DAG: {}").format(dag_id))
             return redirect(origin)
 
         if not task:
-            flash("Cannot find task {} in DAG {}".format(task_id, dag.dag_id))
+            flash(lazy_gettext("Cannot find task {} in DAG {}").format(task_id, dag.dag_id))
             return redirect(origin)
 
         from airflow.api.common.experimental.mark_tasks import set_state
@@ -1112,7 +1111,7 @@ class Airflow(AirflowBaseView):
                                 future=future, past=past, state=state,
                                 commit=True)
 
-            flash("Marked {} on {} task instances".format(state, len(altered)))
+            flash(lazy_gettext("Marked {} on {} task instances").format(state, len(altered)))
             return redirect(origin)
 
         to_be_altered = set_state(task=task, execution_date=execution_date,
@@ -1359,10 +1358,10 @@ class Airflow(AirflowBaseView):
 
         class GraphForm(DateTimeWithNumRunsWithDagRunsForm):
             arrange = SelectField("Layout", choices=(
-                ('LR', "Left->Right"),
-                ('RL', "Right->Left"),
-                ('TB', "Top->Bottom"),
-                ('BT', "Bottom->Top"),
+                ('LR', lazy_gettext("Left->Right")),
+                ('RL', lazy_gettext("Right->Left")),
+                ('TB', lazy_gettext("Top->Bottom")),
+                ('BT', lazy_gettext("Bottom->Top")),
             ))
 
         form = GraphForm(data=dt_nr_dr_data)
@@ -1379,7 +1378,7 @@ class Airflow(AirflowBaseView):
             }
             for t in dag.tasks}
         if not tasks:
-            flash("No tasks found", "error")
+            flash(lazy_gettext("No tasks found"), "error")
         session.commit()
         doc_md = markdown.markdown(dag.doc_md) \
             if hasattr(dag, 'doc_md') and dag.doc_md else ''
@@ -1686,7 +1685,7 @@ class Airflow(AirflowBaseView):
         # sync dag permission
         appbuilder.sm.sync_perm_for_dag(dag_id, dag.access_control)
 
-        flash("DAG [{}] is now fresh as a daisy".format(dag_id))
+        flash(lazy_gettext("DAG [{}] is now fresh as a daisy").format(dag_id))
         return redirect(request.referrer)
 
     @expose('/refresh_all', methods=['POST'])
@@ -1697,7 +1696,7 @@ class Airflow(AirflowBaseView):
         # sync permissions for all dags
         for dag_id, dag in dagbag.dags.items():
             appbuilder.sm.sync_perm_for_dag(dag_id, dag.access_control)
-        flash("All DAGs are now up to date")
+        flash(lazy_gettext("All DAGs are now up to date"))
         return redirect(url_for('Airflow.index'))
 
     @expose('/gantt')
@@ -2193,7 +2192,7 @@ class VariableModelView(AirflowModelView):
                 d = json.loads(out)
         except Exception:
             self.update_redirect()
-            flash("Missing file or syntax error.", 'error')
+            flash(lazy_gettext("Missing file or syntax error."), 'error')
             return redirect(self.get_redirect())
         else:
             suc_count = fail_count = 0
@@ -2205,9 +2204,9 @@ class VariableModelView(AirflowModelView):
                     fail_count += 1
                 else:
                     suc_count += 1
-            flash("{} variable(s) successfully updated.".format(suc_count))
+            flash(lazy_gettext("{} variable(s) successfully updated.").format(suc_count))
             if fail_count:
-                flash("{} variable(s) failed to be updated.".format(fail_count), 'error')
+                flash(lazy_gettext("{} variable(s) failed to be updated.").format(fail_count), 'error')
             self.update_redirect()
             return redirect(self.get_redirect())
 
@@ -2293,7 +2292,7 @@ class DagRunModelView(AirflowModelView):
                 dr.start_date = timezone.utcnow()
                 dr.state = State.RUNNING
             session.commit()
-            flash("{count} dag runs were set to running".format(count=count))
+            flash(lazy_gettext("{count} dag runs were set to running").format(count=count))
         except Exception as ex:
             flash(str(ex), 'error')
             flash('Failed to set state', 'error')
@@ -2320,8 +2319,8 @@ class DagRunModelView(AirflowModelView):
                                                 session=session)
             altered_ti_count = len(altered_tis)
             flash(
-                "{count} dag runs and {altered_ti_count} task instances "
-                "were set to failed".format(count=count, altered_ti_count=altered_ti_count))
+                lazy_gettext("{count} dag runs and {altered_ti_count} task instances "
+                "were set to failed").format(count=count, altered_ti_count=altered_ti_count))
         except Exception:
             flash('Failed to set state', 'error')
         return redirect(self.get_default_url())
@@ -2347,8 +2346,8 @@ class DagRunModelView(AirflowModelView):
                                                  session=session)
             altered_ti_count = len(altered_tis)
             flash(
-                "{count} dag runs and {altered_ti_count} task instances "
-                "were set to success".format(count=count, altered_ti_count=altered_ti_count))
+                lazy_gettext("{count} dag runs and {altered_ti_count} task instances "
+                "were set to success").format(count=count, altered_ti_count=altered_ti_count))
         except Exception:
             flash('Failed to set state', 'error')
         return redirect(self.get_default_url())
@@ -2361,9 +2360,9 @@ class LogModelView(AirflowModelView):
 
     base_permissions = ['can_list']
 
-    list_columns = ['id', 'dttm', 'dag_id', 'task_id', 'event', 'execution_date',
-                    'owner', 'extra']
-    search_columns = ['dag_id', 'task_id', 'event', 'execution_date', 'owner', 'extra']
+    list_columns = [_('id'), _('dttm'), _('dag_id'), _('task_id'), _('event'), _('execution_date'),
+                    _('owner'), _('extra')]
+    search_columns = [_('dag_id'), _('task_id'), _('event'), _('execution_date'), _('owner'), _('extra')]
 
     base_order = ('dttm', 'desc')
 
@@ -2441,7 +2440,7 @@ class TaskInstanceModelView(AirflowModelView):
                 models.clear_task_instances(tis, session, dag=dag)
 
             session.commit()
-            flash("{0} task instances have been cleared".format(len(tis)))
+            flash(lazy_gettext("{0} task instances have been cleared").format(len(tis)))
             self.update_redirect()
             return redirect(self.get_redirect())
 
@@ -2455,7 +2454,7 @@ class TaskInstanceModelView(AirflowModelView):
             for ti in tis:
                 ti.set_state(target_state, session)
             session.commit()
-            flash("{count} task instances were set to '{target_state}'".format(
+            flash(lazy_gettext("{count} task instances were set to '{target_state}'").format(
                 count=count, target_state=target_state))
         except Exception:
             flash('Failed to set state', 'error')

@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PROJECT VERSION\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2019-06-04 15:29+0800\n"
+"POT-Creation-Date: 2019-06-05 18:19+0800\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -16,6 +16,106 @@ msgstr ""
 "Content-Type: text/plain; charset=utf-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Generated-By: Babel 2.6.0\n"
+
+#: decorators.py:124
+msgid "Access is Denied"
+msgstr ""
+
+#: forms.py:62
+msgid "Dag Id"
+msgstr ""
+
+#: forms.py:66
+msgid "Start Date"
+msgstr ""
+
+#: forms.py:69
+msgid "End Date"
+msgstr ""
+
+#: forms.py:72
+msgid "Run Id"
+msgstr ""
+
+#: forms.py:75
+msgid "State"
+msgstr ""
+
+#: forms.py:79
+msgid "Execution Date"
+msgstr ""
+
+#: forms.py:82
+msgid "External Trigger"
+msgstr ""
+
+#: forms.py:87
+msgid "Conn Id"
+msgstr ""
+
+#: forms.py:90
+msgid "Conn Type"
+msgstr ""
+
+#: forms.py:94
+msgid "Host"
+msgstr ""
+
+#: forms.py:97
+msgid "Schema"
+msgstr ""
+
+#: forms.py:100 templates/appbuilder/navbar_right.html:62
+msgid "Login"
+msgstr ""
+
+#: forms.py:103
+msgid "Password"
+msgstr ""
+
+#: forms.py:106
+msgid "Port"
+msgstr ""
+
+#: forms.py:110
+msgid "Extra"
+msgstr ""
+
+#: forms.py:119
+msgid "Driver Path"
+msgstr ""
+
+#: forms.py:122
+msgid "Driver Class"
+msgstr ""
+
+#: forms.py:125
+msgid "Project Id"
+msgstr ""
+
+#: forms.py:128
+msgid "Keyfile Path"
+msgstr ""
+
+#: forms.py:131
+msgid "Keyfile JSON"
+msgstr ""
+
+#: forms.py:134 forms.py:148
+msgid "Scopes (comma separated)"
+msgstr ""
+
+#: forms.py:137
+msgid "Number of Retries"
+msgstr ""
+
+#: forms.py:142
+msgid "Grpc Auth Type"
+msgstr ""
+
+#: forms.py:145
+msgid "Credential Keyfile Path"
+msgstr ""
 
 #: validators.py:40
 #, python-format
@@ -25,6 +125,176 @@ msgstr ""
 #: validators.py:54
 #, python-format
 msgid "Field must be greater than or equal to %(other_label)s."
+msgstr ""
+
+#: views.py:259
+msgid "Broken DAG: [{ie.filename}] {ie.stacktrace}"
+msgstr ""
+
+#: views.py:265
+msgid "Broken plugin: [{filename}] {stacktrace}"
+msgstr ""
+
+#: views.py:473
+msgid "Error rendering template: "
+msgstr ""
+
+#: views.py:658 views.py:740
+msgid "Task [{}.{}] doesn't seem to exist at the moment"
+msgstr ""
+
+#: views.py:799
+msgid "Only works with the Celery or Kubernetes executors, sorry"
+msgstr ""
+
+#: views.py:815
+msgid "Could not queue task instance for execution, dependencies not met: {}"
+msgstr ""
+
+#: views.py:828
+msgid "Sent {} to the message queue, it should start any moment now."
+msgstr ""
+
+#: views.py:846
+msgid "DAG with id {} not found. Cannot delete"
+msgstr ""
+
+#: views.py:849
+msgid "Dag id {} is still in DagBag. Remove the DAG file first."
+msgstr ""
+
+#: views.py:854
+msgid "Deleting DAG with id {}. May take a couple minutes to fully disappear."
+msgstr ""
+
+#: views.py:870
+msgid "Cannot find dag {}"
+msgstr ""
+
+#: views.py:878
+msgid "This run_id {} already exists"
+msgstr ""
+
+#: views.py:892
+msgid "Triggered {}, it should start any moment now."
+msgstr ""
+
+#: views.py:906 views.py:2443
+msgid "{0} task instances have been cleared"
+msgstr ""
+
+#: views.py:917
+msgid "No task instances to clear"
+msgstr ""
+
+#: views.py:1099
+msgid "Cannot find DAG: {}"
+msgstr ""
+
+#: views.py:1103
+msgid "Cannot find task {} in DAG {}"
+msgstr ""
+
+#: views.py:1114
+msgid "Marked {} on {} task instances"
+msgstr ""
+
+#: views.py:1361
+msgid "Left->Right"
+msgstr ""
+
+#: views.py:1362
+msgid "Right->Left"
+msgstr ""
+
+#: views.py:1363
+msgid "Top->Bottom"
+msgstr ""
+
+#: views.py:1364
+msgid "Bottom->Top"
+msgstr ""
+
+#: views.py:1381
+msgid "No tasks found"
+msgstr ""
+
+#: views.py:1688
+msgid "DAG [{}] is now fresh as a daisy"
+msgstr ""
+
+#: views.py:1699
+msgid "All DAGs are now up to date"
+msgstr ""
+
+#: views.py:2195
+msgid "Missing file or syntax error."
+msgstr ""
+
+#: views.py:2207
+msgid "{} variable(s) successfully updated."
+msgstr ""
+
+#: views.py:2209
+msgid "{} variable(s) failed to be updated."
+msgstr ""
+
+#: views.py:2295
+msgid "{count} dag runs were set to running"
+msgstr ""
+
+#: views.py:2322
+msgid "{count} dag runs and {altered_ti_count} task instances were set to failed"
+msgstr ""
+
+#: views.py:2349
+msgid "{count} dag runs and {altered_ti_count} task instances were set to success"
+msgstr ""
+
+#: views.py:2363
+msgid "id"
+msgstr ""
+
+#: views.py:2363
+msgid "dttm"
+msgstr ""
+
+#: views.py:2363 views.py:2365
+msgid "dag_id"
+msgstr ""
+
+#: views.py:2363 views.py:2365
+msgid "task_id"
+msgstr ""
+
+#: views.py:2363 views.py:2365
+msgid "event"
+msgstr ""
+
+#: views.py:2363 views.py:2365
+msgid "execution_date"
+msgstr ""
+
+#: templates/airflow/dag_details.html:68 views.py:2364 views.py:2365
+msgid "owner"
+msgstr ""
+
+#: views.py:2364 views.py:2365
+msgid "extra"
+msgstr ""
+
+#: templates/airflow/dag.html:202 templates/airflow/dag.html:311 views.py:2426
+msgid "Clear"
+msgstr ""
+
+#: views.py:2427
+msgid ""
+"Are you sure you want to clear the state of the selected task instance(s)"
+" and set their dagruns to the running state?"
+msgstr ""
+
+#: views.py:2457
+msgid "{count} task instances were set to '{target_state}'"
 msgstr ""
 
 #: templates/airflow/chart.html:38 templates/airflow/duration_chart.html:42
@@ -66,10 +336,6 @@ msgstr ""
 
 #: templates/airflow/confirm.html:36
 msgid "bail."
-msgstr ""
-
-#: templates/airflow/dag.html:20
-msgid "Airflow - DAG %(id)"
 msgstr ""
 
 #: templates/airflow/dag.html:31
@@ -204,10 +470,6 @@ msgid ""
 "get re-triggered by the scheduler or a backfill command"
 msgstr ""
 
-#: templates/airflow/dag.html:202 templates/airflow/dag.html:311
-msgid "Clear"
-msgstr ""
-
 #: templates/airflow/dag.html:206
 msgid "Also include past task instances when clearing this one"
 msgstr ""
@@ -268,7 +530,7 @@ msgstr ""
 msgid "Are you sure you want to run '\"+dag_id+\"' now?"
 msgstr ""
 
-#: templates/airflow/dag.html:534
+#: templates/airflow/dag.html:534 templates/airflow/dags.html:243
 msgid ""
 "Are you sure you want to delete '\"+dag_id+\"' now?\n"
 "        This option will delete ALL metadata, DAG runs, etc.\n"
@@ -302,10 +564,6 @@ msgstr ""
 
 #: templates/airflow/dag_details.html:64
 msgid "filepath"
-msgstr ""
-
-#: templates/airflow/dag_details.html:68
-msgid "owner"
 msgstr ""
 
 #: templates/airflow/dags.html:38
@@ -374,6 +632,11 @@ msgstr ""
 msgid "Delete Dag"
 msgstr ""
 
+#: templates/airflow/dags.html:189
+#, python-format
+msgid "Showing %(num_dag_from)s to %(num_dag_to)s of %(num_of_all_dags)s entries"
+msgstr ""
+
 #: templates/airflow/dags.html:201
 msgid "Hide Paused DAGs"
 msgstr ""
@@ -382,14 +645,7 @@ msgstr ""
 msgid "Show Paused DAGs"
 msgstr ""
 
-#: templates/airflow/dags.html:243
-msgid ""
-"Are you sure you want to delete '\"+dag_id+\"' now?\\n        This option"
-" will delete ALL metadata, DAG runs, etc.\\n        EXCEPT Log.\\n"
-"        This cannot be undone."
-msgstr ""
-
-#: templates/airflow/dags.html:304
+#: templates/airflow/dags.html:301
 msgid "this.active_dag_run + '/' + this.max_active_runs + ' active dag runs'"
 msgstr ""
 
@@ -519,7 +775,8 @@ msgid "The scheduler does not appear to be running."
 msgstr ""
 
 #: templates/appbuilder/baselayout.html:53
-msgid "Last heartbeat was received %(time)"
+#, python-format
+msgid "Last heartbeat was received %(time)s"
 msgstr ""
 
 #: templates/appbuilder/baselayout.html:56
@@ -540,9 +797,5 @@ msgstr ""
 
 #: templates/appbuilder/navbar_right.html:57
 msgid "Logout"
-msgstr ""
-
-#: templates/appbuilder/navbar_right.html:62
-msgid "Login"
 msgstr ""
 

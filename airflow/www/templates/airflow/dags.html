@@ -186,7 +186,7 @@
     </table>
     <div class="row">
       <div class="col-sm-12" style="text-align:right;">
-        <div class="dataTables_info" id="dags_info" role="status" aria-live="polite" style="padding-top: 0px;">{{_('')}}Showing {{num_dag_from}} to {{num_dag_to}} of {{num_of_all_dags}} entries</div>
+        <div class="dataTables_info" id="dags_info" role="status" aria-live="polite" style="padding-top: 0px;">{{_('Showing %(num_dag_from)s to %(num_dag_to)s of %(num_of_all_dags)s entries', num_dag_from=num_dag_from, num_dag_to=num_dag_to, num_of_all_dags=num_of_all_dags)}}</div>
       </div>
     </div>
     <div class="row">
@@ -240,12 +240,9 @@
       }
 
       function confirmDeleteDag(link, dag_id){
-        if (confirm("{{_('Are you sure you want to delete \'\"+dag_id+\"\' now?\\n\
-        This option will delete ALL metadata, DAG runs, etc.\\n\
-        EXCEPT Log.\\n\
-        This cannot be undone.')}}")) {
-          postAsForm(link.href, {});
-        }
+      if (confirm("{{_('Are you sure you want to delete \'\"+dag_id+\"\' now?\n        This option will delete ALL metadata, DAG runs, etc.\n        EXCEPT Log.\n        This cannot be undone.')}}")) {
+        postAsForm(link.href, {});
+      }
         return false;
       }
       all_dags = $("[id^=toggle]");

@@ -2716,7 +2716,7 @@ class DagRunModelView(ModelViewOnly):
     )
     form_overrides = dict(execution_date=DateTimeField)
 
-    @action('new_delete', "Delete", "Are you sure you want to delete selected records?")
+    @action('new_delete', "Delete", _("Are you sure you want to delete selected records?"))
     @provide_session
     def action_new_delete(self, ids, session=None):
         deleted = set(session.query(models.DagRun)

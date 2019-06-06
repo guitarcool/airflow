@@ -1994,7 +1994,7 @@ class XComModelView(AirflowModelView):
 
     base_filters = [['dag_id', DagFilter, lambda: []]]
 
-    @action('muldelete', 'Delete', "Are you sure you want to delete selected records?",
+    @action('muldelete', 'Delete', _("Are you sure you want to delete selected records?"),
             single=False)
     def action_muldelete(self, items):
         self.datamodel.delete_all(items)
@@ -2028,7 +2028,7 @@ class ConnectionModelView(AirflowModelView):
 
     base_order = ('conn_id', 'asc')
 
-    @action('muldelete', 'Delete', 'Are you sure you want to delete selected records?',
+    @action('muldelete', 'Delete', _('Are you sure you want to delete selected records?'),
             single=False)
     @has_dag_access(can_dag_edit=True)
     def action_muldelete(self, items):
@@ -2075,7 +2075,7 @@ class PoolModelView(AirflowModelView):
 
     base_order = ('pool', 'asc')
 
-    @action('muldelete', 'Delete', 'Are you sure you want to delete selected records?',
+    @action('muldelete', 'Delete', _('Are you sure you want to delete selected records?'),
             single=False)
     def action_muldelete(self, items):
         self.datamodel.delete_all(items)
@@ -2158,7 +2158,7 @@ class VariableModelView(AirflowModelView):
         if wwwutils.should_hide_value_for_key(form.key.data):
             form.val.data = '*' * 8
 
-    @action('muldelete', 'Delete', 'Are you sure you want to delete selected records?',
+    @action('muldelete', 'Delete', _('Are you sure you want to delete selected records?'),
             single=False)
     def action_muldelete(self, items):
         self.datamodel.delete_all(items)
@@ -2266,7 +2266,7 @@ class DagRunModelView(AirflowModelView):
         'dag_id': [validators.DataRequired()]
     }
 
-    @action('muldelete', "Delete", "Are you sure you want to delete selected records?",
+    @action('muldelete', "Delete", _("Are you sure you want to delete selected records?"),
             single=False)
     @has_dag_access(can_dag_edit=True)
     @provide_session
@@ -2360,9 +2360,9 @@ class LogModelView(AirflowModelView):
 
     base_permissions = ['can_list']
 
-    list_columns = [_('id'), _('dttm'), _('dag_id'), _('task_id'), _('event'), _('execution_date'),
-                    _('owner'), _('extra')]
-    search_columns = [_('dag_id'), _('task_id'), _('event'), _('execution_date'), _('owner'), _('extra')]
+    list_columns = ['id', 'dttm', 'dag_id', 'task_id', 'event', 'execution_date',
+                    'owner', 'extra']
+    search_columns = ['dag_id', 'task_id', 'event', 'execution_date', 'owner', 'extra']
 
     base_order = ('dttm', 'desc')
 
@@ -2424,7 +2424,7 @@ class TaskInstanceModelView(AirflowModelView):
 
     @provide_session
     @action('clear', lazy_gettext('Clear'),
-            lazy_gettext('Are you sure you want to clear the state of the selected task'
+            _('Are you sure you want to clear the state of the selected task'
                          ' instance(s) and set their dagruns to the running state?'),
             single=False)
     def action_clear(self, tis, session=None):

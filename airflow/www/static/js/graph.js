@@ -35,15 +35,15 @@ function update_nodes_states(task_instances) {
         const task = tasks[task_id];
         let tt = "";
         if(ti.task_id != undefined) {
-          tt +=  "Task_id: " + escapeHtml(task.task_id) + "<br>";
+          tt +=  __("Task_id") + ": " + escapeHtml(task.task_id) + "<br>";
         }
-        tt += "Run: " + converAndFormatUTC(task.execution_date) + "<br>";
+        tt += __("Run") + ": " + converAndFormatUTC(task.execution_date) + "<br>";
         if(ti.run_id != undefined) {
-          tt += "run_id: <nobr>" + escapeHtml(task.run_id) + "</nobr><br>";
+          tt += __("run_id") + ": <nobr>" + escapeHtml(task.run_id) + "</nobr><br>";
         }
-        tt += "Operator: " + escapeHtml(task.task_type) + "<br>";
-        tt += "Duration: " + escapeHtml(convertSecsToHumanReadable(ti.duration)) + "<br>";
-        tt += "Started: " + escapeHtml(ti.start_date) + "<br>";
+        tt += __("Operator") + ": " + escapeHtml(task.task_type) + "<br>";
+        tt += __("Duration") + ": " + escapeHtml(convertSecsToHumanReadable(ti.duration)) + "<br>";
+        tt += __("Started") + ": " + escapeHtml(ti.start_date) + "<br>";
         tt += generateTooltipDateTime(ti.start_date, ti.end_date, dagTZ); // dagTZ has been defined in dag.html
         return tt;
       });

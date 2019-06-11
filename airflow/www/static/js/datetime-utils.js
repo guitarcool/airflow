@@ -24,7 +24,7 @@ export const defaultFormatWithTZ = 'YYYY-MM-DD, HH:mm:ss z';
 
 const makeDateTimeHTML = (start, end) => {
   return (
-    `Started: ${start.format(defaultFormat)} <br> Ended: ${end.format(defaultFormat)} <br>`
+    `${__("Started")}: ${start.format(defaultFormat)} <br> ${__("Ended")}: ${end.format(defaultFormat)} <br>`
   )
 };
 
@@ -40,12 +40,12 @@ export const generateTooltipDateTime = (startDate, endDate, dagTZ) => {
   tooltipHTML += makeDateTimeHTML(startDate, endDate);
 
   // Generate User's Local Start and End Date
-  tooltipHTML += `<br><strong>Local: ${moment.tz(localTZ).format(tzFormat)}</strong><br>`;
+  tooltipHTML += `<br><strong>${__("Local")}: ${moment.tz(localTZ).format(tzFormat)}</strong><br>`;
   tooltipHTML += makeDateTimeHTML(startDate.local(), endDate.local());
 
   // Generate DAG's Start and End Date
   if (dagTZ !== 'UTC' && dagTZ !== localTZ) {
-    tooltipHTML += `<br><strong>DAG's TZ: ${moment.tz(dagTZ).format(tzFormat)}</strong><br>`;
+    tooltipHTML += `<br><strong>${__("DAG's TZ")}: ${moment.tz(dagTZ).format(tzFormat)}</strong><br>`;
     tooltipHTML += makeDateTimeHTML(startDate.tz(dagTZ), endDate.tz(dagTZ));
   }
 
@@ -64,8 +64,8 @@ export const secondsToString = (seconds) => {
   let numhours   = Math.floor(((seconds % 31536000) % 86400) / 3600);
   let numminutes = Math.floor((((seconds % 31536000) % 86400) % 3600) / 60);
   let numseconds = Math.floor((((seconds % 31536000) % 86400) % 3600) % 60);
-  return (numdays > 0    ? numdays    + (numdays    === 1 ? " day "    : " days ")    : "") +
-         (numhours > 0   ? numhours   + (numhours   === 1 ? " hour "   : " hours ")   : "") +
-         (numminutes > 0 ? numminutes + (numminutes === 1 ? " minute " : " minutes ") : "") +
-         (numseconds > 0 ? numseconds + (numseconds === 1 ? " second"  : " seconds")  : "");
+  return (numdays > 0    ? numdays    + (numdays    === 1 ? " "+__("day")+" "    : " "+__("days")+" ")    : "") +
+         (numhours > 0   ? numhours   + (numhours   === 1 ? " "+__("hour")+" "   : " "+__("hours")+" ")   : "") +
+         (numminutes > 0 ? numminutes + (numminutes === 1 ? " "+__("minute")+" " : " "+__("minutes")+" ") : "") +
+         (numseconds > 0 ? numseconds + (numseconds === 1 ? " "+__("second")+" "  : " "+__("seconds")+" ")  : "");
 }

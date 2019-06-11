@@ -32,6 +32,13 @@ const STATIC_DIR = path.resolve(__dirname, './static');
 // noinspection JSUnresolvedVariable
 const BUILD_DIR = path.resolve(__dirname, './static/dist');
 
+
+const I18nPlugin = require("i18n-webpack-plugin");
+const languages = {
+	en: null,
+	zh: require(`${STATIC_DIR}/js/zh.json`)
+};
+
 const config = {
   entry: {
     connectionForm: `${STATIC_DIR}/js/connection_form.js`,
@@ -128,6 +135,8 @@ const config = {
       { from: 'node_modules/datatables.net/**/**.min.*', flatten: true },
       { from: 'node_modules/datatables.net-bs/**/**.min.*', flatten: true },
     ], { copyUnmodified: true }),
+    // i18n plugin
+    new I18nPlugin(languages['zh']),
   ],
 };
 

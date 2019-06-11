@@ -25,7 +25,7 @@ $(document).ready(function () {
   var config = {
     jdbc: {
       hidden_fields: ['port', 'schema', 'extra'],
-      relabeling: {'host': 'Connection URL'},
+      relabeling: {'host': __('Connection URL')},
     },
     google_cloud_platform: {
       hidden_fields: ['host', 'schema', 'login', 'password', 'port', 'extra'],
@@ -34,23 +34,23 @@ $(document).ready(function () {
     cloudant: {
       hidden_fields: ['port', 'extra'],
       relabeling: {
-        'host': 'Account',
-        'login': 'Username (or API Key)',
-        'schema': 'Database'
+        'host': __("Account"),
+        'login': __("Username (or API Key)"),
+        'schema': __("Database")
       }
     },
     docker: {
       hidden_fields: ['port', 'schema'],
       relabeling: {
-        'host': 'Registry URL',
-        'login': 'Username',
+        'host': __("Registry URL"),
+        'login': __("Username"),
       },
     },
     qubole: {
       hidden_fields: ['login', 'schema', 'port', 'extra'],
       relabeling: {
-        'host': 'API Endpoint',
-        'password': 'Auth Token',
+        'host': __("API Endpoint"),
+        'password': __("Auth Token"),
       },
       placeholders: {
         'host': 'https://<env>.qubole.com/api'
@@ -59,7 +59,7 @@ $(document).ready(function () {
     ssh: {
       hidden_fields: ['schema'],
       relabeling: {
-        'login': 'Username',
+        'login': __("Username"),
       }
     },
   };

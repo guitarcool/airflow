@@ -32,7 +32,7 @@ d3.gantt = function() {
     .html(function(d) {
       var s = ""
       s += "<div class='row'>";
-      s += "<div class='col-md-3'>start:<br/>end:<br/>duration:</div>"
+      s += "<div class='col-md-3'>"+__("start")+":<br/>"+__("end")+":<br/>"+__("duration")+":</div>"
       s += "<div class='col-md-9'><span style='color: #AAA'> "
       s += d.isoStart + "<br/>";
       s += d.isoEnd + "<br/>";

@@ -22,7 +22,6 @@ import ast
 import codecs
 import copy
 import datetime as dt
-from io import BytesIO
 import itertools
 import json
 import logging
@@ -34,12 +33,14 @@ from datetime import timedelta
 from functools import wraps
 from textwrap import dedent
 
+from six.moves.urllib.parse import quote
+
 import markdown
 import pendulum
 import sqlalchemy as sqla
 from flask import (
     abort, jsonify, redirect, url_for, request, Markup, Response,
-    current_app, render_template, make_response, send_file)
+    current_app, render_template, make_response)
 from flask import flash
 from flask_admin import BaseView, expose, AdminIndexView
 from flask_admin.actions import action
@@ -47,6 +48,8 @@ from flask_admin.babel import lazy_gettext
 from flask_admin.contrib.sqla import ModelView
 from flask_admin.form.fields import DateTimeField
 from flask_admin.tools import iterdecode
+from flask_babel import lazy_gettext, gettext as _
+import lazy_object_proxy
 from jinja2 import escape
 from jinja2.sandbox import ImmutableSandboxedEnvironment
 from past.builtins import basestring
@@ -61,6 +64,7 @@ import airflow
 from airflow import configuration as conf
 from airflow import models
 from airflow import settings
+from airflow import jobs
 from airflow.api.common.experimental.mark_tasks import (set_dag_run_state_to_running,
                                                         set_dag_run_state_to_success,
                                                         set_dag_run_state_to_failed)
@@ -316,7 +320,6 @@ def get_chart_height(dag):
     """
     return 600 + len(dag.tasks) * 10
 
-
 def get_date_time_num_runs_dag_runs_form_data(request, session, dag):
     dttm = request.args.get('execution_date')
     if dttm:
@@ -369,7 +372,14 @@ def get_date_time_num_runs_dag_runs_form_data(request, session, dag):
     }
 
 
-class Airflow(BaseView):
+class AirflowViewMixin(object):
+    def render(self, template, **kwargs):
+        kwargs['scheduler_job'] = lazy_object_proxy.Proxy(jobs.SchedulerJob.most_recent_job)
+        kwargs['macros'] = airflow.macros
+        return super(AirflowViewMixin, self).render(template, **kwargs)
+
+
+class Airflow(AirflowViewMixin, BaseView):
     def is_visible(self):
         return False
 
@@ -754,7 +764,7 @@ class Airflow(BaseView):
         try:
             ti.render_templates()
         except Exception as e:
-            flash("Error rendering template: " + str(e), "error")
+            flash(lazy_gettext("Error rendering template: " )+ str(e), "error")
         title = "Rendered Template"
         html_dict = {}
         for template_field in task.__class__.template_fields:
@@ -819,30 +829,49 @@ class Airflow(BaseView):
             models.TaskInstance.dag_id == dag_id,
             models.TaskInstance.task_id == task_id,
             models.TaskInstance.execution_date == dttm).first()
-        try:
+
+        def _get_logs_with_metadata(try_number, metadata):
             if ti is None:
                 logs = ["*** Task instance did not exist in the DB\n"]
                 metadata['end_of_log'] = True
             else:
-                dag = dagbag.get_dag(dag_id)
-                ti.task = dag.get_task(ti.task_id)
                 logs, metadatas = handler.read(ti, try_number, metadata=metadata)
                 metadata = metadatas[0]
+            return logs, metadata
 
+        try:
+            if ti is not None:
+                dag = dagbag.get_dag(dag_id)
+                ti.task = dag.get_task(ti.task_id)
             if response_format == 'json':
+                logs, metadata = _get_logs_with_metadata(try_number, metadata)
                 message = logs[0] if try_number is not None else logs
                 return jsonify(message=message, metadata=metadata)
 
-            file_obj = BytesIO(b'\n'.join(
-                log.encode('utf-8') for log in logs
-            ))
             filename_template = conf.get('core', 'LOG_FILENAME_TEMPLATE')
             attachment_filename = render_log_filename(
                 ti=ti,
                 try_number="all" if try_number is None else try_number,
                 filename_template=filename_template)
-            return send_file(file_obj, as_attachment=True,
-                             attachment_filename=attachment_filename)
+            metadata['download_logs'] = True
+
+            def _generate_log_stream(try_number, metadata):
+                if try_number is None and ti is not None:
+                    next_try = ti.next_try_number
+                    try_numbers = list(range(1, next_try))
+                else:
+                    try_numbers = [try_number]
+                for try_number in try_numbers:
+                    metadata.pop('end_of_log', None)
+                    metadata.pop('max_offset', None)
+                    metadata.pop('offset', None)
+                    while 'end_of_log' not in metadata or not metadata['end_of_log']:
+                        logs, metadata = _get_logs_with_metadata(try_number, metadata)
+                        yield "\n".join(logs) + "\n"
+            return Response(_generate_log_stream(try_number, metadata),
+                            mimetype="text/plain",
+                            headers={"Content-Disposition": "attachment; filename={}".format(
+                                attachment_filename)})
         except AttributeError as e:
             error_message = ["Task log handler {} does not support read logs.\n{}\n"
                              .format(task_log_reader, str(e))]
@@ -881,6 +910,23 @@ class Airflow(BaseView):
             execution_date=execution_date, form=form,
             root=root)
 
+    @expose('/elasticsearch')
+    @login_required
+    @wwwutils.action_logging
+    @provide_session
+    def elasticsearch(self, session=None):
+        dag_id = request.args.get('dag_id')
+        task_id = request.args.get('task_id')
+        execution_date = request.args.get('execution_date')
+        try_number = request.args.get('try_number', 1)
+        elasticsearch_frontend = conf.get('elasticsearch', 'frontend')
+        log_id_template = conf.get('elasticsearch', 'log_id_template')
+        log_id = log_id_template.format(
+            dag_id=dag_id, task_id=task_id,
+            execution_date=execution_date, try_number=try_number)
+        url = 'https://' + elasticsearch_frontend.format(log_id=quote(log_id))
+        return redirect(url)
+
     @expose('/task')
     @login_required
     @wwwutils.action_logging
@@ -899,8 +945,8 @@ class Airflow(BaseView):
 
         if not dag or task_id not in dag.task_ids:
             flash(
-                "Task [{}.{}] doesn't seem to exist"
-                " at the moment".format(dag_id, task_id),
+                lazy_gettext("Task [{}.{}] doesn't seem to exist"
+                " at the moment").format(dag_id, task_id),
                 "error")
             return redirect('/admin/')
         task = copy.copy(dag.get_task(task_id))
@@ -990,8 +1036,8 @@ class Airflow(BaseView):
         ti = session.query(ti_db).filter(ti_db.dag_id == dag_id and ti_db.task_id == task_id).first()
         if not ti:
             flash(
-                "Task [{}.{}] doesn't seem to exist"
-                " at the moment".format(dag_id, task_id),
+                lazy_gettext("Task [{}.{}] doesn't seem to exist"
+                " at the moment").format(dag_id, task_id),
                 "error")
             return redirect('/admin/')
 
@@ -1050,7 +1096,7 @@ class Airflow(BaseView):
             pass
 
         if not valid_celery_config and not valid_kubernetes_config:
-            flash("Only works with the Celery or Kubernetes executors, sorry", "error")
+            flash(lazy_gettext("Only works with the Celery or Kubernetes executors, sorry"), "error")
             return redirect(origin)
 
         ti = models.TaskInstance(task=task, execution_date=execution_date)
@@ -1066,8 +1112,8 @@ class Airflow(BaseView):
         if failed_deps:
             failed_deps_str = ", ".join(
                 ["{}: {}".format(dep.dep_name, dep.reason) for dep in failed_deps])
-            flash("Could not queue task instance for execution, dependencies not met: "
-                  "{}".format(failed_deps_str),
+            flash(lazy_gettext("Could not queue task instance for execution, dependencies not met: "
+                  "{}").format(failed_deps_str),
                   "error")
             return redirect(origin)
 
@@ -1079,8 +1125,8 @@ class Airflow(BaseView):
             ignore_ti_state=ignore_ti_state)
         executor.heartbeat()
         flash(
-            "Sent {} to the message queue, "
-            "it should start any moment now.".format(ti))
+            lazy_gettext("Sent {} to the message queue, "
+            "it should start any moment now.").format(ti))
         return redirect(origin)
 
     @expose('/delete', methods=['POST'])
@@ -1119,7 +1165,7 @@ class Airflow(BaseView):
         origin = request.values.get('origin') or "/admin/"
         dag = session.query(models.DagModel).filter(models.DagModel.dag_id == dag_id).first()
         if not dag:
-            flash("Cannot find dag {}".format(dag_id))
+            flash(lazy_gettext("Cannot find dag {}").format(dag_id))
             return redirect(origin)
 
         execution_date = timezone.utcnow()
@@ -1127,7 +1173,7 @@ class Airflow(BaseView):
 
         dr = DagRun.find(dag_id=dag_id, run_id=run_id)
         if dr:
-            flash("This run_id {} already exists".format(run_id))
+            flash(lazy_gettext("This run_id {} already exists").format(run_id))
             return redirect(origin)
 
         run_conf = {}
@@ -1141,8 +1187,8 @@ class Airflow(BaseView):
         )
 
         flash(
-            "Triggered {}, "
-            "it should start any moment now.".format(dag_id))
+            lazy_gettext("Triggered {}, "
+            "it should start any moment now.").format(dag_id))
         return redirect(origin)
 
     def _clear_dag_tis(self, dag, start_date, end_date, origin,
@@ -1155,7 +1201,7 @@ class Airflow(BaseView):
                 include_parentdag=recursive,
             )
 
-            flash("{0} task instances have been cleared".format(count))
+            flash(lazy_gettext("{0} task instances have been cleared").format(count))
             return redirect(origin)
 
         tis = dag.clear(
@@ -1166,7 +1212,7 @@ class Airflow(BaseView):
             include_parentdag=recursive,
         )
         if not tis:
-            flash("No task instances to clear", 'error')
+            flash(lazy_gettext("No task instances to clear"), 'error')
             response = redirect(origin)
         else:
             details = "\n".join([str(t) for t in tis])
@@ -1341,25 +1387,25 @@ class Airflow(BaseView):
         execution_date = pendulum.parse(execution_date)
 
         if not dag:
-            flash("Cannot find DAG: {}".format(dag_id))
+            flash(lazy_gettext("Cannot find DAG: {}").format(dag_id))
             return redirect(origin)
 
         if not task:
-            flash("Cannot find task {} in DAG {}".format(task_id, dag.dag_id))
+            flash(lazy_gettext("Cannot find task {} in DAG {}").format(task_id, dag.dag_id))
             return redirect(origin)
 
         from airflow.api.common.experimental.mark_tasks import set_state
 
         if confirmed:
-            altered = set_state(task=task, execution_date=execution_date,
+            altered = set_state(tasks=[task], execution_date=execution_date,
                                 upstream=upstream, downstream=downstream,
                                 future=future, past=past, state=state,
                                 commit=True)
 
-            flash("Marked {} on {} task instances".format(state, len(altered)))
+            flash(lazy_gettext("Marked {} on {} task instances").format(state, len(altered)))
             return redirect(origin)
 
-        to_be_altered = set_state(task=task, execution_date=execution_date,
+        to_be_altered = set_state(tasks=[task], execution_date=execution_date,
                                   upstream=upstream, downstream=downstream,
                                   future=future, past=past, state=state,
                                   commit=False)
@@ -1529,12 +1575,14 @@ class Airflow(BaseView):
 
         form = DateTimeWithNumRunsForm(data={'base_date': max_date,
                                              'num_runs': num_runs})
+        external_logs = conf.get('elasticsearch', 'frontend')
         return self.render(
             'airflow/tree.html',
             operators=sorted({op.__class__ for op in dag.tasks}, key=lambda x: x.__name__),
             root=root,
             form=form,
-            dag=dag, data=data, blur=blur, num_runs=num_runs)
+            dag=dag, data=data, blur=blur, num_runs=num_runs,
+            show_external_logs=bool(external_logs))
 
     @expose('/graph')
     @login_required
@@ -1589,10 +1637,10 @@ class Airflow(BaseView):
 
         class GraphForm(DateTimeWithNumRunsWithDagRunsForm):
             arrange = SelectField("Layout", choices=(
-                ('LR', "Left->Right"),
-                ('RL', "Right->Left"),
-                ('TB', "Top->Bottom"),
-                ('BT', "Bottom->Top"),
+                ('LR', lazy_gettext("Left->Right")),
+                ('RL', lazy_gettext("Right->Left")),
+                ('TB', lazy_gettext("Top->Bottom")),
+                ('BT', lazy_gettext("Bottom->Top")),
             ))
 
         form = GraphForm(data=dt_nr_dr_data)
@@ -1608,10 +1656,11 @@ class Airflow(BaseView):
             }
             for t in dag.tasks}
         if not tasks:
-            flash("No tasks found", "error")
+            flash(lazy_gettext("No tasks found"), "error")
         session.commit()
         doc_md = markdown.markdown(dag.doc_md) if hasattr(dag, 'doc_md') and dag.doc_md else ''
 
+        external_logs = conf.get('elasticsearch', 'frontend')
         return self.render(
             'airflow/graph.html',
             dag=dag,
@@ -1628,7 +1677,8 @@ class Airflow(BaseView):
             task_instances=task_instances,
             tasks=tasks,
             nodes=nodes,
-            edges=edges)
+            edges=edges,
+            show_external_logs=bool(external_logs))
 
     @expose('/duration')
     @login_required
@@ -1891,18 +1941,9 @@ class Airflow(BaseView):
     @wwwutils.action_logging
     @provide_session
     def paused(self, session=None):
-        DagModel = models.DagModel
         dag_id = request.values.get('dag_id')
-        orm_dag = session.query(
-            DagModel).filter(DagModel.dag_id == dag_id).first()
-        if request.values.get('is_paused') == 'false':
-            orm_dag.is_paused = True
-        else:
-            orm_dag.is_paused = False
-        session.merge(orm_dag)
-        session.commit()
-
-        dagbag.get_dag(dag_id)
+        is_paused = True if request.args.get('is_paused') == 'false' else False
+        models.DagModel.get_dagmodel(dag_id).set_is_paused(is_paused=is_paused)
         return "OK"
 
     @expose('/refresh', methods=['POST'])
@@ -1928,7 +1969,7 @@ class Airflow(BaseView):
     @wwwutils.action_logging
     def refresh_all(self):
         # TODO: Is this method still needed after AIRFLOW-3561?
-        flash("All DAGs are now up to date")
+        flash(lazy_gettext("All DAGs are now up to date"))
         return redirect('/')
 
     @expose('/gantt')
@@ -1955,7 +1996,7 @@ class Airflow(BaseView):
 
         tis = [
             ti for ti in dag.get_task_instances(dttm, dttm, session=session)
-            if ti.start_date]
+            if ti.start_date and ti.state]
         tis = sorted(tis, key=lambda ti: ti.start_date)
         TF = models.TaskFail
         ti_fails = list(itertools.chain(*[(
@@ -1988,7 +2029,7 @@ class Airflow(BaseView):
                 'isoStart': start_date.isoformat()[:-4],
                 'isoEnd': end_date.isoformat()[:-4],
                 'taskName': task_id,
-                'duration': "{}".format(end_date - start_date)[:-4],
+                'duration': (end_date - start_date).total_seconds(),
                 'status': state,
                 'executionDate': dttm.isoformat(),
             })
@@ -2082,7 +2123,7 @@ class Airflow(BaseView):
         return redirect('/admin/variable')
 
 
-class HomeView(AdminIndexView):
+class HomeView(AirflowViewMixin, AdminIndexView):
     @expose("/")
     @login_required
     @provide_session
@@ -2179,7 +2220,7 @@ class HomeView(AdminIndexView):
             search_query=arg_search_query if arg_search_query else '',
             page_size=dags_per_page,
             num_of_pages=num_of_pages,
-            num_dag_from=start + 1,
+            num_dag_from=min(start + 1, num_of_all_dags),
             num_dag_to=min(end, num_of_all_dags),
             num_of_all_dags=num_of_all_dags,
             paging=wwwutils.generate_pages(current_page, num_of_pages,
@@ -2188,7 +2229,7 @@ class HomeView(AdminIndexView):
             auto_complete_data=auto_complete_data)
 
 
-class QueryView(wwwutils.DataProfilingMixin, BaseView):
+class QueryView(wwwutils.DataProfilingMixin, AirflowViewMixin, BaseView):
     @expose('/', methods=['POST', 'GET'])
     @wwwutils.gzipped
     @provide_session
@@ -2258,7 +2299,7 @@ class QueryView(wwwutils.DataProfilingMixin, BaseView):
             has_data=has_data)
 
 
-class AirflowModelView(ModelView):
+class AirflowModelView(AirflowViewMixin, ModelView):
     list_template = 'airflow/model_list.html'
     edit_template = 'airflow/model_edit.html'
     create_template = 'airflow/model_create.html'
@@ -2643,7 +2684,7 @@ class DagRunModelView(ModelViewOnly):
     verbose_name = "dag run"
     column_default_sort = ('execution_date', True)
     form_choices = {
-        'state': [
+        '_state': [
             ('success', 'success'),
             ('running', 'running'),
             ('failed', 'failed'),
@@ -2675,7 +2716,7 @@ class DagRunModelView(ModelViewOnly):
     )
     form_overrides = dict(execution_date=DateTimeField)
 
-    @action('new_delete', "Delete", "Are you sure you want to delete selected records?")
+    @action('new_delete', "Delete", _("Are you sure you want to delete selected records?"))
     @provide_session
     def action_new_delete(self, ids, session=None):
         deleted = set(session.query(models.DagRun)
@@ -2702,7 +2743,7 @@ class DagRunModelView(ModelViewOnly):
                 dr.state = State.RUNNING
                 dr.start_date = timezone.utcnow()
             flash(
-                "{count} dag runs were set to running".format(**locals()))
+                lazy_gettext("{count} dag runs were set to running").format(**locals()))
         except Exception as ex:
             if not self.handle_view_exception(ex):
                 raise Exception("Ooops")
@@ -2727,8 +2768,8 @@ class DagRunModelView(ModelViewOnly):
                                                 session=session)
             altered_ti_count = len(altered_tis)
             flash(
-                "{count} dag runs and {altered_ti_count} task instances "
-                "were set to failed".format(**locals()))
+                lazy_gettext("{count} dag runs and {altered_ti_count} task instances "
+                "were set to failed").format(**locals()))
         except Exception as ex:
             if not self.handle_view_exception(ex):
                 raise Exception("Ooops")
@@ -2753,8 +2794,8 @@ class DagRunModelView(ModelViewOnly):
                                                  session=session)
             altered_ti_count = len(altered_tis)
             flash(
-                "{count} dag runs and {altered_ti_count} task instances "
-                "were set to success".format(**locals()))
+                lazy_gettext("{count} dag runs and {altered_ti_count} task instances "
+                "were set to success").format(**locals()))
         except Exception as ex:
             if not self.handle_view_exception(ex):
                 raise Exception("Ooops")
@@ -3033,7 +3074,7 @@ class UserModelView(wwwutils.SuperUserMixin, AirflowModelView):
     column_default_sort = 'username'
 
 
-class VersionView(wwwutils.SuperUserMixin, BaseView):
+class VersionView(wwwutils.SuperUserMixin, AirflowViewMixin, BaseView):
     @expose('/')
     def version(self):
         # Look at the version from setup.py
@@ -3059,7 +3100,7 @@ class VersionView(wwwutils.SuperUserMixin, BaseView):
                            git_version=git_version)
 
 
-class ConfigurationView(wwwutils.SuperUserMixin, BaseView):
+class ConfigurationView(wwwutils.SuperUserMixin, AirflowViewMixin, BaseView):
     @expose('/')
     def conf(self):
         raw = request.args.get('raw') == "true"

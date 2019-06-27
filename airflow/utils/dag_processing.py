@@ -292,6 +292,9 @@ def correct_maybe_zipped(fileloc):
         return fileloc
 
 
+COMMENT_PATTERN = re.compile(r"\s*#.*")
+
+
 def list_py_file_paths(directory, safe_mode=True,
                        include_examples=None):
     """
@@ -320,7 +323,8 @@ def list_py_file_paths(directory, safe_mode=True,
                 with open(ignore_file, 'r') as f:
                     # If we have new patterns create a copy so we don't change
                     # the previous list (which would affect other subdirs)
-                    patterns = patterns + [p for p in f.read().split('\n') if p]
+                    lines_no_comments = [COMMENT_PATTERN.sub("", line) for line in f.read().split("\n")]
+                    patterns += [re.compile(line) for line in lines_no_comments if line]
 
             # If we can ignore any subdirs entirely we should - fewer paths
             # to walk is better. We have to modify the ``dirs`` array in
@@ -328,7 +332,7 @@ def list_py_file_paths(directory, safe_mode=True,
             dirs[:] = [
                 d
                 for d in dirs
-                if not any(re.search(p, os.path.join(root, d)) for p in patterns)
+                if not any(p.search(os.path.join(root, d)) for p in patterns)
             ]
 
             # We want patterns defined in a parent folder's .airflowignore to
@@ -1267,7 +1271,10 @@ class DagFileProcessorManager(LoggingMixin):
             )
             self._last_zombie_query_time = timezone.utcnow()
             for ti in tis:
-                zombies.append(SimpleTaskInstance(ti))
+                sti = SimpleTaskInstance(ti)
+                self.log.info("Detected zombie job with dag_id %s, task_id %s, and execution date %s",
+                              sti.dag_id, sti.task_id, sti.execution_date.isoformat())
+                zombies.append(sti)
 
         return zombies
 

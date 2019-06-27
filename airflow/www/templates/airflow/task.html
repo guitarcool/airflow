@@ -22,11 +22,11 @@
     {{ super() }}
     <h4>{{ title }}</h4>
     <div>
-        <h5>Dependencies Blocking Task From Getting Scheduled</h5>
+        <h5>{{_('Dependencies Blocking Task From Getting Scheduled')}}</h5>
         <table class="table table-striped table-bordered">
             <tr>
-                <th>Dependency</th>
-                <th>Reason</th>
+                <th>{{_('Dependency')}}</th>
+                <th>{{_('Reason')}}</th>
             </tr>
             {% for dependency, reason in failed_dep_reasons %}
                 <tr>
@@ -43,14 +43,14 @@
     </div>
     <div>
         {% for attr, value in special_attrs_rendered.items() %}
-            <h5>Attribute: {{ attr }}</h5>
+            <h5>{{_('Attribute')}}: {{ attr }}</h5>
             {{ value|safe }}
         {% endfor %}
-        <h5>Task Instance Attributes</h5>
+        <h5>{{_('Task Instance Attributes')}}</h5>
         <table class="table table-striped table-bordered">
             <tr>
-                <th>Attribute</th>
-                <th>Value</th>
+                <th>{{_('Attribute')}}</th>
+                <th>{{_('Value')}}</th>
             </tr>
             {% for attr, value in ti_attrs %}
                 <tr>
@@ -59,11 +59,11 @@
                 </tr>
             {% endfor %}
         </table>
-        <h5>Task Attributes</h5>
+        <h5>{{_('Task Attributes')}}</h5>
         <table class="table table-striped table-bordered">
             <tr>
-                <th>Attribute</th>
-                <th>Value</th>
+                <th>{{_('Attribute')}}</th>
+                <th>{{_('Value')}}</th>
             </tr>
             {% for attr, value in task_attrs %}
                 <tr>

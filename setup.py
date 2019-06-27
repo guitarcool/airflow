@@ -59,7 +59,12 @@ class Tox(TestCommand):
 
 
 class CleanCommand(Command):
-    """Custom clean command to tidy up the project root."""
+    """
+    Custom clean command to tidy up the project root.
+    Registered as cmdclass in setup() so it can be called with ``python setup.py extra_clean``.
+    """
+
+    description = "Tidy up the project root"
     user_options = []
 
     def initialize_options(self):
@@ -76,7 +81,10 @@ class CompileAssets(Command):
     """
     Custom compile assets command to compile and build the frontend
     assets using npm and webpack.
+    Registered as cmdclass in setup() so it can be called with ``python setup.py compile_assets``.
     """
+
+    description = "Compile and build the frontend assets"
     user_options = []
 
     def initialize_options(self):
@@ -159,7 +167,6 @@ datadog = ['datadog>=0.14.0']
 doc = [
     'sphinx-argparse>=0.1.13',
     'sphinx-autoapi>=0.7.1',
-    'Sphinx-PyPI-upload>=0.2.1',
     'sphinx-rtd-theme>=0.1.6',
     'sphinx>=1.2.3',
     'sphinxcontrib-httpdomain>=1.7.0',
@@ -179,7 +186,7 @@ gcp = [
     'google-cloud-container>=0.1.1',
     'google-cloud-language>=1.1.1',
     'google-cloud-spanner>=1.7.1',
-    'google-cloud-storage~=1.14',
+    'google-cloud-storage~=1.16',
     'google-cloud-translate>=1.3.3',
     'google-cloud-videointelligence>=1.7.0',
     'google-cloud-vision>=0.35.2',
@@ -270,12 +277,14 @@ devel_all = (sendgrid + devel + all_dbs + doc + samba + s3 + slack + crypto + or
              docker + ssh + kubernetes + celery + azure_blob_storage + redis + gcp + grpc +
              datadog + zendesk + jdbc + ldap + kerberos + password + webhdfs + jenkins +
              druid + pinot + segment + snowflake + elasticsearch + azure_data_lake + azure_cosmos +
-             atlas + azure_container_instances)
+             atlas + azure_container_instances + cgroups)
 
 # Snakebite & Google Cloud Dataflow are not Python 3 compatible :'(
 if PY3:
-    devel_ci = [package for package in devel_all if package not in
-                ['snakebite>=2.7.8', 'snakebite[kerberos]>=2.7.8']]
+    devel_all = [package for package in devel_all if package not in
+                 ['snakebite>=2.7.8', 'snakebite[kerberos]>=2.7.8']]
+    devel_ci = devel_all
+
 else:
     devel_ci = devel_all + ['unittest2']
 
@@ -295,7 +304,7 @@ def do_setup():
         zip_safe=False,
         scripts=['airflow/bin/airflow'],
         install_requires=[
-            'alembic>=0.9, <1.0',
+            'alembic>=1.0, <2.0',
             'cached_property~=1.5',
             'configparser>=3.5.0, <3.6.0',
             'croniter>=0.3.17, <0.4',
@@ -315,6 +324,7 @@ def do_setup():
             'iso8601>=0.1.12',
             'json-merge-patch==0.2',
             'jinja2>=2.10.1, <2.11.0',
+            'lazy_object_proxy~=1.3',
             'markdown>=2.5.2, <3.0',
             'pandas>=0.17.1, <1.0.0',
             'pendulum==1.4.4',

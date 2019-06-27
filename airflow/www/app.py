@@ -27,6 +27,7 @@ from flask_wtf.csrf import CSRFProtect
 from six.moves.urllib.parse import urlparse
 from werkzeug.wsgi import DispatcherMiddleware
 from werkzeug.contrib.fixers import ProxyFix
+from flask_babel import Babel, gettext as _
 
 import airflow
 from airflow import configuration as conf
@@ -56,6 +57,23 @@ def create_app(config=None, testing=False):
     app.config['SESSION_COOKIE_SECURE'] = conf.getboolean('webserver', 'COOKIE_SECURE')
     app.config['SESSION_COOKIE_SAMESITE'] = conf.get('webserver', 'COOKIE_SAMESITE')
 
+    babel = Babel(app)
+    @babel.localeselector
+    def get_locale():
+        # if a user is logged in, use the locale from the user settings
+        user = getattr(g, 'user', None)
+        if user is not None:
+            return user.locale
+        # otherwise try to guess the language from the user accept
+        # header the browser transmits.  We support de/fr/en in this
+        # example.  The best match wins.
+        return request.accept_languages.best_match(['zh', 'zh-cn', 'en'])
+
+    @babel.timezoneselector
+    def get_timezone():
+        user = getattr(g, 'user', None)
+        if user is not None:
+            return user.timezone
     if config:
         app.config.from_mapping(config)
 
@@ -64,11 +82,11 @@ def create_app(config=None, testing=False):
     app.config['TESTING'] = testing
 
     airflow.load_login()
-    airflow.login.login_manager.init_app(app)
+    airflow.login.LOGIN_MANAGER.init_app(app)
 
     from airflow import api
     api.load_auth()
-    api.api_auth.init_app(app)
+    api.API_AUTH.api_auth.init_app(app)
 
     # flake8: noqa: F841
     cache = Cache(app=app, config={'CACHE_TYPE': 'filesystem', 'CACHE_DIR': '/tmp'})

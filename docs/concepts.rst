@@ -145,7 +145,7 @@ Airflow provides operators for many common tasks, including:
 
 In addition to these basic building blocks, there are many more specific
 operators: :class:`~airflow.operators.docker_operator.DockerOperator`,
-:class:`~airflow.operators.hive_operator.HiveOperator`, :class:`~airflow.operators.s3_file_transform_operator.S3FileTransformOperator(`,
+:class:`~airflow.operators.hive_operator.HiveOperator`, :class:`~airflow.operators.s3_file_transform_operator.S3FileTransformOperator`,
 :class:`~airflow.operators.presto_to_mysql.PrestoToMySqlTransfer`,
 :class:`~airflow.operators.slack_operator.SlackAPIOperator`... you get the idea!
 
@@ -974,7 +974,7 @@ It will not go into subdirectories as these are considered to be potential
 packages.
 
 In case you would like to add module dependencies to your DAG you basically would
-do the same, but then it is more to use a virtualenv and pip.
+do the same, but then it is more suitable to use a virtualenv and pip.
 
 .. code-block:: bash
 
@@ -1008,7 +1008,8 @@ that Airflow should intentionally ignore. Each line in ``.airflowignore``
 specifies a regular expression pattern, and directories or files whose names
 (not DAG id) match any of the patterns would be ignored (under the hood,
 ``re.findall()`` is used to match the pattern). Overall it works like a
-``.gitignore`` file.
+``.gitignore`` file. Use the ``#`` character to indicate a comment; all
+characters on a line following a ``#`` will be ignored.
 
 ``.airflowignore`` file should be put in your ``DAG_FOLDER``.
 For example, you can prepare a ``.airflowignore`` file with contents

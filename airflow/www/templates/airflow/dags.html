@@ -136,6 +136,16 @@
                 <a href="{{ url_for('airflow.graph', dag_id=dag.dag_id) }}">
                     <span class="glyphicon glyphicon-certificate" aria-hidden="true" data-original-title="{{_('Graph View')}}"></span>
                 </a>
+                
+                <!-- List -->
+                <a href="{{ url_for('airflow.tasklist', dag_id=dag.dag_id) }}">
+                    <span class="glyphicon glyphicon-list-alt" aria-hidden="true" data-original-title="{{_('List View')}}"></span>
+                </a>
+
+                <!-- Task Edit -->
+                <a href="{{ url_for('airflow.taskedit', dag_id=dag.dag_id) }}">
+                    <span class="glyphicon glyphicon-edit" aria-hidden="true" data-original-title="{{_('Add Task')}}"></span>
+                </a>
 
                 <!-- Duration -->
                 <a href="{{ url_for('airflow.duration', dag_id=dag.dag_id) }}">
@@ -161,6 +171,17 @@
                 <a href="{{ url_for("airflow.code", dag_id=dag.dag_id) }}">
                     <span class="glyphicon glyphicon-file" aria-hidden="true" data-original-title="{{_('Code View')}}"></span>
                 </a>
+
+                <!-- DataSource -->
+                <a href="{{ url_for("airflow.data_source", dag_id=dag.dag_id) }}">
+                    <span class="glyphicon glyphicon-hdd" aria-hidden="true" data-original-title="{{_('Data Source')}}"></span>
+                </a>
+                
+                <!-- Group Stat -->
+                <a href="{{ url_for("airflow.group_stat", dag_id=dag.dag_id) }}">
+                    <span class="glyphicon glyphicon-stats" aria-hidden="true" data-original-title="{{_('Group Stat')}}"></span>
+                </a>
+                
 
                 <!-- Logs -->
                 <a href="{{ url_for('log.index_view') }}?sort=1&amp;desc=1&amp;flt1_dag_id_equals={{ dag.dag_id }}">

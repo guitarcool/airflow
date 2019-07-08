@@ -61,6 +61,14 @@
           <span class="glyphicon glyphicon-tree-deciduous" aria-hidden="true"></span>
           {{_('Tree View')}}
       </a></li>
+      <li><a href="{{ url_for("airflow.tasklist", dag_id=dag.dag_id, num_runs=num_runs, root=root) }}">
+          <span class="glyphicon glyphicon-list-alt" aria-hidden="true"></span>
+          {{_('List View')}}
+      </a></li>
+      <li><a href="{{ url_for("airflow.taskedit", dag_id=dag.dag_id, num_runs=num_runs, root=root) }}">
+          <span class="glyphicon glyphicon-edit" aria-hidden="true"></span>
+          {{_('Add Task')}}
+      </a></li>
       <li><a href="{{ url_for("airflow.duration", dag_id=dag.dag_id, days=30, root=root) }}">
           <span class="glyphicon glyphicon-stats" aria-hidden="true"></span>
           {{_('Task Duration')}}
@@ -92,6 +100,18 @@
         <a href="{{ url_for("airflow.code", dag_id=dag.dag_id, root=root) }}">
           <span class="glyphicon glyphicon-file" aria-hidden="true"></span>
           {{_('Code')}}
+        </a>
+      </li>
+      <li>
+        <a href="{{ url_for("airflow.data_source", dag_id=dag.dag_id, root=root) }}">
+          <span class="glyphicon glyphicon-hdd" aria-hidden="true"></span>
+          {{_('Data Source')}}
+        </a>
+      </li>
+      <li>
+        <a href="{{ url_for("airflow.group_stat", dag_id=dag.dag_id, root=root) }}">
+          <span class="glyphicon glyphicon-stats" aria-hidden="true"></span>
+          {{_('Group Stat')}}
         </a>
       </li>
       <li>

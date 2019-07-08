@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PROJECT VERSION\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2019-06-06 18:33+0800\n"
+"POT-Creation-Date: 2019-07-08 16:21+0800\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -16,106 +16,6 @@ msgstr ""
 "Content-Type: text/plain; charset=utf-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Generated-By: Babel 2.7.0\n"
-
-#: decorators.py:124
-msgid "Access is Denied"
-msgstr ""
-
-#: forms.py:62
-msgid "Dag Id"
-msgstr ""
-
-#: forms.py:66
-msgid "Start Date"
-msgstr ""
-
-#: forms.py:69
-msgid "End Date"
-msgstr ""
-
-#: forms.py:72
-msgid "Run Id"
-msgstr ""
-
-#: forms.py:75
-msgid "State"
-msgstr ""
-
-#: forms.py:79
-msgid "Execution Date"
-msgstr ""
-
-#: forms.py:82
-msgid "External Trigger"
-msgstr ""
-
-#: forms.py:87
-msgid "Conn Id"
-msgstr ""
-
-#: forms.py:90
-msgid "Conn Type"
-msgstr ""
-
-#: forms.py:94
-msgid "Host"
-msgstr ""
-
-#: forms.py:97
-msgid "Schema"
-msgstr ""
-
-#: forms.py:100 templates/appbuilder/navbar_right.html:62
-msgid "Login"
-msgstr ""
-
-#: forms.py:103
-msgid "Password"
-msgstr ""
-
-#: forms.py:106
-msgid "Port"
-msgstr ""
-
-#: forms.py:110
-msgid "Extra"
-msgstr ""
-
-#: forms.py:119
-msgid "Driver Path"
-msgstr ""
-
-#: forms.py:122
-msgid "Driver Class"
-msgstr ""
-
-#: forms.py:125
-msgid "Project Id"
-msgstr ""
-
-#: forms.py:128
-msgid "Keyfile Path"
-msgstr ""
-
-#: forms.py:131
-msgid "Keyfile JSON"
-msgstr ""
-
-#: forms.py:134 forms.py:148
-msgid "Scopes (comma separated)"
-msgstr ""
-
-#: forms.py:137
-msgid "Number of Retries"
-msgstr ""
-
-#: forms.py:142
-msgid "Grpc Auth Type"
-msgstr ""
-
-#: forms.py:145
-msgid "Credential Keyfile Path"
-msgstr ""
 
 #: translates.py:51
 msgid "First Name"
@@ -141,7 +41,7 @@ msgstr ""
 msgid "Role"
 msgstr ""
 
-#: templates/appbuilder/navbar.html:34 translates.py:57
+#: translates.py:57
 msgid "Airflow"
 msgstr ""
 
@@ -161,7 +61,7 @@ msgstr ""
 msgid "DagRunModelView"
 msgstr ""
 
-#: templates/airflow/dag.html:150 translates.py:62
+#: templates/airflow/dag.html:170 translates.py:62
 msgid "Task Instances"
 msgstr ""
 
@@ -185,7 +85,7 @@ msgstr ""
 msgid "JobModelView"
 msgstr ""
 
-#: templates/airflow/dags.html:167 translates.py:68
+#: templates/airflow/dags.html:188 translates.py:68
 msgid "Logs"
 msgstr ""
 
@@ -378,162 +278,122 @@ msgstr ""
 msgid "Invalid field name '%s'."
 msgstr ""
 
-#: validators.py:54
+#: validators.py:57
 #, python-format
 msgid "Field must be greater than or equal to %(other_label)s."
 msgstr ""
 
-#: views.py:259
-msgid "Broken DAG: [{ie.filename}] {ie.stacktrace}"
-msgstr ""
-
-#: views.py:265
-msgid "Broken plugin: [{filename}] {stacktrace}"
-msgstr ""
-
-#: views.py:473
+#: views.py:793
 msgid "Error rendering template: "
 msgstr ""
 
-#: views.py:658 views.py:740
+#: views.py:974 views.py:1099
 msgid "Task [{}.{}] doesn't seem to exist at the moment"
 msgstr ""
 
-#: views.py:799
+#: views.py:1159
 msgid "Only works with the Celery or Kubernetes executors, sorry"
 msgstr ""
 
-#: views.py:815
+#: views.py:1175
 msgid "Could not queue task instance for execution, dependencies not met: {}"
 msgstr ""
 
-#: views.py:828
+#: views.py:1188
 msgid "Sent {} to the message queue, it should start any moment now."
 msgstr ""
 
-#: views.py:846
-msgid "DAG with id {} not found. Cannot delete"
-msgstr ""
-
-#: views.py:849
-msgid "Dag id {} is still in DagBag. Remove the DAG file first."
-msgstr ""
-
-#: views.py:854
-msgid "Deleting DAG with id {}. May take a couple minutes to fully disappear."
-msgstr ""
-
-#: views.py:870
+#: views.py:1228
 msgid "Cannot find dag {}"
 msgstr ""
 
-#: views.py:878
+#: views.py:1236
 msgid "This run_id {} already exists"
 msgstr ""
 
-#: views.py:892
+#: views.py:1250
 msgid "Triggered {}, it should start any moment now."
 msgstr ""
 
-#: views.py:906 views.py:2443
+#: views.py:1264
 msgid "{0} task instances have been cleared"
 msgstr ""
 
-#: views.py:917
+#: views.py:1275
 msgid "No task instances to clear"
 msgstr ""
 
-#: views.py:1099
+#: views.py:1450
 msgid "Cannot find DAG: {}"
 msgstr ""
 
-#: views.py:1103
+#: views.py:1454
 msgid "Cannot find task {} in DAG {}"
 msgstr ""
 
-#: views.py:1114
+#: views.py:1465
 msgid "Marked {} on {} task instances"
 msgstr ""
 
-#: views.py:1361
+#: views.py:1700
 msgid "Left->Right"
 msgstr ""
 
-#: views.py:1362
+#: views.py:1701
 msgid "Right->Left"
 msgstr ""
 
-#: views.py:1363
+#: views.py:1702
 msgid "Top->Bottom"
 msgstr ""
 
-#: views.py:1364
+#: views.py:1703
 msgid "Bottom->Top"
 msgstr ""
 
-#: views.py:1381
+#: views.py:1719
 msgid "No tasks found"
 msgstr ""
 
-#: views.py:1688
-msgid "DAG [{}] is now fresh as a daisy"
-msgstr ""
-
-#: views.py:1699
+#: views.py:2158
 msgid "All DAGs are now up to date"
 msgstr ""
 
-#: views.py:1997 views.py:2031 views.py:2078 views.py:2161 views.py:2269
+#: views.py:2905
 msgid "Are you sure you want to delete selected records?"
 msgstr ""
 
-#: views.py:2195
-msgid "Missing file or syntax error."
-msgstr ""
-
-#: views.py:2207
-msgid "{} variable(s) successfully updated."
-msgstr ""
-
-#: views.py:2209
-msgid "{} variable(s) failed to be updated."
-msgstr ""
-
-#: views.py:2295
+#: views.py:2932
 msgid "{count} dag runs were set to running"
 msgstr ""
 
-#: views.py:2322
+#: views.py:2957
 msgid "{count} dag runs and {altered_ti_count} task instances were set to failed"
 msgstr ""
 
-#: views.py:2349
+#: views.py:2983
 msgid "{count} dag runs and {altered_ti_count} task instances were set to success"
 msgstr ""
 
-#: templates/airflow/dag.html:202 templates/airflow/dag.html:311 views.py:2426
+#: templates/airflow/dag.html:221 templates/airflow/dag.html:326 views.py:3084
 msgid "Clear"
 msgstr ""
 
-#: views.py:2427
+#: views.py:3085
 msgid ""
 "Are you sure you want to clear the state of the selected task instance(s)"
 " and set their dagruns to the running state?"
 msgstr ""
 
-#: views.py:2457
-msgid "{count} task instances were set to '{target_state}'"
-msgstr ""
-
 #: templates/airflow/chart.html:38 templates/airflow/duration_chart.html:42
-#: templates/airflow/gantt.html:32 templates/airflow/graph.html:35
-#: templates/airflow/tree.html:32
+#: templates/airflow/gantt.html:31 templates/airflow/graph.html:38
+#: templates/airflow/tree.html:31
 msgid "Base date"
 msgstr ""
 
 #: templates/airflow/chart.html:39 templates/airflow/duration_chart.html:43
-#: templates/airflow/gantt.html:33 templates/airflow/graph.html:36
-#: templates/airflow/tree.html:33
+#: templates/airflow/gantt.html:32 templates/airflow/graph.html:39
+#: templates/airflow/tree.html:32
 msgid "Number of runs"
 msgstr ""
 
@@ -566,19 +426,19 @@ msgstr ""
 msgid "bail."
 msgstr ""
 
-#: templates/airflow/dag.html:31
+#: templates/airflow/dag.html:33
 msgid "SUBDAG"
 msgstr ""
 
-#: templates/airflow/dag.html:34 templates/airflow/dags.html:49
+#: templates/airflow/dag.html:36 templates/airflow/dags.html:49
 msgid "DAG"
 msgstr ""
 
-#: templates/airflow/dag.html:37
+#: templates/airflow/dag.html:39
 msgid "ROOT"
 msgstr ""
 
-#: templates/airflow/dag.html:42
+#: templates/airflow/dag.html:44
 msgid "schedule"
 msgstr ""
 
@@ -594,167 +454,177 @@ msgstr ""
 msgid "Tree View"
 msgstr ""
 
-#: templates/airflow/dag.html:66
-msgid "Task Duration"
+#: templates/airflow/dag.html:66 templates/airflow/dags.html:142
+msgid "List View"
 msgstr ""
 
 #: templates/airflow/dag.html:70 templates/airflow/dags.html:147
+msgid "Add Task"
+msgstr ""
+
+#: templates/airflow/dag.html:74
+msgid "Task Duration"
+msgstr ""
+
+#: templates/airflow/dag.html:78 templates/airflow/dags.html:157
 msgid "Task Tries"
 msgstr ""
 
-#: templates/airflow/dag.html:75 templates/airflow/dags.html:152
+#: templates/airflow/dag.html:83 templates/airflow/dags.html:162
 msgid "Landing Times"
 msgstr ""
 
-#: templates/airflow/dag.html:82
+#: templates/airflow/dag.html:90
 msgid "Gantt"
 msgstr ""
 
-#: templates/airflow/dag.html:88
+#: templates/airflow/dag.html:96
 msgid "Details"
 msgstr ""
 
-#: templates/airflow/dag.html:94
+#: templates/airflow/dag.html:102 templates/airflow/list_tasks.html:50
 msgid "Code"
 msgstr ""
 
-#: templates/airflow/dag.html:101
+#: templates/airflow/dag.html:108 templates/airflow/dags.html:177
+msgid "Data Source"
+msgstr ""
+
+#: templates/airflow/dag.html:114 templates/airflow/dags.html:182
+msgid "Group Stat"
+msgstr ""
+
+#: templates/airflow/dag.html:121
 msgid "Trigger DAG"
 msgstr ""
 
-#: templates/airflow/dag.html:107 templates/airflow/dags.html:173
+#: templates/airflow/dag.html:127 templates/airflow/dags.html:194
 msgid "Refresh"
 msgstr ""
 
-#: templates/airflow/dag.html:114
+#: templates/airflow/dag.html:134
 msgid "Delete"
 msgstr ""
 
-#: templates/airflow/dag.html:129
+#: templates/airflow/dag.html:149
 msgid "Filter on this task and upstream "
 msgstr ""
 
-#: templates/airflow/dag.html:132
+#: templates/airflow/dag.html:152
 msgid "on"
 msgstr ""
 
-#: templates/airflow/dag.html:139
+#: templates/airflow/dag.html:159
 msgid "Zoom into Sub DAG"
 msgstr ""
 
-#: templates/airflow/dag.html:144 templates/airflow/task_instance.html:48
+#: templates/airflow/dag.html:164 templates/airflow/task_instance.html:47
 msgid "Task Instance Details"
 msgstr ""
 
-#: templates/airflow/dag.html:147
+#: templates/airflow/dag.html:167
 msgid "Rendered"
 msgstr ""
 
-#: templates/airflow/dag.html:153
+#: templates/airflow/dag.html:173
 msgid "View Log"
 msgstr ""
 
-#: templates/airflow/dag.html:157
+#: templates/airflow/dag.html:177
 msgid "Download Log (by attempts)"
 msgstr ""
 
-#: templates/airflow/dag.html:164
+#: templates/airflow/dag.html:183
 msgid "View Logs in Elasticsearch (by attempts)"
 msgstr ""
 
-#: templates/airflow/dag.html:184
+#: templates/airflow/dag.html:203
 msgid "Ignores all non-critical dependencies, including task state and task_deps"
 msgstr ""
 
-#: templates/airflow/dag.html:186
+#: templates/airflow/dag.html:205
 msgid "Ignore All Deps"
 msgstr ""
 
-#: templates/airflow/dag.html:188
+#: templates/airflow/dag.html:207
 msgid "Ignore previous success/failure"
 msgstr ""
 
-#: templates/airflow/dag.html:190
+#: templates/airflow/dag.html:209
 msgid "Ignore Task State"
 msgstr ""
 
-#: templates/airflow/dag.html:193
+#: templates/airflow/dag.html:212
 msgid ""
 "Disregard the task-specific dependencies, e.g. status of upstream task "
 "instances and depends_on_past"
 msgstr ""
 
-#: templates/airflow/dag.html:195
+#: templates/airflow/dag.html:214
 msgid "Ignore Task Deps"
 msgstr ""
 
-#: templates/airflow/dag.html:200
-msgid ""
-"Clearing deletes the previous state of the task instance, allowing it to "
-"get re-triggered by the scheduler or a backfill command"
-msgstr ""
-
-#: templates/airflow/dag.html:206
+#: templates/airflow/dag.html:225
 msgid "Also include past task instances when clearing this one"
 msgstr ""
 
-#: templates/airflow/dag.html:208 templates/airflow/dag.html:238
-#: templates/airflow/dag.html:261
+#: templates/airflow/dag.html:227 templates/airflow/dag.html:257
+#: templates/airflow/dag.html:280
 msgid "Past"
 msgstr ""
 
-#: templates/airflow/dag.html:211
+#: templates/airflow/dag.html:230
 msgid "Also include future task instances when clearing this one"
 msgstr ""
 
-#: templates/airflow/dag.html:213 templates/airflow/dag.html:242
-#: templates/airflow/dag.html:265
+#: templates/airflow/dag.html:232 templates/airflow/dag.html:261
+#: templates/airflow/dag.html:284
 msgid "Future"
 msgstr ""
 
-#: templates/airflow/dag.html:216
+#: templates/airflow/dag.html:235
 msgid "Also include upstream dependencies"
 msgstr ""
 
-#: templates/airflow/dag.html:218 templates/airflow/dag.html:246
-#: templates/airflow/dag.html:269
+#: templates/airflow/dag.html:237 templates/airflow/dag.html:265
+#: templates/airflow/dag.html:288
 msgid "Upstream"
 msgstr ""
 
-#: templates/airflow/dag.html:221
+#: templates/airflow/dag.html:240
 msgid "Also include downstream dependencies"
 msgstr ""
 
-#: templates/airflow/dag.html:223 templates/airflow/dag.html:250
-#: templates/airflow/dag.html:273
+#: templates/airflow/dag.html:242 templates/airflow/dag.html:269
+#: templates/airflow/dag.html:292
 msgid "Downstream"
 msgstr ""
 
-#: templates/airflow/dag.html:227
+#: templates/airflow/dag.html:246
 msgid "Recursive"
 msgstr ""
 
-#: templates/airflow/dag.html:233 templates/airflow/dag.html:314
+#: templates/airflow/dag.html:252 templates/airflow/dag.html:329
 msgid "Mark Failed"
 msgstr ""
 
-#: templates/airflow/dag.html:256 templates/airflow/dag.html:317
+#: templates/airflow/dag.html:275 templates/airflow/dag.html:332
 msgid "Mark Success"
 msgstr ""
 
-#: templates/airflow/dag.html:284 templates/airflow/dag.html:323
+#: templates/airflow/dag.html:299 templates/airflow/dag.html:338
 msgid "Close"
 msgstr ""
 
-#: templates/airflow/dag.html:304
+#: templates/airflow/dag.html:319
 msgid "Edit"
 msgstr ""
 
-#: templates/airflow/dag.html:526 templates/airflow/dags.html:235
+#: templates/airflow/dag.html:451 templates/airflow/dags.html:255
 msgid "Are you sure you want to run '\"+dag_id+\"' now?"
 msgstr ""
 
-#: templates/airflow/dag.html:534 templates/airflow/dags.html:243
+#: templates/airflow/dag.html:459 templates/airflow/dags.html:263
 msgid ""
 "Are you sure you want to delete '\"+dag_id+\"' now?\n"
 "        This option will delete ALL metadata, DAG runs, etc.\n"
@@ -762,35 +632,35 @@ msgid ""
 "        This cannot be undone."
 msgstr ""
 
-#: templates/airflow/dag_details.html:40
+#: templates/airflow/dag_details.html:45
 msgid "schedule_interval"
 msgstr ""
 
-#: templates/airflow/dag_details.html:44
+#: templates/airflow/dag_details.html:49
 msgid "max_active_runs"
 msgstr ""
 
-#: templates/airflow/dag_details.html:48
+#: templates/airflow/dag_details.html:53
 msgid "concurrency"
 msgstr ""
 
-#: templates/airflow/dag_details.html:52
+#: templates/airflow/dag_details.html:57
 msgid "default_args"
 msgstr ""
 
-#: templates/airflow/dag_details.html:56
+#: templates/airflow/dag_details.html:61
 msgid "tasks count"
 msgstr ""
 
-#: templates/airflow/dag_details.html:60
+#: templates/airflow/dag_details.html:65
 msgid "task ids"
 msgstr ""
 
-#: templates/airflow/dag_details.html:64
+#: templates/airflow/dag_details.html:69
 msgid "filepath"
 msgstr ""
 
-#: templates/airflow/dag_details.html:68
+#: templates/airflow/dag_details.html:73
 msgid "owner"
 msgstr ""
 
@@ -836,36 +706,36 @@ msgstr ""
 msgid "Trigger Dag"
 msgstr ""
 
-#: templates/airflow/dags.html:142
+#: templates/airflow/dags.html:152 templates/airflow/list_tasks.html:46
 msgid "Tasks Duration"
 msgstr ""
 
-#: templates/airflow/dags.html:157
+#: templates/airflow/dags.html:167
 msgid "Gantt View"
 msgstr ""
 
-#: templates/airflow/dags.html:162
+#: templates/airflow/dags.html:172
 msgid "Code View"
 msgstr ""
 
-#: templates/airflow/dags.html:180
+#: templates/airflow/dags.html:201
 msgid "Delete Dag"
 msgstr ""
 
-#: templates/airflow/dags.html:189
+#: templates/airflow/dags.html:210
 #, python-format
 msgid "Showing %(num_dag_from)s to %(num_dag_to)s of %(num_of_all_dags)s entries"
 msgstr ""
 
-#: templates/airflow/dags.html:201
+#: templates/airflow/dags.html:222
 msgid "Hide Paused DAGs"
 msgstr ""
 
-#: templates/airflow/dags.html:203
+#: templates/airflow/dags.html:224
 msgid "Show Paused DAGs"
 msgstr ""
 
-#: templates/airflow/dags.html:301
+#: templates/airflow/dags.html:322
 msgid "this.active_dag_run + '/' + this.max_active_runs + ' active dag runs'"
 msgstr ""
 
@@ -877,52 +747,76 @@ msgstr ""
 msgid "Go"
 msgstr ""
 
-#: templates/airflow/gantt.html:34 templates/airflow/graph.html:37
+#: templates/airflow/gantt.html:33 templates/airflow/graph.html:40
 msgid "Run"
 msgstr ""
 
-#: templates/airflow/graph.html:39
+#: templates/airflow/graph.html:42
 msgid "Layout"
 msgstr ""
 
-#: templates/airflow/graph.html:47
+#: templates/airflow/graph.html:50
 msgid "Search for..."
 msgstr ""
 
-#: templates/airflow/graph.html:61 templates/airflow/tree.html:43
+#: templates/airflow/graph.html:64 templates/airflow/tree.html:42
 msgid "no_status"
 msgstr ""
 
-#: templates/airflow/graph.html:62 templates/airflow/tree.html:45
+#: templates/airflow/graph.html:65 templates/airflow/tree.html:44
 msgid "queued"
 msgstr ""
 
-#: templates/airflow/graph.html:63 templates/airflow/tree.html:47
+#: templates/airflow/graph.html:66 templates/airflow/tree.html:46
 msgid "up_for_retry"
 msgstr ""
 
-#: templates/airflow/graph.html:64 templates/airflow/tree.html:49
+#: templates/airflow/graph.html:67 templates/airflow/tree.html:48
 msgid "up_for_reschedule"
 msgstr ""
 
-#: templates/airflow/graph.html:65 templates/airflow/tree.html:51
+#: templates/airflow/graph.html:68 templates/airflow/tree.html:50
 msgid "skipped"
 msgstr ""
 
-#: templates/airflow/graph.html:66 templates/airflow/tree.html:53
+#: templates/airflow/graph.html:69 templates/airflow/tree.html:52
 msgid "failed"
 msgstr ""
 
-#: templates/airflow/graph.html:67 templates/airflow/tree.html:55
+#: templates/airflow/graph.html:70 templates/airflow/tree.html:54
 msgid "running"
 msgstr ""
 
-#: templates/airflow/graph.html:68 templates/airflow/tree.html:57
+#: templates/airflow/graph.html:71 templates/airflow/tree.html:56
 msgid "success"
 msgstr ""
 
-#: templates/airflow/graph.html:74
+#: templates/airflow/graph.html:77 templates/airflow/list_tasks.html:34
 msgid "Oops."
+msgstr ""
+
+#: templates/airflow/list_tasks.html:43
+msgid "Task"
+msgstr ""
+
+#: templates/airflow/list_tasks.html:44
+msgid "Start Date"
+msgstr ""
+
+#: templates/airflow/list_tasks.html:45
+msgid "End Date"
+msgstr ""
+
+#: templates/airflow/list_tasks.html:47
+msgid "Number of Retries"
+msgstr ""
+
+#: templates/airflow/list_tasks.html:48
+msgid "Result"
+msgstr ""
+
+#: templates/airflow/list_tasks.html:49 templates/airflow/task_instance.html:53
+msgid "Log"
 msgstr ""
 
 #: templates/airflow/task.html:25
@@ -950,19 +844,15 @@ msgstr ""
 msgid "Task Attributes"
 msgstr ""
 
-#: templates/airflow/task_instance.html:35
+#: templates/airflow/task_instance.html:34
 msgid "Task Instance"
 msgstr ""
 
-#: templates/airflow/task_instance.html:51
+#: templates/airflow/task_instance.html:50
 msgid "Rendered Template"
 msgstr ""
 
-#: templates/airflow/task_instance.html:54
-msgid "Log"
-msgstr ""
-
-#: templates/airflow/task_instance.html:57
+#: templates/airflow/task_instance.html:56
 msgid "XCom"
 msgstr ""
 
@@ -978,7 +868,7 @@ msgstr ""
 msgid "Node"
 msgstr ""
 
-#: templates/airflow/variable_list.html:26
+#: templates/airflow/variable_list.html:29
 msgid "Import Variables"
 msgstr ""
 
@@ -988,31 +878,6 @@ msgstr ""
 
 #: templates/airflow/version.html:32
 msgid "Git Version"
-msgstr ""
-
-#: templates/appbuilder/baselayout.html:51
-msgid "The scheduler does not appear to be running."
-msgstr ""
-
-#: templates/appbuilder/baselayout.html:53
-#, python-format
-msgid "Last heartbeat was received %(time)s"
-msgstr ""
-
-#: templates/appbuilder/baselayout.html:56
-msgid "The DAGs list may not update, and new tasks will not be scheduled."
-msgstr ""
-
-#: templates/appbuilder/navbar_menu.html:26
-msgid "DAGs"
-msgstr ""
-
-#: templates/appbuilder/navbar_right.html:56
-msgid "Profile"
-msgstr ""
-
-#: templates/appbuilder/navbar_right.html:57
-msgid "Logout"
 msgstr ""
 
 # Chinese translations for PROJECT.

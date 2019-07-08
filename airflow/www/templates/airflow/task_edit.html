@@ -1,0 +1,203 @@
+{#
+    #
+    # Licensed to the Apache Software Foundation (ASF) under one
+    # or more contributor license agreements.  See the NOTICE file
+    # distributed with this work for additional information
+    # regarding copyright ownership.  The ASF licenses this file
+    # to you under the Apache License, Version 2.0 (the
+    # "License"); you may not use this file except in compliance
+    # with the License.  You may obtain a copy of the License at
+    # 
+    #   http://www.apache.org/licenses/LICENSE-2.0
+    # 
+    # Unless required by applicable law or agreed to in writing,
+    # software distributed under the License is distributed on an
+    # "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+    # KIND, either express or implied.  See the License for the
+    # specific language governing permissions and limitations
+    # under the License.
+    #
+    #}
+    {% extends "airflow/dag.html" %}
+    
+    {% block head_css %}
+    {{ super() }}
+    <link href="{{ admin_static.url(filename='vendor/bootstrap-daterangepicker/daterangepicker-bs2.css') }}" rel="stylesheet">
+    <style>
+        #task_edit .table{
+            width: 80%;
+        }
+        #task_edit td{
+            position: relative;
+        }
+        #task_edit tr td:first-child{
+            width: 20%;
+        }
+        #task_edit input[type="text"]{
+            width: 100%;
+            height: 80%;
+        }
+        .day-select,
+        .system-config-select,
+        .custom-sql-input {
+            display: none;
+        }
+        input[name="period"][value="weekly"]:checked ~.day-select{
+            display: inline-block;
+        }
+
+        input[name="executeLogic"][value="system"]:checked ~.system-config-select{
+            display: block;
+        }
+
+        input[name="executeLogic"][value="custom"]:checked ~.custom-sql-input{
+            display: block;
+        }
+    </style>
+    {% endblock %}
+    
+    {% block body %}
+      {{ super() }}
+    <form method="get" id="task_edit" class="form-inline">
+        <input name="_csrf_token" type="hidden" value="{{ csrf_token() }}">
+        <input type="hidden" value="{{ dag.dag_id }}" name="dag_id">
+        <table class="table">
+            <tr>
+                <td><label>任务名</label></td>
+                <td>
+                    <input type="text" value="{{ task_id }}">
+                </td>
+            </tr>
+            <tr>
+                <td><label>源地址</label></td>
+                <td><input type="text"></td>
+            </tr>
+            <tr>
+                <td><label>源文件格式</label></td>
+                <td><input type="text"></td>
+            </tr>
+            <tr>
+                <td><label>目标地址</label></td>
+                <td><input type="text"></td>
+            </tr>
+            <tr>
+                <td><label>目标表</label></td>
+                <td><select name="target">
+                    <option>a</option>
+                    <option>b</option>
+                </select></td>
+            </tr>
+            <tr>
+                <td><label>数据源名称</label></td>
+                <td><select name="dataSrc">
+                    <option>a</option>
+                    <option>b</option>
+                </select></td>
+            </tr>
+            <tr>
+                <td><label>执行标志</label></td>
+                <td><select name="src">
+                    <option>标志文件</option>
+                    <option>文件大小不变</option>
+                    <option>固定时间之后</option>
+                </select></td>
+            </tr>
+            <tr>
+                <td><label>周期</label></td>
+                <td>
+                    <input type="radio" name="period" value="today"><label>当天</label>
+                    <input type="radio" name="period" value="daily"><label>每天</label>
+                    <input type="radio" name="period" value="weekly"><label>每周</label>
+                    <span class="day-select">
+                        周
+                        <select>
+                            <option>日</option>
+                            <option>一</option>
+                            <option>二</option>
+                            <option>三</option>
+                            <option>四</option>
+                            <option>五</option>
+                            <option>六</option>
+                        </select>
+                    </span>
+                    <span class="hour-select">
+                        <select>
+                            <option>0</option>
+                            <option>1</option>
+                            <option>2</option>
+                            <option>3</option>
+                            <option>4</option>
+                            <option>5</option>
+                            <option>6</option>
+                            <option>7</option>
+                            <option>8</option>
+                            <option>9</option>
+                            <option>10</option>
+                            <option>11</option>
+                            <option>12</option>
+                            <option>13</option>
+                            <option>14</option>
+                            <option>15</option>
+                            <option>16</option>
+                            <option>17</option>
+                            <option>18</option>
+                            <option>19</option>
+                            <option>20</option>
+                            <option>21</option>
+                            <option>22</option>
+                            <option>23</option>
+                        </select>
+                        点
+                    </span>
+                </td>
+            </tr>
+            <tr>
+                <td><label>执行逻辑</label></td>
+                <td>
+                    <input type="radio" name="executeLogic" value="system"><label>系统预置</label>
+                    <input type="radio" name="executeLogic" value="custom"><label>自定义SQL</label>
+                    <div class="system-config-select">
+                        <select>
+                            <option>拉链</option>
+                            <option>覆盖插入</option>
+                            <option>更新</option>
+                            <option>Sqoop</option>
+                        </select>
+                    </div>
+                    <div class="custom-sql-input">
+                        <input type="text" name="customSQL">
+                    </div>
+                </td>
+            </tr>
+            <tr>
+                <td><label>出错处理</label></td>
+                <td><select name="src">
+                    <option>暂停</option>
+                    <option>忽略</option>
+                </select></td>
+            </tr>
+        </table>
+    </form>
+    {% endblock %}
+    {% block tail %}
+      {{ super() }}
+      <script src="{{ admin_static.url(filename='vendor/bootstrap-daterangepicker/daterangepicker.js') }}"></script>
+      <script src="{{ admin_static.url(filename='admin/js/form-1.0.0.js') }}"></script>
+      <script>
+        $( document ).ready(function() {
+          function date_change(){
+              execution_date = $("input#execution_date").val().replace(' ', 'T');
+              loc = decodeURIComponent(window.location.href);
+              loc = loc.replace('{{ execution_date }}', execution_date);
+              window.location = loc;
+          }
+          $("input#execution_date").on("change.daterangepicker", function(){
+              date_change();
+          });
+          $("input#execution_date").on("apply.daterangepicker", function(){
+              date_change();
+          });
+        });
+      </script>
+    {% endblock %}
+    

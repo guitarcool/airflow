@@ -681,6 +681,32 @@ class Airflow(AirflowViewMixin, BaseView):
             root=request.args.get('root'),
             demo_mode=conf.getboolean('webserver', 'demo_mode'))
 
+    @expose('/data_source')
+    @login_required
+    @wwwutils.action_logging
+    def data_source(self, session=None):
+        dag_id = request.args.get('dag_id')
+        dag = dagbag.get_dag(dag_id)
+        root = request.args.get('root', '')
+        return self.render(
+            'airflow/data_source.html',
+            dag=dag,
+            root=root
+        )
+
+    @expose('/group_stat')
+    @login_required
+    @wwwutils.action_logging
+    def group_stat(self, session=None):
+        dag_id = request.args.get('dag_id')
+        dag = dagbag.get_dag(dag_id)
+        root = request.args.get('root', '')
+        return self.render(
+            'airflow/group_stat.html',
+            dag=dag,
+            root=root
+        )
+
     @expose('/dag_details')
     @login_required
     @provide_session
@@ -1016,6 +1042,40 @@ class Airflow(AirflowViewMixin, BaseView):
             form=form,
             root=root,
             dag=dag, title=title)
+
+    @expose('/taskedit')
+    @login_required
+    @wwwutils.action_logging
+    def taskedit(self):
+        TI = models.TaskInstance
+
+        dag_id = request.args.get('dag_id')
+        task_id = request.args.get('task_id')
+        # Carrying execution_date through, even though it's irrelevant for
+        # this context
+        # execution_date = request.args.get('execution_date')
+        # FIXME
+        execution_date = 'Mon Jul 08 2019 13:43:14 GMT+0800' 
+        dttm = pendulum.parse(execution_date)
+        form = DateTimeForm(data={'execution_date': '2019-07-06 00:00:00+00:00'})
+        root = request.args.get('root', '')
+        dag = dagbag.get_dag(dag_id)
+
+        title = "Task Edit"
+        return self.render(
+            'airflow/task_edit.html',
+            # task_attrs=task_attrs,
+            # ti_attrs=ti_attrs,
+            # failed_dep_reasons=failed_dep_reasons or no_failed_deps_result,
+            # task_id=task_id,
+            task_id='id',
+            # execution_date=execution_date,
+            execution_date='123',
+            # special_attrs_rendered=special_attrs_rendered,
+            form=form,
+            root=root,
+            dag=dag, title=title
+            )
 
     @expose('/xcom')
     @login_required
@@ -1678,6 +1738,132 @@ class Airflow(AirflowViewMixin, BaseView):
             tasks=tasks,
             nodes=nodes,
             edges=edges,
+            show_external_logs=bool(external_logs))
+
+    @expose('/tasklist')
+    @login_required
+    @wwwutils.gzipped
+    @wwwutils.action_logging
+    @provide_session
+    def tasklist(self, session=None):
+        default_dag_run = conf.getint('webserver', 'default_dag_run_display_number')
+        dag_id = request.args.get('dag_id')
+        blur = conf.getboolean('webserver', 'demo_mode')
+        dag = dagbag.get_dag(dag_id)
+        if dag_id not in dagbag.dags:
+            flash('DAG "{0}" seems to be missing.'.format(dag_id), "error")
+            return redirect('/admin/')
+
+        root = request.args.get('root')
+        if root:
+            dag = dag.sub_dag(
+                task_regex=root,
+                include_downstream=False,
+                include_upstream=True)
+
+        base_date = request.args.get('base_date')
+        num_runs = request.args.get('num_runs')
+        num_runs = int(num_runs) if num_runs else default_dag_run
+
+        if base_date:
+            base_date = timezone.parse(base_date)
+        else:
+            base_date = dag.latest_execution_date or timezone.utcnow()
+
+        DR = models.DagRun
+        dag_runs = (
+            session.query(DR)
+            .filter(
+                DR.dag_id == dag.dag_id,
+                DR.execution_date <= base_date)
+            .order_by(DR.execution_date.desc())
+            .limit(num_runs)
+            .all()
+        )
+        dag_runs = {
+            dr.execution_date: alchemy_to_dict(dr) for dr in dag_runs}
+
+        dates = sorted(list(dag_runs.keys()))
+        max_date = max(dates) if dates else None
+        min_date = min(dates) if dates else None
+
+        tis = dag.get_task_instances(
+            start_date=min_date, end_date=base_date, session=session)
+        task_instances = {}
+        for ti in tis:
+            tid = alchemy_to_dict(ti)
+            dr = dag_runs.get(ti.execution_date)
+            tid['external_trigger'] = dr['external_trigger'] if dr else False
+            task_instances[(ti.task_id, ti.execution_date)] = tid
+
+        expanded = []
+        # The default recursion traces every path so that tree view has full
+        # expand/collapse functionality. After 5,000 nodes we stop and fall
+        # back on a quick DFS search for performance. See PR #320.
+        node_count = [0]
+        node_limit = 5000 / max(1, len(dag.roots))
+
+        def recurse_nodes(task, visited):
+            visited.add(task)
+            node_count[0] += 1
+
+            children = [
+                recurse_nodes(t, visited) for t in task.upstream_list
+                if node_count[0] < node_limit or t not in visited]
+
+            # D3 tree uses children vs _children to define what is
+            # expanded or not. The following block makes it such that
+            # repeated nodes are collapsed by default.
+            children_key = 'children'
+            if task.task_id not in expanded:
+                expanded.append(task.task_id)
+            elif children:
+                children_key = "_children"
+
+            def set_duration(tid):
+                if isinstance(tid, dict) and tid.get("state") == State.RUNNING \
+                        and tid["start_date"] is not None:
+                    d = timezone.utcnow() - pendulum.parse(tid["start_date"])
+                    tid["duration"] = d.total_seconds()
+                return tid
+
+            return {
+                'name': task.task_id,
+                'instances': [
+                    set_duration(task_instances.get((task.task_id, d))) or {
+                        'execution_date': d.isoformat(),
+                        'task_id': task.task_id
+                    }
+                    for d in dates],
+                children_key: children,
+                'num_dep': len(task.upstream_list),
+                'operator': task.task_type,
+                'retries': task.retries,
+                'owner': task.owner,
+                'start_date': task.start_date,
+                'end_date': task.end_date,
+                'depends_on_past': task.depends_on_past,
+                'ui_color': task.ui_color,
+            }
+
+        data = {
+            'name': '[DAG]',
+            # 'children': [recurse_nodes(t, set()) for t in dag.roots],
+            'children': dag.roots,
+            'instances': [dag_runs.get(d) or {'execution_date': d.isoformat()} for d in dates],
+        }
+
+        session.commit()
+
+        form = DateTimeWithNumRunsForm(data={'base_date': max_date,
+                                             'num_runs': num_runs})
+        external_logs = conf.get('elasticsearch', 'frontend')
+        return self.render(
+            'airflow/list_tasks.html',
+            operators=sorted({op.__class__ for op in dag.tasks}, key=lambda x: x.__name__),
+            root=root,
+            form=form,
+            dag=dag, data=data, blur=blur, num_runs=num_runs,
             show_external_logs=bool(external_logs))
 
     @expose('/duration')

@@ -12,119 +12,11 @@ msgstr ""
 "Last-Translator: \n"
 "Language: zh\n"
 "Language-Team: zh <LL@li.org>\n"
-"Plural-Forms: nplurals=1; plural=0;\n"
+"Plural-Forms: nplurals=1; plural=0\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=utf-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Generated-By: Babel 2.7.0\n"
-"X-Generator: Poedit 2.2.3\n"
-
-#: decorators.py:124 flask_appbuilder/const.py:100
-msgid "Access is Denied"
-msgstr "访问被拒绝"
-
-#: forms.py:62
-msgid "Dag Id"
-msgstr ""
-
-#: forms.py:66
-msgid "Start Date"
-msgstr "开始日期"
-
-#: forms.py:69
-msgid "End Date"
-msgstr "结束日期"
-
-#: forms.py:72
-msgid "Run Id"
-msgstr "运行Id"
-
-#: forms.py:75
-msgid "State"
-msgstr "状态"
-
-#: forms.py:79
-msgid "Execution Date"
-msgstr "执行日期"
-
-#: forms.py:82
-msgid "External Trigger"
-msgstr "执行触发"
-
-#: forms.py:87
-msgid "Conn Id"
-msgstr "连接Id"
-
-#: forms.py:90
-msgid "Conn Type"
-msgstr "连接类型"
-
-#: forms.py:94
-msgid "Host"
-msgstr ""
-
-#: forms.py:97
-msgid "Schema"
-msgstr ""
-
-#: flask_appbuilder/templates/appbuilder/baselib.html:122
-#: flask_appbuilder/templates/appbuilder/navbar_right.html:43 forms.py:100
-#: templates/appbuilder/navbar_right.html:62
-msgid "Login"
-msgstr "登录"
-
-#: flask_appbuilder/security/forms.py:17 flask_appbuilder/security/forms.py:21
-#: flask_appbuilder/security/forms.py:37 flask_appbuilder/security/views.py:104
-#: flask_appbuilder/security/views.py:207
-#: flask_appbuilder/templates/appbuilder/general/security/login_db.html:31
-#: flask_appbuilder/templates/appbuilder/general/security/login_ldap.html:27
-#: forms.py:103
-msgid "Password"
-msgstr "密码"
-
-#: forms.py:106
-msgid "Port"
-msgstr "端口"
-
-#: forms.py:110
-msgid "Extra"
-msgstr "其他"
-
-#: forms.py:119
-msgid "Driver Path"
-msgstr "驱动路径"
-
-#: forms.py:122
-msgid "Driver Class"
-msgstr "驱动类型"
-
-#: forms.py:125
-msgid "Project Id"
-msgstr "项目Id"
-
-#: forms.py:128
-msgid "Keyfile Path"
-msgstr ""
-
-#: forms.py:131
-msgid "Keyfile JSON"
-msgstr ""
-
-#: forms.py:134 forms.py:148
-msgid "Scopes (comma separated)"
-msgstr "范围（由逗号分割）"
-
-#: forms.py:137
-msgid "Number of Retries"
-msgstr "重试次数"
-
-#: forms.py:142
-msgid "Grpc Auth Type"
-msgstr "Grpc认证类型"
-
-#: forms.py:145
-msgid "Credential Keyfile Path"
-msgstr ""
 
 #: flask_appbuilder/security/forms.py:34 flask_appbuilder/security/forms.py:51
 #: flask_appbuilder/security/views.py:101 translates.py:51
@@ -156,7 +48,7 @@ msgstr "是否激活?"
 msgid "Role"
 msgstr "角色"
 
-#: templates/appbuilder/navbar.html:34 translates.py:57
+#: translates.py:57
 msgid "Airflow"
 msgstr ""
 
@@ -176,7 +68,7 @@ msgstr "运行状态"
 msgid "DagRunModelView"
 msgstr "DAG运行模型视图"
 
-#: templates/airflow/dag.html:150 translates.py:62
+#: templates/airflow/dag.html:170 translates.py:62
 msgid "Task Instances"
 msgstr "task实例"
 
@@ -200,7 +92,7 @@ msgstr ""
 msgid "JobModelView"
 msgstr "Job模型视图"
 
-#: templates/airflow/dags.html:167 translates.py:68
+#: templates/airflow/dags.html:188 translates.py:68
 msgid "Logs"
 msgstr "日志"
 
@@ -399,160 +291,122 @@ msgstr "显示行数"
 msgid "Invalid field name '%s'."
 msgstr "无效的字段名称 \" %s\"。"
 
-#: validators.py:54
+#: validators.py:57
 #, python-format
 msgid "Field must be greater than or equal to %(other_label)s."
 msgstr "值必须大于等于 %(other_label)s ."
 
-#: views.py:259
-msgid "Broken DAG: [{ie.filename}] {ie.stacktrace}"
-msgstr "损坏的DAG: [{ie.filename}] {ie.stacktrace}"
-
-#: views.py:265
-msgid "Broken plugin: [{filename}] {stacktrace}"
-msgstr "损坏的插件: [{filename}] {stacktrace}"
-
-#: views.py:473
+#: views.py:793
 msgid "Error rendering template: "
 msgstr "模板渲染错误: "
 
-#: views.py:658 views.py:740
+#: views.py:974 views.py:1099
 msgid "Task [{}.{}] doesn't seem to exist at the moment"
 msgstr "Task [{}.{}] 当前不存在"
 
-#: views.py:799
+#: views.py:1159
 msgid "Only works with the Celery or Kubernetes executors, sorry"
 msgstr "对不起，只能由Celery或Kubernetes的程序执行"
 
-#: views.py:815
+#: views.py:1175
 msgid "Could not queue task instance for execution, dependencies not met: {}"
 msgstr "不能将task实例加入到执行队列中，依赖缺失: {}"
 
-#: views.py:828
+#: views.py:1188
 msgid "Sent {} to the message queue, it should start any moment now."
 msgstr "发送 {} 到消息队列，随时可以开始."
 
-#: views.py:846
-msgid "DAG with id {} not found. Cannot delete"
-msgstr "id为 {} 的DAG未找到. 无法删除"
-
-#: views.py:849
-msgid "Dag id {} is still in DagBag. Remove the DAG file first."
-msgstr "Dag id {} 仍在 DagBag中. 请先移除DAG文件."
-
-#: views.py:854
-msgid "Deleting DAG with id {}. May take a couple minutes to fully disappear."
-msgstr "删除id为 {}的DAG. 可能需要一些时间去完全删除."
-
-#: views.py:870
+#: views.py:1228
 msgid "Cannot find dag {}"
 msgstr "找不到 dag {}"
 
-#: views.py:878
+#: views.py:1236
 msgid "This run_id {} already exists"
 msgstr "run_id {} 已存在"
 
-#: views.py:892
+#: views.py:1250
 msgid "Triggered {}, it should start any moment now."
 msgstr "激活 {}, 该操作随时会开始."
 
-#: views.py:906 views.py:2443
+#: views.py:1264
 msgid "{0} task instances have been cleared"
 msgstr "{0} task 实例已经清除"
 
-#: views.py:917
+#: views.py:1275
 msgid "No task instances to clear"
 msgstr "没有可清除的task实例"
 
-#: views.py:1099
+#: views.py:1450
 msgid "Cannot find DAG: {}"
 msgstr "找不到DAG:{}"
 
-#: views.py:1103
+#: views.py:1454
 msgid "Cannot find task {} in DAG {}"
 msgstr "无法找到task {} (位于DAG {})"
 
-#: views.py:1114
+#: views.py:1465
 msgid "Marked {} on {} task instances"
 msgstr "将 {} 标记于 {} task实例"
 
-#: views.py:1361
+#: views.py:1700
 msgid "Left->Right"
 msgstr "左->右"
 
-#: views.py:1362
+#: views.py:1701
 msgid "Right->Left"
 msgstr "右->左"
 
-#: views.py:1363
+#: views.py:1702
 msgid "Top->Bottom"
 msgstr "上->下"
 
-#: views.py:1364
+#: views.py:1703
 msgid "Bottom->Top"
 msgstr "下->上"
 
-#: views.py:1381
+#: views.py:1719
 msgid "No tasks found"
 msgstr "找不到task"
 
-#: views.py:1688
-msgid "DAG [{}] is now fresh as a daisy"
-msgstr "DAG [{}] 已激活"
-
-#: views.py:1699
+#: views.py:2158
 msgid "All DAGs are now up to date"
 msgstr "所有DAG都已更新"
 
-#: views.py:1997 views.py:2031 views.py:2078 views.py:2161 views.py:2269
+#: views.py:2905
 msgid "Are you sure you want to delete selected records?"
 msgstr "你确定要删除这些记录吗?"
 
-#: views.py:2195
-msgid "Missing file or syntax error."
-msgstr "文件缺失或语法错误."
-
-#: views.py:2207
-msgid "{} variable(s) successfully updated."
-msgstr "{} 变量已成功更新."
-
-#: views.py:2209
-msgid "{} variable(s) failed to be updated."
-msgstr "{} 变量更新失败."
-
-#: views.py:2295
+#: views.py:2932
 msgid "{count} dag runs were set to running"
 msgstr "{count} dag运行状态设为运行中"
 
-#: views.py:2322
+#: views.py:2957
 msgid "{count} dag runs and {altered_ti_count} task instances were set to failed"
 msgstr "{count} dag 运行切 {altered_ti_count} task instances were set to failed"
 
-#: views.py:2349
+#: views.py:2983
 msgid "{count} dag runs and {altered_ti_count} task instances were set to success"
 msgstr ""
 
-#: templates/airflow/dag.html:202 templates/airflow/dag.html:311 views.py:2426
+#: templates/airflow/dag.html:221 templates/airflow/dag.html:326 views.py:3084
 msgid "Clear"
 msgstr "清除"
 
-#: views.py:2427
-msgid "Are you sure you want to clear the state of the selected task instance(s) and set their dagruns to the running state?"
-msgstr ""
-
-#: views.py:2457
-msgid "{count} task instances were set to '{target_state}'"
+#: views.py:3085
+msgid ""
+"Are you sure you want to clear the state of the selected task instance(s)"
+" and set their dagruns to the running state?"
 msgstr ""
 
 #: templates/airflow/chart.html:38 templates/airflow/duration_chart.html:42
-#: templates/airflow/gantt.html:32 templates/airflow/graph.html:35
-#: templates/airflow/tree.html:32
+#: templates/airflow/gantt.html:31 templates/airflow/graph.html:38
+#: templates/airflow/tree.html:31
 msgid "Base date"
 msgstr "日期"
 
 #: templates/airflow/chart.html:39 templates/airflow/duration_chart.html:43
-#: templates/airflow/gantt.html:33 templates/airflow/graph.html:36
-#: templates/airflow/tree.html:33
+#: templates/airflow/gantt.html:32 templates/airflow/graph.html:39
+#: templates/airflow/tree.html:32
 msgid "Number of runs"
 msgstr "运行次数"
 
@@ -585,19 +439,19 @@ msgstr "等待中."
 msgid "bail."
 msgstr "已释放."
 
-#: templates/airflow/dag.html:31
+#: templates/airflow/dag.html:33
 msgid "SUBDAG"
 msgstr ""
 
-#: templates/airflow/dag.html:34 templates/airflow/dags.html:49
+#: templates/airflow/dag.html:36 templates/airflow/dags.html:49
 msgid "DAG"
 msgstr ""
 
-#: templates/airflow/dag.html:37
+#: templates/airflow/dag.html:39
 msgid "ROOT"
 msgstr ""
 
-#: templates/airflow/dag.html:42
+#: templates/airflow/dag.html:44
 msgid "schedule"
 msgstr "调度"
 
@@ -613,201 +467,217 @@ msgstr "图视图"
 msgid "Tree View"
 msgstr "树视图"
 
-#: templates/airflow/dag.html:66
+#: templates/airflow/dag.html:66 templates/airflow/dags.html:142
+msgid "List View"
+msgstr ""
+
+#: templates/airflow/dag.html:70 templates/airflow/dags.html:147
+msgid "Add Task"
+msgstr ""
+
+#: templates/airflow/dag.html:74
 msgid "Task Duration"
 msgstr "task持续时间"
 
-#: templates/airflow/dag.html:70 templates/airflow/dags.html:147
+#: templates/airflow/dag.html:78 templates/airflow/dags.html:157
 msgid "Task Tries"
 msgstr "task尝试次数"
 
-#: templates/airflow/dag.html:75 templates/airflow/dags.html:152
+#: templates/airflow/dag.html:83 templates/airflow/dags.html:162
 msgid "Landing Times"
 msgstr "落实时间"
 
-#: templates/airflow/dag.html:82
+#: templates/airflow/dag.html:90
 msgid "Gantt"
 msgstr "甘特图"
 
-#: templates/airflow/dag.html:88
+#: templates/airflow/dag.html:96
 msgid "Details"
 msgstr "详情"
 
-#: templates/airflow/dag.html:94
+#: templates/airflow/dag.html:102 templates/airflow/list_tasks.html:50
 msgid "Code"
 msgstr "代码"
 
-#: templates/airflow/dag.html:101
+#: templates/airflow/dag.html:108 templates/airflow/dags.html:177
+msgid "Data Source"
+msgstr ""
+
+#: templates/airflow/dag.html:114 templates/airflow/dags.html:182
+msgid "Group Stat"
+msgstr ""
+
+#: templates/airflow/dag.html:121
 msgid "Trigger DAG"
 msgstr "激活DAG"
 
-#: templates/airflow/dag.html:107 templates/airflow/dags.html:173
+#: templates/airflow/dag.html:127 templates/airflow/dags.html:194
 msgid "Refresh"
 msgstr "刷新"
 
-#: templates/airflow/dag.html:114
+#: templates/airflow/dag.html:134
 msgid "Delete"
 msgstr "删除"
 
-#: templates/airflow/dag.html:129
+#: templates/airflow/dag.html:149
 msgid "Filter on this task and upstream "
 msgstr "筛选并上传该task "
 
-#: templates/airflow/dag.html:132
+#: templates/airflow/dag.html:152
 msgid "on"
 msgstr "打开"
 
-#: templates/airflow/dag.html:139
+#: templates/airflow/dag.html:159
 msgid "Zoom into Sub DAG"
 msgstr "放大子DAG"
 
-#: templates/airflow/dag.html:144 templates/airflow/task_instance.html:48
+#: templates/airflow/dag.html:164 templates/airflow/task_instance.html:47
 msgid "Task Instance Details"
 msgstr "task实例详情"
 
-#: templates/airflow/dag.html:147
+#: templates/airflow/dag.html:167
 msgid "Rendered"
 msgstr "渲染"
 
-#: templates/airflow/dag.html:153
+#: templates/airflow/dag.html:173
 msgid "View Log"
 msgstr "查看日志"
 
-#: templates/airflow/dag.html:157
+#: templates/airflow/dag.html:177
 msgid "Download Log (by attempts)"
 msgstr "下载日志"
 
-#: templates/airflow/dag.html:164
+#: templates/airflow/dag.html:183
 msgid "View Logs in Elasticsearch (by attempts)"
 msgstr "在Elasticsearch上查看日志"
 
-#: templates/airflow/dag.html:184
+#: templates/airflow/dag.html:203
 msgid "Ignores all non-critical dependencies, including task state and task_deps"
 msgstr "隐藏所有非关键依赖，包括task状态和task依赖项"
 
-#: templates/airflow/dag.html:186
+#: templates/airflow/dag.html:205
 msgid "Ignore All Deps"
 msgstr "隐藏所有依赖项"
 
-#: templates/airflow/dag.html:188
+#: templates/airflow/dag.html:207
 msgid "Ignore previous success/failure"
 msgstr "隐藏先前成功／失败信息"
 
-#: templates/airflow/dag.html:190
+#: templates/airflow/dag.html:209
 msgid "Ignore Task State"
 msgstr "隐藏task状态"
 
-#: templates/airflow/dag.html:193
-msgid "Disregard the task-specific dependencies, e.g. status of upstream task instances and depends_on_past"
+#: templates/airflow/dag.html:212
+msgid ""
+"Disregard the task-specific dependencies, e.g. status of upstream task "
+"instances and depends_on_past"
 msgstr "忽略task声明的依赖项，如task实例上传状态和之前的依赖项"
 
-#: templates/airflow/dag.html:195
+#: templates/airflow/dag.html:214
 msgid "Ignore Task Deps"
 msgstr "隐藏task依赖项"
 
-#: templates/airflow/dag.html:200
-msgid "Clearing deletes the previous state of the task instance, allowing it to get re-triggered by the scheduler or a backfill command"
-msgstr "清除操作会删除task实例之前的运行状态，可以通过调度或回滚操作重新激活"
-
-#: templates/airflow/dag.html:206
+#: templates/airflow/dag.html:225
 msgid "Also include past task instances when clearing this one"
 msgstr "同时删除之前（过去）的task实例"
 
-#: templates/airflow/dag.html:208 templates/airflow/dag.html:238
-#: templates/airflow/dag.html:261
+#: templates/airflow/dag.html:227 templates/airflow/dag.html:257
+#: templates/airflow/dag.html:280
 msgid "Past"
 msgstr "过去"
 
-#: templates/airflow/dag.html:211
+#: templates/airflow/dag.html:230
 msgid "Also include future task instances when clearing this one"
 msgstr "同时删除之后（未来）的task实例"
 
-#: templates/airflow/dag.html:213 templates/airflow/dag.html:242
-#: templates/airflow/dag.html:265
+#: templates/airflow/dag.html:232 templates/airflow/dag.html:261
+#: templates/airflow/dag.html:284
 msgid "Future"
 msgstr "未来"
 
-#: templates/airflow/dag.html:216
+#: templates/airflow/dag.html:235
 msgid "Also include upstream dependencies"
 msgstr "同时包含上游依赖"
 
-#: templates/airflow/dag.html:218 templates/airflow/dag.html:246
-#: templates/airflow/dag.html:269
+#: templates/airflow/dag.html:237 templates/airflow/dag.html:265
+#: templates/airflow/dag.html:288
 msgid "Upstream"
 msgstr "上游"
 
-#: templates/airflow/dag.html:221
+#: templates/airflow/dag.html:240
 msgid "Also include downstream dependencies"
 msgstr "同时包含下游依赖"
 
-#: templates/airflow/dag.html:223 templates/airflow/dag.html:250
-#: templates/airflow/dag.html:273
+#: templates/airflow/dag.html:242 templates/airflow/dag.html:269
+#: templates/airflow/dag.html:292
 msgid "Downstream"
 msgstr "下游"
 
-#: templates/airflow/dag.html:227
+#: templates/airflow/dag.html:246
 msgid "Recursive"
 msgstr "回归"
 
-#: templates/airflow/dag.html:233 templates/airflow/dag.html:314
+#: templates/airflow/dag.html:252 templates/airflow/dag.html:329
 msgid "Mark Failed"
 msgstr "标记为失败"
 
-#: templates/airflow/dag.html:256 templates/airflow/dag.html:317
+#: templates/airflow/dag.html:275 templates/airflow/dag.html:332
 msgid "Mark Success"
 msgstr "标记为成功"
 
-#: templates/airflow/dag.html:284 templates/airflow/dag.html:323
+#: templates/airflow/dag.html:299 templates/airflow/dag.html:338
 msgid "Close"
 msgstr "关闭"
 
-#: templates/airflow/dag.html:304
+#: templates/airflow/dag.html:319
 msgid "Edit"
 msgstr "编辑"
 
-#: templates/airflow/dag.html:526 templates/airflow/dags.html:235
+#: templates/airflow/dag.html:451 templates/airflow/dags.html:255
 msgid "Are you sure you want to run '\"+dag_id+\"' now?"
 msgstr "确定现在要运行’”+dag_id+”’吗？"
 
-#: templates/airflow/dag.html:534 templates/airflow/dags.html:243
-msgid "Are you sure you want to delete '\"+dag_id+\"' now?\n"
+#: templates/airflow/dag.html:459 templates/airflow/dags.html:263
+msgid ""
+"Are you sure you want to delete '\"+dag_id+\"' now?\n"
 "        This option will delete ALL metadata, DAG runs, etc.\n"
 "        EXCEPT Log.\n"
 "        This cannot be undone."
-msgstr "确定现在要删除 ‘”+dag_id+”’ 吗?\n"
+msgstr ""
+"确定现在要删除 ‘”+dag_id+”’ 吗?\n"
 "        该操作会删除所有的元数据，DAG运行信息等。\n"
 "        日志不会被删除。\n"
 "        该操作不可撤销。"
 
-#: templates/airflow/dag_details.html:40
+#: templates/airflow/dag_details.html:45
 msgid "schedule_interval"
 msgstr "调度间隔"
 
-#: templates/airflow/dag_details.html:44
+#: templates/airflow/dag_details.html:49
 msgid "max_active_runs"
 msgstr "最大同时激活数"
 
-#: templates/airflow/dag_details.html:48
+#: templates/airflow/dag_details.html:53
 msgid "concurrency"
 msgstr "并发"
 
-#: templates/airflow/dag_details.html:52
+#: templates/airflow/dag_details.html:57
 msgid "default_args"
 msgstr "默认变量"
 
-#: templates/airflow/dag_details.html:56
+#: templates/airflow/dag_details.html:61
 msgid "tasks count"
 msgstr "task数"
 
-#: templates/airflow/dag_details.html:60
+#: templates/airflow/dag_details.html:65
 msgid "task ids"
 msgstr "taskid"
 
-#: templates/airflow/dag_details.html:64
+#: templates/airflow/dag_details.html:69
 msgid "filepath"
 msgstr "文件路径"
 
-#: templates/airflow/dag_details.html:68
+#: templates/airflow/dag_details.html:73
 msgid "owner"
 msgstr "所有者"
 
@@ -834,7 +704,9 @@ msgid "Recent Tasks"
 msgstr "近期task"
 
 #: templates/airflow/dags.html:53
-msgid "Status of tasks from all active DAG runs or, if not currently active, from most recent run."
+msgid ""
+"Status of tasks from all active DAG runs or, if not currently active, "
+"from most recent run."
 msgstr "运行中的DAG task状态或是上次运行的task状态."
 
 #: templates/airflow/dags.html:56
@@ -857,36 +729,36 @@ msgstr "链接"
 msgid "Trigger Dag"
 msgstr "激活DAG"
 
-#: templates/airflow/dags.html:142
+#: templates/airflow/dags.html:152 templates/airflow/list_tasks.html:46
 msgid "Tasks Duration"
 msgstr "task持续时间"
 
-#: templates/airflow/dags.html:157
+#: templates/airflow/dags.html:167
 msgid "Gantt View"
 msgstr "甘特图"
 
-#: templates/airflow/dags.html:162
+#: templates/airflow/dags.html:172
 msgid "Code View"
 msgstr "代码"
 
-#: templates/airflow/dags.html:180
+#: templates/airflow/dags.html:201
 msgid "Delete Dag"
 msgstr "删除DAG"
 
-#: templates/airflow/dags.html:189
+#: templates/airflow/dags.html:210
 #, python-format
 msgid "Showing %(num_dag_from)s to %(num_dag_to)s of %(num_of_all_dags)s entries"
 msgstr "当前显示第 %(num_dag_from)s 到 %(num_dag_to)s 项，共 %(num_of_all_dags)s 项"
 
-#: templates/airflow/dags.html:201
+#: templates/airflow/dags.html:222
 msgid "Hide Paused DAGs"
 msgstr "隐藏停止的DAG"
 
-#: templates/airflow/dags.html:203
+#: templates/airflow/dags.html:224
 msgid "Show Paused DAGs"
 msgstr "显示停止的DAG"
 
-#: templates/airflow/dags.html:301
+#: templates/airflow/dags.html:322
 msgid "this.active_dag_run + '/' + this.max_active_runs + ' active dag runs'"
 msgstr "this.active_dag_run + ‘/‘ + this.max_active_runs + ‘次运行’"
 
@@ -898,53 +770,77 @@ msgstr "累积持续时间"
 msgid "Go"
 msgstr "开始"
 
-#: templates/airflow/gantt.html:34 templates/airflow/graph.html:37
+#: templates/airflow/gantt.html:33 templates/airflow/graph.html:40
 msgid "Run"
 msgstr "运行"
 
-#: templates/airflow/graph.html:39
+#: templates/airflow/graph.html:42
 msgid "Layout"
 msgstr "布局"
 
-#: templates/airflow/graph.html:47
+#: templates/airflow/graph.html:50
 msgid "Search for..."
 msgstr "搜索..."
 
-#: templates/airflow/graph.html:61 templates/airflow/tree.html:43
+#: templates/airflow/graph.html:64 templates/airflow/tree.html:42
 msgid "no_status"
 msgstr "无状态"
 
-#: templates/airflow/graph.html:62 templates/airflow/tree.html:45
+#: templates/airflow/graph.html:65 templates/airflow/tree.html:44
 msgid "queued"
 msgstr "排队中"
 
-#: templates/airflow/graph.html:63 templates/airflow/tree.html:47
+#: templates/airflow/graph.html:66 templates/airflow/tree.html:46
 msgid "up_for_retry"
 msgstr "准备重试"
 
-#: templates/airflow/graph.html:64 templates/airflow/tree.html:49
+#: templates/airflow/graph.html:67 templates/airflow/tree.html:48
 msgid "up_for_reschedule"
 msgstr "准备重新调度"
 
-#: templates/airflow/graph.html:65 templates/airflow/tree.html:51
+#: templates/airflow/graph.html:68 templates/airflow/tree.html:50
 msgid "skipped"
 msgstr "已跳过"
 
-#: templates/airflow/graph.html:66 templates/airflow/tree.html:53
+#: templates/airflow/graph.html:69 templates/airflow/tree.html:52
 msgid "failed"
 msgstr "失败"
 
-#: templates/airflow/graph.html:67 templates/airflow/tree.html:55
+#: templates/airflow/graph.html:70 templates/airflow/tree.html:54
 msgid "running"
 msgstr "运行中"
 
-#: templates/airflow/graph.html:68 templates/airflow/tree.html:57
+#: templates/airflow/graph.html:71 templates/airflow/tree.html:56
 msgid "success"
 msgstr "成功"
 
-#: templates/airflow/graph.html:74
+#: templates/airflow/graph.html:77 templates/airflow/list_tasks.html:34
 msgid "Oops."
 msgstr "出错了。"
+
+#: templates/airflow/list_tasks.html:43
+msgid "Task"
+msgstr ""
+
+#: templates/airflow/list_tasks.html:44
+msgid "Start Date"
+msgstr "开始日期"
+
+#: templates/airflow/list_tasks.html:45
+msgid "End Date"
+msgstr "结束日期"
+
+#: templates/airflow/list_tasks.html:47
+msgid "Number of Retries"
+msgstr "重试次数"
+
+#: templates/airflow/list_tasks.html:48
+msgid "Result"
+msgstr ""
+
+#: templates/airflow/list_tasks.html:49 templates/airflow/task_instance.html:53
+msgid "Log"
+msgstr "日志"
 
 #: templates/airflow/task.html:25
 msgid "Dependencies Blocking Task From Getting Scheduled"
@@ -971,19 +867,15 @@ msgstr "task实例属性"
 msgid "Task Attributes"
 msgstr "task属性"
 
-#: templates/airflow/task_instance.html:35
+#: templates/airflow/task_instance.html:34
 msgid "Task Instance"
 msgstr "task实例"
 
-#: templates/airflow/task_instance.html:51
+#: templates/airflow/task_instance.html:50
 msgid "Rendered Template"
 msgstr "渲染模板"
 
-#: templates/airflow/task_instance.html:54
-msgid "Log"
-msgstr "日志"
-
-#: templates/airflow/task_instance.html:57
+#: templates/airflow/task_instance.html:56
 msgid "XCom"
 msgstr ""
 
@@ -999,7 +891,7 @@ msgstr "出错了。"
 msgid "Node"
 msgstr "节点"
 
-#: templates/airflow/variable_list.html:26
+#: templates/airflow/variable_list.html:29
 msgid "Import Variables"
 msgstr "导入变量"
 
@@ -1011,34 +903,9 @@ msgstr "不可用"
 msgid "Git Version"
 msgstr "Git版本"
 
-#: templates/appbuilder/baselayout.html:51
-msgid "The scheduler does not appear to be running."
-msgstr "调度程序当前没有在运行."
-
-#: templates/appbuilder/baselayout.html:53
-#, python-format
-msgid "Last heartbeat was received %(time)s"
-msgstr "上次心跳接收于%(time)s"
-
-#: templates/appbuilder/baselayout.html:56
-msgid "The DAGs list may not update, and new tasks will not be scheduled."
-msgstr "DAG列表还未更新，新的task不会被调度."
-
-#: templates/appbuilder/navbar_menu.html:26
-msgid "DAGs"
-msgstr ""
-
-#: flask_appbuilder/templates/appbuilder/baselib.html:115
-#: flask_appbuilder/templates/appbuilder/navbar_right.html:37
-#: templates/appbuilder/navbar_right.html:56
-msgid "Profile"
-msgstr "个人资料"
-
-#: flask_appbuilder/templates/appbuilder/baselib.html:116
-#: flask_appbuilder/templates/appbuilder/navbar_right.html:38
-#: templates/appbuilder/navbar_right.html:57
-msgid "Logout"
-msgstr "注销"
+#: flask_appbuilder/const.py:100
+msgid "Access is Denied"
+msgstr "访问被拒绝"
 
 #: flask_appbuilder/fields.py:77 flask_appbuilder/fields.py:79
 #: flask_appbuilder/fields.py:131 flask_appbuilder/fields.py:138
@@ -1201,10 +1068,20 @@ msgstr ""
 msgid "Remember me"
 msgstr "记住我"
 
+#: flask_appbuilder/security/forms.py:17 flask_appbuilder/security/forms.py:21
+#: flask_appbuilder/security/forms.py:37 flask_appbuilder/security/views.py:104
+#: flask_appbuilder/security/views.py:207
+#: flask_appbuilder/templates/appbuilder/general/security/login_db.html:31
+#: flask_appbuilder/templates/appbuilder/general/security/login_ldap.html:27
+msgid "Password"
+msgstr "密码"
+
 #: flask_appbuilder/security/forms.py:22 flask_appbuilder/security/forms.py:38
 #: flask_appbuilder/security/views.py:120
 #: flask_appbuilder/security/views.py:208
-msgid "Please use a good password policy, this application does not check this for you"
+msgid ""
+"Please use a good password policy, this application does not check this "
+"for you"
 msgstr "请使用较为安全的密码，该应用不会检查密码安全性"
 
 #: flask_appbuilder/security/forms.py:26 flask_appbuilder/security/forms.py:42
@@ -1339,7 +1216,9 @@ msgid "The user's email, this will also be used for OID auth"
 msgstr "用户的电子邮件，将被用于OID验证"
 
 #: flask_appbuilder/security/views.py:124
-msgid "The user role on the application, this will associate with a list of permissions"
+msgid ""
+"The user role on the application, this will associate with a list of "
+"permissions"
 msgstr "用户角色，关联到用户权限"
 
 #: flask_appbuilder/security/views.py:126
@@ -1419,6 +1298,21 @@ msgstr "无效的用户名或密码，请重试！"
 #: flask_appbuilder/templates/appbuilder/general/security/login_oauth.html:56
 #: flask_appbuilder/templates/appbuilder/general/security/login_oid.html:118
 msgid "Sign In"
+msgstr "登录"
+
+#: flask_appbuilder/templates/appbuilder/baselib.html:115
+#: flask_appbuilder/templates/appbuilder/navbar_right.html:37
+msgid "Profile"
+msgstr "个人资料"
+
+#: flask_appbuilder/templates/appbuilder/baselib.html:116
+#: flask_appbuilder/templates/appbuilder/navbar_right.html:38
+msgid "Logout"
+msgstr "注销"
+
+#: flask_appbuilder/templates/appbuilder/baselib.html:122
+#: flask_appbuilder/templates/appbuilder/navbar_right.html:43
+msgid "Login"
 msgstr "登录"
 
 #: flask_appbuilder/templates/appbuilder/general/security/activation.html:5
@@ -1709,3 +1603,116 @@ msgstr "详细"
 
 #~ msgid "external_trigger"
 #~ msgstr ""
+
+#~ msgid "Dag Id"
+#~ msgstr ""
+
+#~ msgid "Run Id"
+#~ msgstr "运行Id"
+
+#~ msgid "State"
+#~ msgstr "状态"
+
+#~ msgid "Execution Date"
+#~ msgstr "执行日期"
+
+#~ msgid "External Trigger"
+#~ msgstr "执行触发"
+
+#~ msgid "Conn Id"
+#~ msgstr "连接Id"
+
+#~ msgid "Conn Type"
+#~ msgstr "连接类型"
+
+#~ msgid "Host"
+#~ msgstr ""
+
+#~ msgid "Schema"
+#~ msgstr ""
+
+#~ msgid "Port"
+#~ msgstr "端口"
+
+#~ msgid "Extra"
+#~ msgstr "其他"
+
+#~ msgid "Driver Path"
+#~ msgstr "驱动路径"
+
+#~ msgid "Driver Class"
+#~ msgstr "驱动类型"
+
+#~ msgid "Project Id"
+#~ msgstr "项目Id"
+
+#~ msgid "Keyfile Path"
+#~ msgstr ""
+
+#~ msgid "Keyfile JSON"
+#~ msgstr ""
+
+#~ msgid "Scopes (comma separated)"
+#~ msgstr "范围（由逗号分割）"
+
+#~ msgid "Grpc Auth Type"
+#~ msgstr "Grpc认证类型"
+
+#~ msgid "Credential Keyfile Path"
+#~ msgstr ""
+
+#~ msgid "Broken DAG: [{ie.filename}] {ie.stacktrace}"
+#~ msgstr "损坏的DAG: [{ie.filename}] {ie.stacktrace}"
+
+#~ msgid "Broken plugin: [{filename}] {stacktrace}"
+#~ msgstr "损坏的插件: [{filename}] {stacktrace}"
+
+#~ msgid "DAG with id {} not found. Cannot delete"
+#~ msgstr "id为 {} 的DAG未找到. 无法删除"
+
+#~ msgid "Dag id {} is still in DagBag. Remove the DAG file first."
+#~ msgstr "Dag id {} 仍在 DagBag中. 请先移除DAG文件."
+
+#~ msgid "Deleting DAG with id {}. May take a couple minutes to fully disappear."
+#~ msgstr "删除id为 {}的DAG. 可能需要一些时间去完全删除."
+
+#~ msgid "DAG [{}] is now fresh as a daisy"
+#~ msgstr "DAG [{}] 已激活"
+
+#~ msgid "Missing file or syntax error."
+#~ msgstr "文件缺失或语法错误."
+
+#~ msgid "{} variable(s) successfully updated."
+#~ msgstr "{} 变量已成功更新."
+
+#~ msgid "{} variable(s) failed to be updated."
+#~ msgstr "{} 变量更新失败."
+
+#~ msgid "{count} task instances were set to '{target_state}'"
+#~ msgstr ""
+
+#~ msgid ""
+#~ "Clearing deletes the previous state of"
+#~ " the task instance, allowing it to"
+#~ " get re-triggered by the scheduler"
+#~ " or a backfill command"
+#~ msgstr "清除操作会删除task实例之前的运行状态，可以通过调度或回滚操作重新激活"
+
+#~ msgid "The scheduler does not appear to be running."
+#~ msgstr "调度程序当前没有在运行."
+
+#~ msgid "Last heartbeat was received %(time)s"
+#~ msgstr "上次心跳接收于%(time)s"
+
+#~ msgid "The DAGs list may not update, and new tasks will not be scheduled."
+#~ msgstr "DAG列表还未更新，新的task不会被调度."
+
+#~ msgid "DAGs"
+#~ msgstr ""
+
+#~ msgid "Task Edit"
+#~ msgstr ""
+
+#~ msgid "Hardware Stat"
+#~ msgstr ""
+

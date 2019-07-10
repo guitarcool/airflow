@@ -68,16 +68,6 @@
   <!-- <div>
       {{data}}
   </div> -->
-  <div id="svg_container">
-    <svg width="{{ width }}" height="{{ height }}">
-      <g id='dig' transform="translate(20,20)"></g>
-      <filter id="blur-effect-1">
-        <feGaussianBlur stdDeviation="3"></feGaussianBlur>
-      </filter>
-    </svg>
-    <img id="loading" alt="spinner" src="{{ url_for('static', filename='loading.gif') }}">
-  </div>
-  <hr>
   {% endblock %}
   
   {% block tail %}
@@ -86,8 +76,6 @@
   <script src="{{ url_for('static', filename='d3.v3.min.js') }}"></script>
   <script src="{{ url_for('static', filename='dagre-d3.js') }}"></script>
   <script>
-    var data = {{ data }};
-    console.log(data);
   </script>
   {% endblock %}
   

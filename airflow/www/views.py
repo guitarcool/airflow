@@ -1077,6 +1077,40 @@ class Airflow(AirflowViewMixin, BaseView):
             dag=dag, title=title
             )
 
+    @expose('/newtask')
+    @login_required
+    @wwwutils.action_logging
+    def newtask(self):
+        TI = models.TaskInstance
+
+        dag_id = request.args.get('dag_id')
+        task_id = request.args.get('task_id')
+        # Carrying execution_date through, even though it's irrelevant for
+        # this context
+        # execution_date = request.args.get('execution_date')
+        # FIXME
+        execution_date = 'Mon Jul 08 2019 13:43:14 GMT+0800' 
+        dttm = pendulum.parse(execution_date)
+        form = DateTimeForm(data={'execution_date': '2019-07-06 00:00:00+00:00'})
+        root = request.args.get('root', '')
+        dag = dagbag.get_dag(dag_id)
+
+        title = "Task Edit"
+        return self.render(
+            'airflow/task_edit.html',
+            # task_attrs=task_attrs,
+            # ti_attrs=ti_attrs,
+            # failed_dep_reasons=failed_dep_reasons or no_failed_deps_result,
+            # task_id=task_id,
+            task_id='id',
+            # execution_date=execution_date,
+            execution_date='123',
+            # special_attrs_rendered=special_attrs_rendered,
+            form=form,
+            root=root,
+            dag=dag, title=title
+            )
+    
     @expose('/xcom')
     @login_required
     @wwwutils.action_logging
@@ -1848,8 +1882,7 @@ class Airflow(AirflowViewMixin, BaseView):
 
         data = {
             'name': '[DAG]',
-            # 'children': [recurse_nodes(t, set()) for t in dag.roots],
-            'children': dag.roots,
+            'children': [recurse_nodes(t, set()) for t in dag.roots],
             'instances': [dag_runs.get(d) or {'execution_date': d.isoformat()} for d in dates],
         }
 
@@ -1863,7 +1896,8 @@ class Airflow(AirflowViewMixin, BaseView):
             operators=sorted({op.__class__ for op in dag.tasks}, key=lambda x: x.__name__),
             root=root,
             form=form,
-            dag=dag, data=data, blur=blur, num_runs=num_runs,
+            dag=dag, 
+            data=data, blur=blur, num_runs=num_runs,
             show_external_logs=bool(external_logs))
 
     @expose('/duration')

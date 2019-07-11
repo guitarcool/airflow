@@ -37,6 +37,14 @@
   <!-- <button class="btn btn-default pull-right" id="refresh_button">
     <span class="glyphicon glyphicon-refresh" aria-hidden="true"></span>
   </button> -->
+  <form method="get" style="float:left;">
+    {{_('Base date')}}: {{ form.base_date(class_="form-control") }}
+    {{_('Number of runs')}}: {{ form.num_runs(class_="form-control") }}
+    <input type="hidden" name="root" value="{{ root if root else '' }}">
+    <input type="hidden" value="{{ dag.dag_id }}" name="dag_id">
+    <input type="submit" value="Go" class="btn btn-default">
+    <input name="_csrf_token" type="hidden" value="{{ csrf_token() }}">
+  </form>
   <table id="task_list" class="table table-striped table-bordered">
       <thead>
         <tr>
@@ -51,7 +59,7 @@
         </tr>
       </thead>
       <tbody>
-        {% for item in data.children %}
+        {% for item in tasks %}
             <tr>
                 <td>{{item.name}}</td>
                 <td>{{item.start_date}}</td>
@@ -65,9 +73,6 @@
         {% endfor %}
       </tbody>
   </table>
-  <!-- <div>
-      {{data}}
-  </div> -->
   {% endblock %}
   
   {% block tail %}
@@ -76,6 +81,8 @@
   <script src="{{ url_for('static', filename='d3.v3.min.js') }}"></script>
   <script src="{{ url_for('static', filename='dagre-d3.js') }}"></script>
   <script>
+
+    var tasks = {{ tasks|tojson|safe }};
   </script>
   {% endblock %}
   

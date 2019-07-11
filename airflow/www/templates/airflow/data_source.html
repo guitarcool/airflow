@@ -24,32 +24,64 @@
     {{ super() }}
     <link href="{{ admin_static.url(filename='vendor/bootstrap-daterangepicker/daterangepicker-bs2.css') }}" rel="stylesheet">
     <style>
-        #task_edit .table{
+        #data_source .table{
             width: 80%;
         }
-        #task_edit td{
+        #data_source td{
             position: relative;
         }
-        #task_edit tr td:first-child{
+        #data_source tr td:first-child{
             width: 20%;
         }
-        #task_edit input[type="text"]{
+        #data_source input[type="text"]{
             width: 100%;
             height: 80%;
+        }
+        #data_source td>span.glyphicon{
+            width: 1em;
+            height: 1em;
+        }
+        #data_source select[name="dataSourceName"],
+        #data_source input[name="newSourceName"]{
+            width: 200px;
+        }
+        #data_source.state-add select[name="dataSourceName"],
+        #data_source.state-add .btn-trash,
+        #data_source.state-add .btn-add{
+            display: none;
+        }
+        #data_source.state-edit input[name="newSourceName"],
+        #data_source.state-edit .btn-remove{
+            display: none;
+        }
+        .btn.btn-submit {
+            background: hsla(0, 0%, 70%, .3);
+            cursor: pointer;
+        }
+        .btn.btn-submit:hover {
+            background: hsla(0, 0%, 70%, .5);
         }
     </style>
     {% endblock %}
     
     {% block body %}
       {{ super() }}
-    <form method="get" id="task_edit" class="form-inline">
+    <form method="get" id="data_source" class="form-inline state-edit">
         <input name="_csrf_token" type="hidden" value="{{ csrf_token() }}">
         <input type="hidden" value="{{ dag.dag_id }}" name="dag_id">
         <table class="table">
             <tr>
                 <td><label>名称</label></td>
                 <td>
-                    <input type="text" value="{{ task_id }}">
+                    <select name="dataSourceName">
+                        <option value="" style="display:none">请选择</option>
+                        <option value="A">A</option>
+                        <option value="B">B</option>
+                    </select>
+                    <input name="newSourceName" type="text">
+                    <span class="glyphicon glyphicon-plus btn-add" title="新增数据源" aria-hidden="true"></span>
+                    <span class="glyphicon glyphicon-remove btn-remove" title="取消" aria-hidden="true"></span>
+                    <!-- <span class="glyphicon glyphicon-trash btn-trash" aria-hidden="true"></span> -->
                 </td>
             </tr>
             <tr>
@@ -83,8 +115,9 @@
                 <td><input type="text"></td>
             </tr>
             <tr>
-                <td><label>数据源名称</label></td>
-                <td><input type="text"></td>
+                <td>
+                    <div class="btn btn-submit">提交</div>
+                </td>
             </tr>
         </table>
     </form>
@@ -107,6 +140,23 @@
           $("input#execution_date").on("apply.daterangepicker", function(){
               date_change();
           });
+
+          // btn-add click
+          $('.btn-add').on('click', function(){
+            $('#data_source').removeClass('state-edit');
+            $('#data_source').addClass('state-add');
+          })
+          // btn-remove click
+          $('.btn-remove').on('click', function(){
+            $('#data_source').addClass('state-edit');
+            $('#data_source').removeClass('state-add');
+          })
+          // observer source name change
+          $('select[name="dataSourceName"]').on('change', function(ev){
+            $('#data_source').removeClass('state-add');
+            $('#data_source').addClass('state-edit');
+            console.log(ev);
+          })
         });
       </script>
     {% endblock %}

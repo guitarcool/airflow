@@ -42,7 +42,7 @@
 </button>
 <div class="svg-container">
   <h4>CPU</h4>
-  <svg class="cpu-stat">
+  <svg class="cpu-stat" viewBox="0 0 300 300">
     <g id='dig' transform="translate(20,20)"></g>
     <filter id="blur-effect-1">
       <feGaussianBlur stdDeviation="3"></feGaussianBlur>
@@ -52,7 +52,7 @@
 </div>
 <div class="svg-container">
   <h4>内存</h4>
-  <svg class="memory-stat">
+  <svg class="memory-stat" viewBox="0 0 300 300">
     <g id='dig' transform="translate(20,20)"></g>
     <filter id="blur-effect-1">
       <feGaussianBlur stdDeviation="3"></feGaussianBlur>
@@ -62,7 +62,7 @@
 </div>
 <div class="svg-container">
   <h4>磁盘</h4>
-  <svg class="disk-stat">
+  <svg class="disk-stat" viewBox="0 0 300 300">
     <g id='dig' transform="translate(20,20)"></g>
     <filter id="blur-effect-1">
       <feGaussianBlur stdDeviation="3"></feGaussianBlur>
@@ -72,7 +72,7 @@
 </div>
 <div class="svg-container">
   <h4>网络</h4>
-  <svg class="network-stat">
+  <svg class="network-stat" viewBox="0 0 300 300">
     <g id='dig' transform="translate(20,20)"></g>
     <filter id="blur-effect-1">
       <feGaussianBlur stdDeviation="3"></feGaussianBlur>
@@ -300,46 +300,25 @@
 
 </script>
 <script>
-  var cpuData = [{
-      name: '占用',
-      value: "0.26"
-    },
-    {
-      name: '空闲',
-      value: "0.74"
-    }
-  ];
-  var memoryData = [{
-      name: '占用',
-      value: "0.26"
-    },
-    {
-      name: '空闲',
-      value: "0.74"
-    }
-  ];
-  var diskData = [{
-      name: '占用',
-      value: "0.26"
-    },
-    {
-      name: '空闲',
-      value: "0.74"
-    }
-  ];
-  var networkData = [{
-      name: '占用',
-      value: "0.26"
-    },
-    {
-      name: '空闲',
-      value: "0.74"
-    }
-  ];
-  pieChart('cpu-stat', cpuData, {showValue: false})
-  pieChart('memory-stat', cpuData, {showValue: false})
-  pieChart('disk-stat', cpuData, {showValue: false})
-  pieChart('network-stat', cpuData, {showValue: false})
+  var data = {{data|tojson|safe}}
+  var cpuData = data.cpu;
+  var memoryData = data.memory;
+  var diskData = data.disk;
+  var networkData = data.network;
+  function _formatData(data) {
+    let formattedData = [];
+    Object.keys(data).forEach(function(key){
+      formattedData.push({
+        name: key,
+        value: data[key]
+      });
+    })
+    return formattedData;
+  }
+  pieChart('cpu-stat', _formatData(cpuData), {showValue: false})
+  pieChart('memory-stat', _formatData(cpuData), {showValue: false})
+  pieChart('disk-stat', _formatData(cpuData), {showValue: false})
+  pieChart('network-stat', _formatData(cpuData), {showValue: false})
 
 </script>
 

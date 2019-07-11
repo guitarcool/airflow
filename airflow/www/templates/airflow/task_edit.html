@@ -41,17 +41,30 @@
         .system-config-select,
         .custom-sql-input {
             display: none;
+            vertical-align: middle;
         }
-        input[name="period"][value="weekly"]:checked ~.day-select{
+        .custom-sql-input textarea{
+            width: 100%;
+            height: 80px;
+            resize: none;
+        }
+        input[name="period_type"][value="weekly"]:checked ~.day-select{
             display: inline-block;
         }
 
-        input[name="executeLogic"][value="system"]:checked ~.system-config-select{
+        input[name="executetion_logic_type"][value="system"]:checked ~.system-config-select{
             display: block;
         }
 
-        input[name="executeLogic"][value="custom"]:checked ~.custom-sql-input{
+        input[name="executetion_logic_type"][value="custom"]:checked ~.custom-sql-input{
             display: block;
+        }
+        .btn.btn-submit {
+            background: hsla(0, 0%, 70%, .3);
+            cursor: pointer;
+        }
+        .btn.btn-submit:hover {
+            background: hsla(0, 0%, 70%, .5);
         }
     </style>
     {% endblock %}
@@ -65,38 +78,40 @@
             <tr>
                 <td><label>任务名</label></td>
                 <td>
-                    <input type="text" value="{{ task_id }}">
+                    <input type="text" name="task_id" value="{{ task_id }}" required>
                 </td>
             </tr>
             <tr>
                 <td><label>源地址</label></td>
-                <td><input type="text"></td>
+                <td><input type="text" name="source_address" required></td>
             </tr>
             <tr>
                 <td><label>源文件格式</label></td>
-                <td><input type="text"></td>
+                <td><input type="text" name="source_format" required></td>
             </tr>
             <tr>
                 <td><label>目标地址</label></td>
-                <td><input type="text"></td>
+                <td><input type="text" name="target_address" required></td>
             </tr>
             <tr>
                 <td><label>目标表</label></td>
-                <td><select name="target">
-                    <option>a</option>
-                    <option>b</option>
+                <td><select name="target_table">
+                    {% for source in targetTables %}
+                    <option value="{{source}}">{{source}}</option>
+                    {% endfor %}
                 </select></td>
             </tr>
             <tr>
                 <td><label>数据源名称</label></td>
-                <td><select name="dataSrc">
-                    <option>a</option>
-                    <option>b</option>
+                <td><select name="data_source">
+                    {% for source in dataSources %}
+                    <option value="{{source}}">{{source}}</option>
+                    {% endfor %}
                 </select></td>
             </tr>
             <tr>
                 <td><label>执行标志</label></td>
-                <td><select name="src">
+                <td><select name="executetion_token">
                     <option>标志文件</option>
                     <option>文件大小不变</option>
                     <option>固定时间之后</option>
@@ -105,12 +120,13 @@
             <tr>
                 <td><label>周期</label></td>
                 <td>
-                    <input type="radio" name="period" value="today"><label>当天</label>
-                    <input type="radio" name="period" value="daily"><label>每天</label>
-                    <input type="radio" name="period" value="weekly"><label>每周</label>
+                    <input type="radio" name="period_type" value="today" checked><label>当天</label>
+                    <input type="radio" name="period_type" value="daily"><label>每天</label>
+                    <input type="radio" name="period_type" value="weekly"><label>每周</label>
+                    <br/>
                     <span class="day-select">
                         周
-                        <select>
+                        <select name="period_day">
                             <option>日</option>
                             <option>一</option>
                             <option>二</option>
@@ -121,7 +137,7 @@
                         </select>
                     </span>
                     <span class="hour-select">
-                        <select>
+                        <select name="period_hour">
                             <option>0</option>
                             <option>1</option>
                             <option>2</option>
@@ -154,10 +170,10 @@
             <tr>
                 <td><label>执行逻辑</label></td>
                 <td>
-                    <input type="radio" name="executeLogic" value="system"><label>系统预置</label>
-                    <input type="radio" name="executeLogic" value="custom"><label>自定义SQL</label>
+                    <input type="radio" name="executetion_logic_type" value="system" checked><label>系统预置</label>
+                    <input type="radio" name="executetion_logic_type" value="custom"><label>自定义SQL</label>
                     <div class="system-config-select">
-                        <select>
+                        <select name="executetion_logic_default_setting">
                             <option>拉链</option>
                             <option>覆盖插入</option>
                             <option>更新</option>
@@ -165,16 +181,21 @@
                         </select>
                     </div>
                     <div class="custom-sql-input">
-                        <input type="text" name="customSQL">
+                        <textarea type="text" name="executetion_logic_custom_sql"></textarea>
                     </div>
                 </td>
             </tr>
             <tr>
                 <td><label>出错处理</label></td>
-                <td><select name="src">
+                <td><select name="error_handle">
                     <option>暂停</option>
                     <option>忽略</option>
                 </select></td>
+            </tr>
+            <tr>
+                <td>
+                    <div class="btn btn-submit">提交</div>
+                </td>
             </tr>
         </table>
     </form>
@@ -197,6 +218,50 @@
           $("input#execution_date").on("apply.daterangepicker", function(){
               date_change();
           });
+        });
+
+        var requestLock = false;
+        $(".btn.btn-submit").click(function() {
+            var f = document.forms["task_edit"];
+            var sendData = {
+                task_id: f.task_id.value,
+                source_address: f.source_address.value,
+                source_format: f.source_format.value,
+                target_address: f.target_address.value,
+                target_table: f.target_table.value,
+                data_source: f.data_source.value,
+                executetion_token: f.executetion_token.value,
+                period: f.period_type.value,
+                period_day: f.period_day.value,
+                period_hour: f.period_hour.value,
+                executetion_logic_type: f.executetion_logic_type.value,
+                executetion_logic_default_setting: f.executetion_logic_default_setting.value,
+                executetion_logic_custom_sql: f.executetion_logic_custom_sql.value,
+                error_handle: f.error_handle.value
+            }
+            console.log(sendData);
+            if (!requestLock) {
+                requestLock = true;
+                $.ajax({
+                    method: "POST",
+                    url: '{{ url_for("airflow.update_task") }}',
+                    data: JSON.stringify(sendData),
+                    dataType: "json",
+                    contentType: "application/json",
+                    success: function(response_data) {
+                        console.log("success.")
+                    },
+                    failure: function(response_data) {
+                        console.log("post error.")
+                    },
+                    complete: function(jqXHT) {
+                        requestLock = false;
+                    }
+                })
+            }
+            else {
+                console.log("input error.")
+            }
         });
       </script>
     {% endblock %}

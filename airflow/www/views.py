@@ -685,6 +685,7 @@ class Airflow(AirflowViewMixin, BaseView):
     @login_required
     @wwwutils.action_logging
     def data_source(self, session=None):
+        #TODO: finish this
         dag_id = request.args.get('dag_id')
         dag = dagbag.get_dag(dag_id)
         root = request.args.get('root', '')
@@ -694,17 +695,47 @@ class Airflow(AirflowViewMixin, BaseView):
             root=root
         )
 
+    @expose('/update_data_source', methods=['POST'])
+    @login_required
+    @wwwutils.action_logging
+    def update_data_source(self, session=None):
+        #TODO: finish this
+        return wwwutils.json_response({
+            'success': '1'
+        })
+
+
     @expose('/group_stat')
     @login_required
     @wwwutils.action_logging
     def group_stat(self, session=None):
+        #TODO: finish this
         dag_id = request.args.get('dag_id')
         dag = dagbag.get_dag(dag_id)
         root = request.args.get('root', '')
+        data = {
+            'cpu': {
+                'used': 24,
+                'remain': 76
+            },
+            'memory': {
+                'used': 24,
+                'remain': 76
+            },
+            'disk': {
+                'used': 24,
+                'remain': 76
+            },
+            'network': {
+                'used': 24,
+                'remain': 76
+            },
+        }
         return self.render(
             'airflow/group_stat.html',
             dag=dag,
-            root=root
+            root=root,
+            data=data,
         )
 
     @expose('/dag_details')
@@ -1068,13 +1099,16 @@ class Airflow(AirflowViewMixin, BaseView):
             # ti_attrs=ti_attrs,
             # failed_dep_reasons=failed_dep_reasons or no_failed_deps_result,
             # task_id=task_id,
-            task_id='id',
+            task_id='',
             # execution_date=execution_date,
             execution_date='123',
             # special_attrs_rendered=special_attrs_rendered,
             form=form,
             root=root,
-            dag=dag, title=title
+            dag=dag, 
+            title=title,
+            targetTables = ['table1', 'table2'],
+            dataSources = ['a', 'b']
             )
 
     @expose('/newtask')
@@ -1102,15 +1136,27 @@ class Airflow(AirflowViewMixin, BaseView):
             # ti_attrs=ti_attrs,
             # failed_dep_reasons=failed_dep_reasons or no_failed_deps_result,
             # task_id=task_id,
-            task_id='id',
+            task_id='',
             # execution_date=execution_date,
             execution_date='123',
             # special_attrs_rendered=special_attrs_rendered,
             form=form,
             root=root,
-            dag=dag, title=title
+            dag=dag, 
+            title=title,
+            targetTables = ['table1', 'table2'],
+            dataSources = ['a', 'b']
             )
     
+    @expose('/update_task', methods=['POST'])
+    @login_required
+    @wwwutils.action_logging
+    def update_task(self):
+        #TODO: finish this
+        return wwwutils.json_response({
+            'success': '1'
+        })
+
     @expose('/xcom')
     @login_required
     @wwwutils.action_logging
@@ -1249,7 +1295,7 @@ class Airflow(AirflowViewMixin, BaseView):
         # Upon successful delete return to origin
         return redirect(origin)
 
-    @expose('/trigger', methods=['POST'])
+    @expose('/trigger', methods=['GET'])
     @login_required
     @wwwutils.action_logging
     @wwwutils.notify_owner
@@ -1880,6 +1926,16 @@ class Airflow(AirflowViewMixin, BaseView):
                 'ui_color': task.ui_color,
             }
 
+        tasks = [
+            {
+                'name': t.task_id,
+                'start_date': t.start_date,
+                'end_date': t.end_date,
+                'execution_timeout': t.execution_timeout,
+                'retries': t.retries
+            }
+            for t in dag.tasks]
+        
         data = {
             'name': '[DAG]',
             'children': [recurse_nodes(t, set()) for t in dag.roots],
@@ -1898,6 +1954,7 @@ class Airflow(AirflowViewMixin, BaseView):
             form=form,
             dag=dag, 
             data=data, blur=blur, num_runs=num_runs,
+            tasks=tasks,
             show_external_logs=bool(external_logs))
 
     @expose('/duration')

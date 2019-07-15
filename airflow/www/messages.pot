@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PROJECT VERSION\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2019-07-12 10:20+0800\n"
+"POT-Creation-Date: 2019-07-15 11:26+0800\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -283,103 +283,103 @@ msgstr ""
 msgid "Field must be greater than or equal to %(other_label)s."
 msgstr ""
 
-#: views.py:824
+#: views.py:854
 msgid "Error rendering template: "
 msgstr ""
 
-#: views.py:1005 views.py:1179
+#: views.py:1035 views.py:1210
 msgid "Task [{}.{}] doesn't seem to exist at the moment"
 msgstr ""
 
-#: views.py:1239
+#: views.py:1270
 msgid "Only works with the Celery or Kubernetes executors, sorry"
 msgstr ""
 
-#: views.py:1255
+#: views.py:1286
 msgid "Could not queue task instance for execution, dependencies not met: {}"
 msgstr ""
 
-#: views.py:1268
+#: views.py:1299
 msgid "Sent {} to the message queue, it should start any moment now."
 msgstr ""
 
-#: views.py:1308
+#: views.py:1339
 msgid "Cannot find dag {}"
 msgstr ""
 
-#: views.py:1316
+#: views.py:1347
 msgid "This run_id {} already exists"
 msgstr ""
 
-#: views.py:1330
+#: views.py:1361
 msgid "Triggered {}, it should start any moment now."
 msgstr ""
 
-#: views.py:1344
+#: views.py:1375
 msgid "{0} task instances have been cleared"
 msgstr ""
 
-#: views.py:1355
+#: views.py:1386
 msgid "No task instances to clear"
 msgstr ""
 
-#: views.py:1530
+#: views.py:1561
 msgid "Cannot find DAG: {}"
 msgstr ""
 
-#: views.py:1534
+#: views.py:1565
 msgid "Cannot find task {} in DAG {}"
 msgstr ""
 
-#: views.py:1545
+#: views.py:1576
 msgid "Marked {} on {} task instances"
 msgstr ""
 
-#: views.py:1780
+#: views.py:1811
 msgid "Left->Right"
 msgstr ""
 
-#: views.py:1781
+#: views.py:1812
 msgid "Right->Left"
 msgstr ""
 
-#: views.py:1782
+#: views.py:1813
 msgid "Top->Bottom"
 msgstr ""
 
-#: views.py:1783
+#: views.py:1814
 msgid "Bottom->Top"
 msgstr ""
 
-#: views.py:1799
+#: views.py:1830
 msgid "No tasks found"
 msgstr ""
 
-#: views.py:2249
+#: views.py:2306
 msgid "All DAGs are now up to date"
 msgstr ""
 
-#: views.py:2996
+#: views.py:3053
 msgid "Are you sure you want to delete selected records?"
 msgstr ""
 
-#: views.py:3023
+#: views.py:3080
 msgid "{count} dag runs were set to running"
 msgstr ""
 
-#: views.py:3048
+#: views.py:3105
 msgid "{count} dag runs and {altered_ti_count} task instances were set to failed"
 msgstr ""
 
-#: views.py:3074
+#: views.py:3131
 msgid "{count} dag runs and {altered_ti_count} task instances were set to success"
 msgstr ""
 
-#: templates/airflow/dag.html:221 templates/airflow/dag.html:326 views.py:3175
+#: templates/airflow/dag.html:221 templates/airflow/dag.html:326 views.py:3232
 msgid "Clear"
 msgstr ""
 
-#: views.py:3176
+#: views.py:3233
 msgid ""
 "Are you sure you want to clear the state of the selected task instance(s)"
 " and set their dagruns to the running state?"

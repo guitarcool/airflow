@@ -296,103 +296,103 @@ msgstr "无效的字段名称 \" %s\"。"
 msgid "Field must be greater than or equal to %(other_label)s."
 msgstr "值必须大于等于 %(other_label)s ."
 
-#: views.py:824
+#: views.py:854
 msgid "Error rendering template: "
 msgstr "模板渲染错误: "
 
-#: views.py:1005 views.py:1179
+#: views.py:1035 views.py:1210
 msgid "Task [{}.{}] doesn't seem to exist at the moment"
 msgstr "Task [{}.{}] 当前不存在"
 
-#: views.py:1239
+#: views.py:1270
 msgid "Only works with the Celery or Kubernetes executors, sorry"
 msgstr "对不起，只能由Celery或Kubernetes的程序执行"
 
-#: views.py:1255
+#: views.py:1286
 msgid "Could not queue task instance for execution, dependencies not met: {}"
 msgstr "不能将task实例加入到执行队列中，依赖缺失: {}"
 
-#: views.py:1268
+#: views.py:1299
 msgid "Sent {} to the message queue, it should start any moment now."
 msgstr "发送 {} 到消息队列，随时可以开始."
 
-#: views.py:1308
+#: views.py:1339
 msgid "Cannot find dag {}"
 msgstr "找不到 dag {}"
 
-#: views.py:1316
+#: views.py:1347
 msgid "This run_id {} already exists"
 msgstr "run_id {} 已存在"
 
-#: views.py:1330
+#: views.py:1361
 msgid "Triggered {}, it should start any moment now."
 msgstr "激活 {}, 该操作随时会开始."
 
-#: views.py:1344
+#: views.py:1375
 msgid "{0} task instances have been cleared"
 msgstr "{0} task 实例已经清除"
 
-#: views.py:1355
+#: views.py:1386
 msgid "No task instances to clear"
 msgstr "没有可清除的task实例"
 
-#: views.py:1530
+#: views.py:1561
 msgid "Cannot find DAG: {}"
 msgstr "找不到DAG:{}"
 
-#: views.py:1534
+#: views.py:1565
 msgid "Cannot find task {} in DAG {}"
 msgstr "无法找到task {} (位于DAG {})"
 
-#: views.py:1545
+#: views.py:1576
 msgid "Marked {} on {} task instances"
 msgstr "将 {} 标记于 {} task实例"
 
-#: views.py:1780
+#: views.py:1811
 msgid "Left->Right"
 msgstr "左->右"
 
-#: views.py:1781
+#: views.py:1812
 msgid "Right->Left"
 msgstr "右->左"
 
-#: views.py:1782
+#: views.py:1813
 msgid "Top->Bottom"
 msgstr "上->下"
 
-#: views.py:1783
+#: views.py:1814
 msgid "Bottom->Top"
 msgstr "下->上"
 
-#: views.py:1799
+#: views.py:1830
 msgid "No tasks found"
 msgstr "找不到task"
 
-#: views.py:2249
+#: views.py:2306
 msgid "All DAGs are now up to date"
 msgstr "所有DAG都已更新"
 
-#: views.py:2996
+#: views.py:3053
 msgid "Are you sure you want to delete selected records?"
 msgstr "你确定要删除这些记录吗?"
 
-#: views.py:3023
+#: views.py:3080
 msgid "{count} dag runs were set to running"
 msgstr "{count} dag运行状态设为运行中"
 
-#: views.py:3048
+#: views.py:3105
 msgid "{count} dag runs and {altered_ti_count} task instances were set to failed"
 msgstr "{count} dag 运行切 {altered_ti_count} task instances were set to failed"
 
-#: views.py:3074
+#: views.py:3131
 msgid "{count} dag runs and {altered_ti_count} task instances were set to success"
 msgstr ""
 
-#: templates/airflow/dag.html:221 templates/airflow/dag.html:326 views.py:3175
+#: templates/airflow/dag.html:221 templates/airflow/dag.html:326 views.py:3232
 msgid "Clear"
 msgstr "清除"
 
-#: views.py:3176
+#: views.py:3233
 msgid ""
 "Are you sure you want to clear the state of the selected task instance(s)"
 " and set their dagruns to the running state?"
@@ -647,7 +647,7 @@ msgstr "编辑"
 
 #: templates/airflow/dag.html:451 templates/airflow/dags.html:255
 msgid "Are you sure you want to run '\"+dag_id+\"' now?"
-msgstr "确定现在要运行’”+dag_id+”’吗？"
+msgstr "确定现在要运行'”+dag_id+”'吗？"
 
 #: templates/airflow/dag.html:459 templates/airflow/dags.html:263
 msgid ""
@@ -656,10 +656,8 @@ msgid ""
 "        EXCEPT Log.\n"
 "        This cannot be undone."
 msgstr ""
-"确定现在要删除 ‘”+dag_id+”’ 吗?\n"
-"        该操作会删除所有的元数据，DAG运行信息等。\n"
-"        日志不会被删除。\n"
-"        该操作不可撤销。"
+"确定现在要删除 '\"+dag_id+\"' 吗?\\n        该操作会删除所有的元数据，DAG运行信息等。\\n        "
+"日志不会被删除。\\n        该操作不可撤销。"
 
 #: templates/airflow/dag_details.html:45
 msgid "schedule_interval"
@@ -772,7 +770,7 @@ msgstr "显示停止的DAG"
 
 #: templates/airflow/dags.html:322
 msgid "this.active_dag_run + '/' + this.max_active_runs + ' active dag runs'"
-msgstr "this.active_dag_run + ‘/‘ + this.max_active_runs + ‘次运行’"
+msgstr "this.active_dag_run + '/' + this.max_active_runs + '次运行'"
 
 #: templates/airflow/duration_chart.html:37
 msgid "Cumulative Duration"
@@ -1433,7 +1431,7 @@ msgstr "详细"
 #~ "etc.\\n        EXCEPT Log.\\n        This "
 #~ "cannot be undone."
 #~ msgstr ""
-#~ "你确定现在要删除 ‘”+dag_id+”’ 吗?\\n        "
+#~ "你确定现在要删除 '”+dag_id+”' 吗?\\n        "
 #~ "该操作会删除所有的元数据，DAG运行信息等。\\n        日志不会被删除。\\n        "
 #~ "该操作不可撤销。"
 

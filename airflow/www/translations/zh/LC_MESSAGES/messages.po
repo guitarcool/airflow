@@ -296,117 +296,129 @@ msgstr "无效的字段名称 \" %s\"。"
 msgid "Field must be greater than or equal to %(other_label)s."
 msgstr "值必须大于等于 %(other_label)s ."
 
-#: views.py:793
+#: views.py:824
 msgid "Error rendering template: "
 msgstr "模板渲染错误: "
 
-#: views.py:974 views.py:1099
+#: views.py:1005 views.py:1179
 msgid "Task [{}.{}] doesn't seem to exist at the moment"
 msgstr "Task [{}.{}] 当前不存在"
 
-#: views.py:1159
+#: views.py:1239
 msgid "Only works with the Celery or Kubernetes executors, sorry"
 msgstr "对不起，只能由Celery或Kubernetes的程序执行"
 
-#: views.py:1175
+#: views.py:1255
 msgid "Could not queue task instance for execution, dependencies not met: {}"
 msgstr "不能将task实例加入到执行队列中，依赖缺失: {}"
 
-#: views.py:1188
+#: views.py:1268
 msgid "Sent {} to the message queue, it should start any moment now."
 msgstr "发送 {} 到消息队列，随时可以开始."
 
-#: views.py:1228
+#: views.py:1308
 msgid "Cannot find dag {}"
 msgstr "找不到 dag {}"
 
-#: views.py:1236
+#: views.py:1316
 msgid "This run_id {} already exists"
 msgstr "run_id {} 已存在"
 
-#: views.py:1250
+#: views.py:1330
 msgid "Triggered {}, it should start any moment now."
 msgstr "激活 {}, 该操作随时会开始."
 
-#: views.py:1264
+#: views.py:1344
 msgid "{0} task instances have been cleared"
 msgstr "{0} task 实例已经清除"
 
-#: views.py:1275
+#: views.py:1355
 msgid "No task instances to clear"
 msgstr "没有可清除的task实例"
 
-#: views.py:1450
+#: views.py:1530
 msgid "Cannot find DAG: {}"
 msgstr "找不到DAG:{}"
 
-#: views.py:1454
+#: views.py:1534
 msgid "Cannot find task {} in DAG {}"
 msgstr "无法找到task {} (位于DAG {})"
 
-#: views.py:1465
+#: views.py:1545
 msgid "Marked {} on {} task instances"
 msgstr "将 {} 标记于 {} task实例"
 
-#: views.py:1700
+#: views.py:1780
 msgid "Left->Right"
 msgstr "左->右"
 
-#: views.py:1701
+#: views.py:1781
 msgid "Right->Left"
 msgstr "右->左"
 
-#: views.py:1702
+#: views.py:1782
 msgid "Top->Bottom"
 msgstr "上->下"
 
-#: views.py:1703
+#: views.py:1783
 msgid "Bottom->Top"
 msgstr "下->上"
 
-#: views.py:1719
+#: views.py:1799
 msgid "No tasks found"
 msgstr "找不到task"
 
-#: views.py:2158
+#: views.py:2249
 msgid "All DAGs are now up to date"
 msgstr "所有DAG都已更新"
 
-#: views.py:2905
+#: views.py:2996
 msgid "Are you sure you want to delete selected records?"
 msgstr "你确定要删除这些记录吗?"
 
-#: views.py:2932
+#: views.py:3023
 msgid "{count} dag runs were set to running"
 msgstr "{count} dag运行状态设为运行中"
 
-#: views.py:2957
+#: views.py:3048
 msgid "{count} dag runs and {altered_ti_count} task instances were set to failed"
 msgstr "{count} dag 运行切 {altered_ti_count} task instances were set to failed"
 
-#: views.py:2983
+#: views.py:3074
 msgid "{count} dag runs and {altered_ti_count} task instances were set to success"
 msgstr ""
 
-#: templates/airflow/dag.html:221 templates/airflow/dag.html:326 views.py:3084
+#: templates/airflow/dag.html:221 templates/airflow/dag.html:326 views.py:3175
 msgid "Clear"
 msgstr "清除"
 
-#: views.py:3085
+#: views.py:3176
 msgid ""
 "Are you sure you want to clear the state of the selected task instance(s)"
 " and set their dagruns to the running state?"
 msgstr ""
 
+#: templates/admin/master.html:176
+msgid "The scheduler does not appear to be running."
+msgstr ""
+
+#: templates/admin/master.html:178
+msgid "Last heartbeat was received"
+msgstr ""
+
+#: templates/admin/master.html:181
+msgid "The DAGs list may not update, and new tasks will not be scheduled."
+msgstr ""
+
 #: templates/airflow/chart.html:38 templates/airflow/duration_chart.html:42
 #: templates/airflow/gantt.html:31 templates/airflow/graph.html:38
-#: templates/airflow/tree.html:31
+#: templates/airflow/list_tasks.html:41 templates/airflow/tree.html:31
 msgid "Base date"
 msgstr "日期"
 
 #: templates/airflow/chart.html:39 templates/airflow/duration_chart.html:43
 #: templates/airflow/gantt.html:32 templates/airflow/graph.html:39
-#: templates/airflow/tree.html:32
+#: templates/airflow/list_tasks.html:42 templates/airflow/tree.html:32
 msgid "Number of runs"
 msgstr "运行次数"
 
@@ -495,7 +507,7 @@ msgstr "甘特图"
 msgid "Details"
 msgstr "详情"
 
-#: templates/airflow/dag.html:102 templates/airflow/list_tasks.html:50
+#: templates/airflow/dag.html:102 templates/airflow/list_tasks.html:58
 msgid "Code"
 msgstr "代码"
 
@@ -729,7 +741,7 @@ msgstr "链接"
 msgid "Trigger Dag"
 msgstr "激活DAG"
 
-#: templates/airflow/dags.html:152 templates/airflow/list_tasks.html:46
+#: templates/airflow/dags.html:152 templates/airflow/list_tasks.html:54
 msgid "Tasks Duration"
 msgstr "task持续时间"
 
@@ -815,30 +827,31 @@ msgid "success"
 msgstr "成功"
 
 #: templates/airflow/graph.html:77 templates/airflow/list_tasks.html:34
+#: templates/airflow/nvd3.html:80
 msgid "Oops."
 msgstr "出错了。"
 
-#: templates/airflow/list_tasks.html:43
+#: templates/airflow/list_tasks.html:51
 msgid "Task"
 msgstr ""
 
-#: templates/airflow/list_tasks.html:44
+#: templates/airflow/list_tasks.html:52
 msgid "Start Date"
 msgstr "开始日期"
 
-#: templates/airflow/list_tasks.html:45
+#: templates/airflow/list_tasks.html:53
 msgid "End Date"
 msgstr "结束日期"
 
-#: templates/airflow/list_tasks.html:47
+#: templates/airflow/list_tasks.html:55
 msgid "Number of Retries"
 msgstr "重试次数"
 
-#: templates/airflow/list_tasks.html:48
+#: templates/airflow/list_tasks.html:56
 msgid "Result"
 msgstr ""
 
-#: templates/airflow/list_tasks.html:49 templates/airflow/task_instance.html:53
+#: templates/airflow/list_tasks.html:57 templates/airflow/task_instance.html:53
 msgid "Log"
 msgstr "日志"
 

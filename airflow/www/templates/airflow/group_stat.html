@@ -320,6 +320,9 @@
   pieChart('disk-stat', _formatData(cpuData), {showValue: false})
   pieChart('network-stat', _formatData(cpuData), {showValue: false})
 
+  $('#refresh_button').on('click', function(ev) {
+    window.location.reload();
+  })
 </script>
 
 {% endblock %}

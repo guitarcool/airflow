@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PROJECT VERSION\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2019-07-08 16:21+0800\n"
+"POT-Creation-Date: 2019-07-12 10:20+0800\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -283,117 +283,129 @@ msgstr ""
 msgid "Field must be greater than or equal to %(other_label)s."
 msgstr ""
 
-#: views.py:793
+#: views.py:824
 msgid "Error rendering template: "
 msgstr ""
 
-#: views.py:974 views.py:1099
+#: views.py:1005 views.py:1179
 msgid "Task [{}.{}] doesn't seem to exist at the moment"
 msgstr ""
 
-#: views.py:1159
+#: views.py:1239
 msgid "Only works with the Celery or Kubernetes executors, sorry"
 msgstr ""
 
-#: views.py:1175
+#: views.py:1255
 msgid "Could not queue task instance for execution, dependencies not met: {}"
 msgstr ""
 
-#: views.py:1188
+#: views.py:1268
 msgid "Sent {} to the message queue, it should start any moment now."
 msgstr ""
 
-#: views.py:1228
+#: views.py:1308
 msgid "Cannot find dag {}"
 msgstr ""
 
-#: views.py:1236
+#: views.py:1316
 msgid "This run_id {} already exists"
 msgstr ""
 
-#: views.py:1250
+#: views.py:1330
 msgid "Triggered {}, it should start any moment now."
 msgstr ""
 
-#: views.py:1264
+#: views.py:1344
 msgid "{0} task instances have been cleared"
 msgstr ""
 
-#: views.py:1275
+#: views.py:1355
 msgid "No task instances to clear"
 msgstr ""
 
-#: views.py:1450
+#: views.py:1530
 msgid "Cannot find DAG: {}"
 msgstr ""
 
-#: views.py:1454
+#: views.py:1534
 msgid "Cannot find task {} in DAG {}"
 msgstr ""
 
-#: views.py:1465
+#: views.py:1545
 msgid "Marked {} on {} task instances"
 msgstr ""
 
-#: views.py:1700
+#: views.py:1780
 msgid "Left->Right"
 msgstr ""
 
-#: views.py:1701
+#: views.py:1781
 msgid "Right->Left"
 msgstr ""
 
-#: views.py:1702
+#: views.py:1782
 msgid "Top->Bottom"
 msgstr ""
 
-#: views.py:1703
+#: views.py:1783
 msgid "Bottom->Top"
 msgstr ""
 
-#: views.py:1719
+#: views.py:1799
 msgid "No tasks found"
 msgstr ""
 
-#: views.py:2158
+#: views.py:2249
 msgid "All DAGs are now up to date"
 msgstr ""
 
-#: views.py:2905
+#: views.py:2996
 msgid "Are you sure you want to delete selected records?"
 msgstr ""
 
-#: views.py:2932
+#: views.py:3023
 msgid "{count} dag runs were set to running"
 msgstr ""
 
-#: views.py:2957
+#: views.py:3048
 msgid "{count} dag runs and {altered_ti_count} task instances were set to failed"
 msgstr ""
 
-#: views.py:2983
+#: views.py:3074
 msgid "{count} dag runs and {altered_ti_count} task instances were set to success"
 msgstr ""
 
-#: templates/airflow/dag.html:221 templates/airflow/dag.html:326 views.py:3084
+#: templates/airflow/dag.html:221 templates/airflow/dag.html:326 views.py:3175
 msgid "Clear"
 msgstr ""
 
-#: views.py:3085
+#: views.py:3176
 msgid ""
 "Are you sure you want to clear the state of the selected task instance(s)"
 " and set their dagruns to the running state?"
 msgstr ""
 
+#: templates/admin/master.html:176
+msgid "The scheduler does not appear to be running."
+msgstr ""
+
+#: templates/admin/master.html:178
+msgid "Last heartbeat was received"
+msgstr ""
+
+#: templates/admin/master.html:181
+msgid "The DAGs list may not update, and new tasks will not be scheduled."
+msgstr ""
+
 #: templates/airflow/chart.html:38 templates/airflow/duration_chart.html:42
 #: templates/airflow/gantt.html:31 templates/airflow/graph.html:38
-#: templates/airflow/tree.html:31
+#: templates/airflow/list_tasks.html:41 templates/airflow/tree.html:31
 msgid "Base date"
 msgstr ""
 
 #: templates/airflow/chart.html:39 templates/airflow/duration_chart.html:43
 #: templates/airflow/gantt.html:32 templates/airflow/graph.html:39
-#: templates/airflow/tree.html:32
+#: templates/airflow/list_tasks.html:42 templates/airflow/tree.html:32
 msgid "Number of runs"
 msgstr ""
 
@@ -482,7 +494,7 @@ msgstr ""
 msgid "Details"
 msgstr ""
 
-#: templates/airflow/dag.html:102 templates/airflow/list_tasks.html:50
+#: templates/airflow/dag.html:102 templates/airflow/list_tasks.html:58
 msgid "Code"
 msgstr ""
 
@@ -706,7 +718,7 @@ msgstr ""
 msgid "Trigger Dag"
 msgstr ""
 
-#: templates/airflow/dags.html:152 templates/airflow/list_tasks.html:46
+#: templates/airflow/dags.html:152 templates/airflow/list_tasks.html:54
 msgid "Tasks Duration"
 msgstr ""
 
@@ -792,30 +804,31 @@ msgid "success"
 msgstr ""
 
 #: templates/airflow/graph.html:77 templates/airflow/list_tasks.html:34
+#: templates/airflow/nvd3.html:80
 msgid "Oops."
 msgstr ""
 
-#: templates/airflow/list_tasks.html:43
+#: templates/airflow/list_tasks.html:51
 msgid "Task"
 msgstr ""
 
-#: templates/airflow/list_tasks.html:44
+#: templates/airflow/list_tasks.html:52
 msgid "Start Date"
 msgstr ""
 
-#: templates/airflow/list_tasks.html:45
+#: templates/airflow/list_tasks.html:53
 msgid "End Date"
 msgstr ""
 
-#: templates/airflow/list_tasks.html:47
+#: templates/airflow/list_tasks.html:55
 msgid "Number of Retries"
 msgstr ""
 
-#: templates/airflow/list_tasks.html:48
+#: templates/airflow/list_tasks.html:56
 msgid "Result"
 msgstr ""
 
-#: templates/airflow/list_tasks.html:49 templates/airflow/task_instance.html:53
+#: templates/airflow/list_tasks.html:57 templates/airflow/task_instance.html:53
 msgid "Log"
 msgstr ""
 

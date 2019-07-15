@@ -71,6 +71,8 @@ from airflow.api.common.experimental.mark_tasks import (set_dag_run_state_to_run
 from airflow.exceptions import AirflowException
 from airflow.models import BaseOperator, Connection, DagRun, errors, XCom
 from airflow.operators.subdag_operator import SubDagOperator
+from airflow.operators.dummy_operator import DummyOperator
+from airflow.operators.python_operator import PythonOperator
 from airflow.ti_deps.dep_context import DepContext, QUEUE_DEPS, SCHEDULER_DEPS
 from airflow.utils import timezone
 from airflow.utils.dates import infer_time_unit, scale_time_units, parse_execution_date
@@ -685,23 +687,51 @@ class Airflow(AirflowViewMixin, BaseView):
     @login_required
     @wwwutils.action_logging
     def data_source(self, session=None):
-        #TODO: finish this
+        #TODO: finish this: 
         dag_id = request.args.get('dag_id')
         dag = dagbag.get_dag(dag_id)
         root = request.args.get('root', '')
+        data = []
+        remote_dirs = ['ftp', 'sftp']
+        databases = ['MySQL', 'Oracle', 'DB2', 'Hive']
+
+        #TODO: 获取当前已有数据源、远程目录、数据库
+        #mock data
+        data.append({
+            'data_source_id': 'data_source_id_1',
+            'remote_dir': 'ftp',
+            'database': 'MySQL',
+            'address': 'www.testaddress.com',
+            'port': '8080',
+            'username': 'username1',
+            'password': 'password1',
+        })
+        data.append({
+            'data_source_id': 'data_source_id_2',
+            'remote_dir': 'sftp',
+            'database': 'DB2',
+            'address': 'www.testaddress2.com',
+            'port': '7070',
+            'username': 'username2',
+            'password': 'password2',
+        })
         return self.render(
             'airflow/data_source.html',
             dag=dag,
-            root=root
+            root=root,
+            data=data,
+            remote_dirs=remote_dirs,
+            databases=databases
         )
 
     @expose('/update_data_source', methods=['POST'])
     @login_required
     @wwwutils.action_logging
     def update_data_source(self, session=None):
-        #TODO: finish this
+        #TODO: finish this: 更新数据源（新增或修改）
+        data_source_id = request.form['data_source_id']
         return wwwutils.json_response({
-            'success': '1'
+            'success': 1
         })
 
 
@@ -709,7 +739,7 @@ class Airflow(AirflowViewMixin, BaseView):
     @login_required
     @wwwutils.action_logging
     def group_stat(self, session=None):
-        #TODO: finish this
+        #TODO: finish this: 获取集群状态
         dag_id = request.args.get('dag_id')
         dag = dagbag.get_dag(dag_id)
         root = request.args.get('root', '')
@@ -1152,7 +1182,8 @@ class Airflow(AirflowViewMixin, BaseView):
     @login_required
     @wwwutils.action_logging
     def update_task(self):
-        #TODO: finish this
+        #TODO: finish this: 更新task状态（新增或修改)
+        task_id=request.form['task_id']
         return wwwutils.json_response({
             'success': '1'
         })
@@ -1883,6 +1914,15 @@ class Airflow(AirflowViewMixin, BaseView):
         node_count = [0]
         node_limit = 5000 / max(1, len(dag.roots))
 
+
+        def get_duration(tid):
+            duration=''
+            if isinstance(tid, dict) and tid.get("state") == State.RUNNING \
+                    and tid["start_date"] is not None:
+                d = timezone.utcnow() - pendulum.parse(tid["start_date"])
+                duration = d.total_seconds()
+            return duration
+
         def recurse_nodes(task, visited):
             visited.add(task)
             node_count[0] += 1
@@ -1926,16 +1966,32 @@ class Airflow(AirflowViewMixin, BaseView):
                 'ui_color': task.ui_color,
             }
 
-        tasks = [
-            {
-                'name': t.task_id,
-                'start_date': t.start_date,
-                'end_date': t.end_date,
-                'execution_timeout': t.execution_timeout,
-                'retries': t.retries
-            }
-            for t in dag.tasks]
-        
+        tasks=[]
+        for task in dag.tasks:
+            if isinstance(task, PythonOperator)==True:
+                html_dict = {}
+                for template_field in task.__class__.template_fields:
+                    content = getattr(task, template_field)
+                    if template_field in attr_renderer:
+                        html_dict[template_field] = attr_renderer[template_field](content)
+                    else:
+                        html_dict[template_field] = (
+                            "<pre><code>" + str(content) + "</pre></code>")
+
+                tasks.append(
+                    {
+                        'name': task.task_id,
+                        'start_date': task.start_date,
+                        'end_date': task.end_date,
+                        'execution_timeout': task.execution_timeout,
+                        'retries': task.retries,
+                        'code': html_dict,
+                        'duration': get_duration(task),
+                        'state': task.state,
+                        'log': ''
+                    }
+                )
+
         data = {
             'name': '[DAG]',
             'children': [recurse_nodes(t, set()) for t in dag.roots],
@@ -1947,6 +2003,7 @@ class Airflow(AirflowViewMixin, BaseView):
         form = DateTimeWithNumRunsForm(data={'base_date': max_date,
                                              'num_runs': num_runs})
         external_logs = conf.get('elasticsearch', 'frontend')
+
         return self.render(
             'airflow/list_tasks.html',
             operators=sorted({op.__class__ for op in dag.tasks}, key=lambda x: x.__name__),

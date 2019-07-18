@@ -117,17 +117,13 @@
   </div>
   <div class="form-group row">
     <label class="col-form-label">目标表</label>
-    <select name="target_table" class="form-control">
-      {% for source in targetTables %}
-      <option value="{{source}}">{{source}}</option>
-      {% endfor %}
-    </select>
+    <input type="text" class="form-control" name="target_table" required>
   </div>
   <div class="form-group row">
     <label class="col-form-label">数据源名称</label>
     <select name="data_source" class="form-control">
       {% for source in dataSources %}
-      <option value="{{source}}">{{source}}</option>
+      <option value="{{source.id}}">{{source.conn_id}}</option>
       {% endfor %}
     </select>
   </div>

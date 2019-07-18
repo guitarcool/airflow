@@ -70,6 +70,7 @@ class Connection(Base, LoggingMixin):
         ('docker', 'Docker Registry',),
         ('fs', 'File (path)'),
         ('ftp', 'FTP',),
+        ('sftp', 'SFTP',),
         ('google_cloud_platform', 'Google Cloud Platform'),
         ('hdfs', 'HDFS',),
         ('http', 'HTTP',),

@@ -47,6 +47,7 @@ from airflow.models.base import Base, ID_LEN
 from airflow.models.dagbag import DagBag
 from airflow.models.dagpickle import DagPickle
 from airflow.models.dagrun import DagRun
+from airflow.models.etltask import ETLTask
 from airflow.models.taskinstance import TaskInstance, clear_task_instances
 from airflow.utils import timezone
 from airflow.utils.dates import cron_presets, date_range as utils_date_range
@@ -74,6 +75,17 @@ def get_last_dagrun(dag_id, session, include_externally_triggered=False):
     query = query.order_by(DR.execution_date.desc())
     return query.first()
 
+
+def get_etl_task_names(dag_id, session):
+    """
+    Returns a list of etl_tasks'names for a dag, None if there was none.
+    """
+    query = session.query(ETLTask.task_id).filter(ETLTask.dag_id == dag_id)
+    query = query.order_by(ETLTask.task_id)
+    result = query.all()
+    task_names = [r[0] for r in result]
+    print('etl_task_names:%s' % task_names)
+    return task_names
 
 @functools.total_ordering
 class DAG(BaseDag, LoggingMixin):
@@ -473,6 +485,11 @@ class DAG(BaseDag, LoggingMixin):
     def get_last_dagrun(self, session=None, include_externally_triggered=False):
         return get_last_dagrun(self.dag_id, session=session,
                                include_externally_triggered=include_externally_triggered)
+
+    @provide_session
+    def etl_tasks(self, session=None):
+        return get_etl_task_names(self.dag_id, session=session)
+
 
     @property
     def dag_id(self):

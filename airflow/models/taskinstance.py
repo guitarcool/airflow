@@ -42,6 +42,7 @@ from airflow.exceptions import (
     AirflowException, AirflowTaskTimeout, AirflowSkipException, AirflowRescheduleException
 )
 from airflow.models.base import Base, ID_LEN
+from airflow.models.etltask import ETLTask
 from airflow.models.log import Log
 from airflow.models.pool import Pool
 from airflow.models.taskfail import TaskFail
@@ -1122,6 +1123,13 @@ class TaskInstance(Base, LoggingMixin):
                 .first()
             )
             run_id = dag_run.run_id if dag_run else None
+            etl_task = (
+                session.query(ETLTask)
+                .filter_by(
+                    dag_id=task.dag.dag_id,
+                    task_id=task.task_id)
+                .first()
+            )
             session.expunge_all()
             session.commit()
 
@@ -1228,6 +1236,7 @@ class TaskInstance(Base, LoggingMixin):
             'params': params,
             'tables': tables,
             'task': task,
+            'etl_task': etl_task,
             'task_instance': self,
             'ti': self,
             'task_instance_key_str': ti_key_str,

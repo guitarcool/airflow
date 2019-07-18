@@ -27,6 +27,7 @@ import json
 import logging
 import math
 import os
+import sys
 import traceback
 from collections import defaultdict
 from datetime import timedelta
@@ -70,6 +71,7 @@ from airflow.api.common.experimental.mark_tasks import (set_dag_run_state_to_run
                                                         set_dag_run_state_to_failed)
 from airflow.exceptions import AirflowException
 from airflow.models import BaseOperator, Connection, DagRun, errors, XCom
+from airflow.models.etltask import ETLTask
 from airflow.operators.subdag_operator import SubDagOperator
 from airflow.operators.dummy_operator import DummyOperator
 from airflow.operators.python_operator import PythonOperator
@@ -687,7 +689,7 @@ class Airflow(AirflowViewMixin, BaseView):
     @login_required
     @wwwutils.action_logging
     def data_source(self, session=None):
-        #TODO: finish this: 
+        #TODO: finish this:
         dag_id = request.args.get('dag_id')
         dag = dagbag.get_dag(dag_id)
         root = request.args.get('root', '')
@@ -1107,21 +1109,16 @@ class Airflow(AirflowViewMixin, BaseView):
     @expose('/taskedit')
     @login_required
     @wwwutils.action_logging
-    def taskedit(self):
-        TI = models.TaskInstance
-
+    @provide_session
+    def taskedit(self, session=None):
         dag_id = request.args.get('dag_id')
         task_id = request.args.get('task_id')
-        # Carrying execution_date through, even though it's irrelevant for
-        # this context
-        # execution_date = request.args.get('execution_date')
-        # FIXME
-        execution_date = 'Mon Jul 08 2019 13:43:14 GMT+0800' 
-        dttm = pendulum.parse(execution_date)
-        form = DateTimeForm(data={'execution_date': '2019-07-06 00:00:00+00:00'})
         root = request.args.get('root', '')
         dag = dagbag.get_dag(dag_id)
-
+        etlTask = session.query(ETLTask).filter(
+                ETLTask.dag_id == dag_id,
+                ETLTask.task_id == task_id,
+            ).first()
         title = "Task Edit"
         return self.render(
             'airflow/task_edit.html',
@@ -1133,9 +1130,8 @@ class Airflow(AirflowViewMixin, BaseView):
             # execution_date=execution_date,
             execution_date='123',
             # special_attrs_rendered=special_attrs_rendered,
-            form=form,
             root=root,
-            dag=dag, 
+            dag=dag,
             title=title,
             targetTables = ['table1', 'table2'],
             dataSources = ['a', 'b']
@@ -1191,46 +1187,134 @@ class Airflow(AirflowViewMixin, BaseView):
     @expose('/newtask')
     @login_required
     @wwwutils.action_logging
-    def newtask(self):
-        TI = models.TaskInstance
-
+    @provide_session
+    def newtask(self, session=None):
         dag_id = request.args.get('dag_id')
-        task_id = request.args.get('task_id')
-        # Carrying execution_date through, even though it's irrelevant for
-        # this context
-        # execution_date = request.args.get('execution_date')
-        # FIXME
-        execution_date = 'Mon Jul 08 2019 13:43:14 GMT+0800' 
-        dttm = pendulum.parse(execution_date)
-        form = DateTimeForm(data={'execution_date': '2019-07-06 00:00:00+00:00'})
+        data_sources = session.query(Connection).order_by(Connection.conn_id).all()
         root = request.args.get('root', '')
         dag = dagbag.get_dag(dag_id)
-
         title = "Task Edit"
+
         return self.render(
             'airflow/task_edit.html',
-            # task_attrs=task_attrs,
-            # ti_attrs=ti_attrs,
-            # failed_dep_reasons=failed_dep_reasons or no_failed_deps_result,
-            # task_id=task_id,
-            task_id='',
-            # execution_date=execution_date,
-            execution_date='123',
-            # special_attrs_rendered=special_attrs_rendered,
-            form=form,
             root=root,
-            dag=dag, 
+            dag=dag,
             title=title,
-            targetTables = ['table1', 'table2'],
-            dataSources = ['a', 'b']
+            dataSources=data_sources
             )
-    
+
+    @expose('/alltasks')
+    @login_required
+    @wwwutils.action_logging
+    @provide_session
+    def alltasks(self, session=None):
+        dag_id = request.args.get('dag_id')
+        root = request.args.get('root', '')
+        dag = dagbag.get_dag(dag_id)
+        title = "Task Edit"
+        tasks = session.query(ETLTask).filter(ETLTask.dag_id == dag_id).order_by(ETLTask.task_id).all()
+
+        # TODO
+        return self.render(
+            'airflow/etltasks.html',
+            root=root,
+            dag=dag,
+            title=title,
+            tasks=tasks
+        )
+
+    @expose('/delete_task')
+    @login_required
+    @wwwutils.action_logging
+    @provide_session
+    def delete_task(self, session=None):
+        dag_id = request.args.get('dag_id')
+        task_id = request.args.get('task_id')
+        session.query(ETLTask).filter(
+            ETLTask.dag_id == dag_id,
+            ETLTask.task_id == task_id
+        ).delete()
+        session.commit()
+
+        return wwwutils.json_response({
+            'success': '1'
+        })
+
+    @expose('/add_task', methods=['POST'])
+    @login_required
+    @wwwutils.action_logging
+    @provide_session
+    def add_task(self, session=None):
+        try:
+            dag_id = request.args.get('dag_id')
+            print('dag_id:%s' % dag_id)
+            task_id = request.form['task_id']
+            src_path = request.form['source_address']
+            file_pattern = request.form['source_format']
+            dst_path = request.form['target_address']
+            dst_tbl = request.form['target_table']
+            conn_id = request.form['data_source']
+            print('conn_id: %s' % conn_id)
+            check_mode = request.form['executetion_token']
+            print('check_mode: %s' % check_mode)
+            period_type = request.form['period_type']
+            print('period_type: %s' % period_type)
+            period_weekday = request.form['period_day']
+            print('period_weekday: %s' % period_weekday)
+            period_hour = request.form['period_hour']
+            print('period_hour: %s' % period_hour)
+            exec_logic_type = request.form['executetion_logic_type']
+            exec_logic_preset_type = request.form['executetion_logic_default_setting']
+            exec_logic_custom_sql = request.form['executetion_logic_custom_sql']
+            error_handle = request.form['error_handle']
+            # etlTask = ETLTask(task_id='gas1', dag_id='hy_demo', src_path='src_path', file_pattern='file_pattern',
+            #                   dst_path='dst_path', dst_tbl='dst_tbl', conn_id=1, check_mode=0, check_mode_remk='',
+            #                   period_type=2, period_weekday=0, period_hour=1, exec_logic_type=0,
+            #                   exec_logic_preset_type=0, exec_logic_custom_sql=0, error_handle=0)
+            etlTask = ETLTask(task_id, dag_id, src_path, file_pattern, dst_path, dst_tbl, conn_id, check_mode, '',
+                              period_type, period_weekday, period_hour, exec_logic_type, exec_logic_preset_type,
+                              exec_logic_custom_sql,
+                              error_handle)
+            session.add(etlTask)
+            session.commit()
+        except Exception as e:
+            print(e)
+            print(sys.exc_info())
+        return wwwutils.json_response({
+            'success': '1'
+        })
+
     @expose('/update_task', methods=['POST'])
     @login_required
     @wwwutils.action_logging
-    def update_task(self):
-        #TODO: finish this: 更新task状态（新增或修改)
-        task_id=request.form['task_id']
+    @provide_session
+    def update_task(self, session=None):
+        try:
+            dag_id = request.args.get('dag_id')
+            print('dag_id:%s' % dag_id)
+            task_id = request.form['task_id']
+            src_path = request.form['source_address']
+            file_pattern = request.form['source_format']
+            dst_path = request.form['target_address']
+            dst_tbl = request.form['target_table']
+            conn_id = request.form['data_source']
+            print('conn_id: %s' % conn_id)
+            check_mode = request.form['executetion_token']
+            print('check_mode: %s' % check_mode)
+            period_type = request.form['period_type']
+            print('period_type: %s' % period_type)
+            period_weekday = request.form['period_day']
+            print('period_weekday: %s' % period_weekday)
+            period_hour = request.form['period_hour']
+            print('period_hour: %s' % period_hour)
+            exec_logic_type = request.form['executetion_logic_type']
+            exec_logic_preset_type = request.form['executetion_logic_default_setting']
+            exec_logic_custom_sql = request.form['executetion_logic_custom_sql']
+            error_handle = request.form['error_handle']
+            # TODO
+        except Exception as e:
+            print(e)
+            print(sys.exc_info())
         return wwwutils.json_response({
             'success': '1'
         })
@@ -1998,7 +2082,7 @@ class Airflow(AirflowViewMixin, BaseView):
             operators=sorted({op.__class__ for op in dag.tasks}, key=lambda x: x.__name__),
             root=root,
             form=form,
-            dag=dag, 
+            dag=dag,
             data=data, blur=blur, num_runs=num_runs,
             tasks=tasks,
             show_external_logs=bool(external_logs),

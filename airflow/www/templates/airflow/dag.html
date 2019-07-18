@@ -65,7 +65,7 @@
           <span class="glyphicon glyphicon-list-alt" aria-hidden="true"></span>
           {{_('List View')}}
       </a></li>
-      <li><a href="{{ url_for("airflow.newtask", dag_id=dag.dag_id, num_runs=num_runs, root=root) }}">
+      <li><a href="{{ url_for("airflow.taskeditlist", dag_id=dag.dag_id, num_runs=num_runs, root=root) }}">
           <span class="glyphicon glyphicon-edit" aria-hidden="true"></span>
           {{_('Add Task')}}
       </a></li>

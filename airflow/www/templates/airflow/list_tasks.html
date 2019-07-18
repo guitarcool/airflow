@@ -25,6 +25,11 @@
   {{ super() }}
   <link href="{{ url_for("static", filename="dataTables.bootstrap.css") }}" rel="stylesheet" type="text/css" >
   <link href="{{ url_for("static", filename="bootstrap-toggle.min.css") }}" rel="stylesheet" type="text/css">
+  <style>
+    #task_list td{
+      white-space: nowrap;
+    }
+  </style>
   {% endblock %}
   
   {% block body %}
@@ -38,13 +43,17 @@
     <span class="glyphicon glyphicon-refresh" aria-hidden="true"></span>
   </button> -->
   <form method="get" style="float:left;">
+    {{ state_token }}
     {{_('Base date')}}: {{ form.base_date(class_="form-control") }}
     {{_('Number of runs')}}: {{ form.num_runs(class_="form-control") }}
-    <input type="hidden" name="root" value="{{ root if root else '' }}">
+    {{_('Run')}}:
+    {{ form.execution_date(class_="form-control") | safe }}
+    <input type="hidden" name="root" value="{{ root }}">
     <input type="hidden" value="{{ dag.dag_id }}" name="dag_id">
-    <input type="submit" value="Go" class="btn btn-default">
     <input name="_csrf_token" type="hidden" value="{{ csrf_token() }}">
+    <input type="submit" value="Go" class="btn btn-default">
   </form>
+  <br/>
   <table id="task_list" class="table table-striped table-bordered">
       <thead>
         <tr>
@@ -59,20 +68,47 @@
         </tr>
       </thead>
       <tbody>
-        {% for item in tasks %}
+        {% for item in task_instances %}
             <tr>
-                <td>{{item.name}}</td>
+                <td onclick="call_modal('{{item.task_id}}', '{{item.execution_date}}', '{{item.try_number}}')"><a >{{item.task_id}}</a></td>
                 <td>{{item.start_date}}</td>
                 <td>{{item.end_date}}</td>
                 <td>{{item.duration}}</td>
-                <td>{{item.retries}}</td>
+                <td>{{item.try_number}}</td>
                 <td>{{item.state}}</td>
-                <td>{{item.log}}</td>
-                <td>{{item.code}}</td>
+                <td><a href="{{ url_for("airflow.log", dag_id=dag.dag_id, task_id=item.task_id, execution_date=item.execution_date) }}">{{_("Detail")}}</a></td>
+                <td>{{item.code|safe}}</td>
             </tr>
         {% endfor %}
       </tbody>
   </table>
+
+  <!-- Modal -->
+  <div class="modal fade" id="log_modal"
+        tabindex="-1" role="dialog"
+      aria-labelledby="myModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h4 class="modal-title" id="myModalLabel">
+            <span id='task_id'></span>
+            <button id="btn_filter" type="button" class="btn btn-default" title="{{_('Filter on this task and upstream ')}}">
+              <span class="glyphicon glyphicon-filter" style="margin-left: 0px;" aria-hidden="true"></span>
+            </button>
+            {{_('on')}}
+            <span id='execution_date'></span>
+          </h4>
+        </div>
+        <div class="modal-body">
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-default" data-dismiss="modal">
+            {{_('Close')}}
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
   {% endblock %}
   
   {% block tail %}
@@ -83,6 +119,11 @@
   <script>
 
     var tasks = {{ tasks|tojson|safe }};
+    var task_instances = {{ task_instances|tojson|safe }};
+
+    function call_log_modal(){
+      console.log('click')
+    }
   </script>
   {% endblock %}
   

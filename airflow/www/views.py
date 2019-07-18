@@ -1141,6 +1141,53 @@ class Airflow(AirflowViewMixin, BaseView):
             dataSources = ['a', 'b']
             )
 
+    @expose('/taskeditlist')
+    @login_required
+    @wwwutils.action_logging
+    @provide_session
+    def taskeditlist(self, session=None):
+        default_dag_run = conf.getint('webserver', 'default_dag_run_display_number')
+        dag_id = request.args.get('dag_id')
+        dag = dagbag.get_dag(dag_id)
+        if dag_id not in dagbag.dags:
+            flash('DAG "{0}" seems to be missing.'.format(dag_id), "error")
+            return redirect('/admin/')
+
+        root = request.args.get('root')
+        if root:
+            dag = dag.sub_dag(
+                task_regex=root,
+                include_downstream=False,
+                include_upstream=True)
+
+        arrange = request.args.get('arrange', dag.orientation)
+
+        dt_nr_dr_data = get_date_time_num_runs_dag_runs_form_data(request, session, dag)
+        dt_nr_dr_data['arrange'] = arrange
+        dttm = dt_nr_dr_data['dttm']
+
+        # task_instances = {
+        #     ti.task_id: alchemy_to_dict(ti)
+        #     for ti in dag.get_task_instances(dttm, dttm, session=session)}
+        task_instances = []
+        for ti in dag.get_task_instances(dttm, dttm, session=session):
+            item=alchemy_to_dict(ti)
+            item['task_id']=ti.task_id
+            task = copy.copy(dag.get_task(ti.task_id))
+            for attr_name in attr_renderer:
+                if hasattr(task, attr_name):
+                    source = getattr(task, attr_name)
+                    item['code']= attr_renderer[attr_name](source)
+            task_instances.append(item)
+
+
+        data={}
+        return self.render(
+            'airflow/task_edit_list.html',
+            task_instances=task_instances,
+            dag=dag
+            )
+
     @expose('/newtask')
     @login_required
     @wwwutils.action_logging
@@ -1872,6 +1919,8 @@ class Airflow(AirflowViewMixin, BaseView):
                 include_downstream=False,
                 include_upstream=True)
 
+        arrange = request.args.get('arrange', dag.orientation)
+
         base_date = request.args.get('base_date')
         num_runs = request.args.get('num_runs')
         num_runs = int(num_runs) if num_runs else default_dag_run
@@ -1898,23 +1947,6 @@ class Airflow(AirflowViewMixin, BaseView):
         max_date = max(dates) if dates else None
         min_date = min(dates) if dates else None
 
-        tis = dag.get_task_instances(
-            start_date=min_date, end_date=base_date, session=session)
-        task_instances = {}
-        for ti in tis:
-            tid = alchemy_to_dict(ti)
-            dr = dag_runs.get(ti.execution_date)
-            tid['external_trigger'] = dr['external_trigger'] if dr else False
-            task_instances[(ti.task_id, ti.execution_date)] = tid
-
-        expanded = []
-        # The default recursion traces every path so that tree view has full
-        # expand/collapse functionality. After 5,000 nodes we stop and fall
-        # back on a quick DFS search for performance. See PR #320.
-        node_count = [0]
-        node_limit = 5000 / max(1, len(dag.roots))
-
-
         def get_duration(tid):
             duration=''
             if isinstance(tid, dict) and tid.get("state") == State.RUNNING \
@@ -1922,88 +1954,45 @@ class Airflow(AirflowViewMixin, BaseView):
                 d = timezone.utcnow() - pendulum.parse(tid["start_date"])
                 duration = d.total_seconds()
             return duration
+        
+        dt_nr_dr_data = get_date_time_num_runs_dag_runs_form_data(request, session, dag)
+        dt_nr_dr_data['arrange'] = arrange
+        dttm = dt_nr_dr_data['dttm']
 
-        def recurse_nodes(task, visited):
-            visited.add(task)
-            node_count[0] += 1
-
-            children = [
-                recurse_nodes(t, visited) for t in task.upstream_list
-                if node_count[0] < node_limit or t not in visited]
-
-            # D3 tree uses children vs _children to define what is
-            # expanded or not. The following block makes it such that
-            # repeated nodes are collapsed by default.
-            children_key = 'children'
-            if task.task_id not in expanded:
-                expanded.append(task.task_id)
-            elif children:
-                children_key = "_children"
-
-            def set_duration(tid):
-                if isinstance(tid, dict) and tid.get("state") == State.RUNNING \
-                        and tid["start_date"] is not None:
-                    d = timezone.utcnow() - pendulum.parse(tid["start_date"])
-                    tid["duration"] = d.total_seconds()
-                return tid
-
-            return {
-                'name': task.task_id,
-                'instances': [
-                    set_duration(task_instances.get((task.task_id, d))) or {
-                        'execution_date': d.isoformat(),
-                        'task_id': task.task_id
-                    }
-                    for d in dates],
-                children_key: children,
-                'num_dep': len(task.upstream_list),
-                'operator': task.task_type,
-                'retries': task.retries,
-                'owner': task.owner,
-                'start_date': task.start_date,
-                'end_date': task.end_date,
-                'depends_on_past': task.depends_on_past,
-                'ui_color': task.ui_color,
+        # task_instances = {
+        #     ti.task_id: alchemy_to_dict(ti)
+        #     for ti in dag.get_task_instances(dttm, dttm, session=session)}
+        task_instances = []
+        for ti in dag.get_task_instances(dttm, dttm, session=session):
+            item=alchemy_to_dict(ti)
+            item['task_id']=ti.task_id
+            task = copy.copy(dag.get_task(ti.task_id))
+            for attr_name in attr_renderer:
+                if hasattr(task, attr_name):
+                    source = getattr(task, attr_name)
+                    item['code']= attr_renderer[attr_name](source)
+            task_instances.append(item)
+        
+        tasks = {
+            t.task_id: {
+                'dag_id': t.dag_id,
+                'task_type': t.task_type,
             }
-
-        tasks=[]
-        for task in dag.tasks:
-            if isinstance(task, PythonOperator)==True:
-                html_dict = {}
-                for template_field in task.__class__.template_fields:
-                    content = getattr(task, template_field)
-                    if template_field in attr_renderer:
-                        html_dict[template_field] = attr_renderer[template_field](content)
-                    else:
-                        html_dict[template_field] = (
-                            "<pre><code>" + str(content) + "</pre></code>")
-
-                tasks.append(
-                    {
-                        'name': task.task_id,
-                        'start_date': task.start_date,
-                        'end_date': task.end_date,
-                        'execution_timeout': task.execution_timeout,
-                        'retries': task.retries,
-                        'code': html_dict,
-                        'duration': get_duration(task),
-                        'state': task.state,
-                        'log': ''
-                    }
-                )
-
-        data = {
-            'name': '[DAG]',
-            'children': [recurse_nodes(t, set()) for t in dag.roots],
-            'instances': [dag_runs.get(d) or {'execution_date': d.isoformat()} for d in dates],
-        }
+            for t in dag.tasks}
 
         session.commit()
 
-        form = DateTimeWithNumRunsForm(data={'base_date': max_date,
-                                             'num_runs': num_runs})
+        class GraphForm(DateTimeWithNumRunsWithDagRunsForm):
+            arrange = SelectField("Layout", choices=(
+                ('LR', lazy_gettext("Left->Right")),
+                ('RL', lazy_gettext("Right->Left")),
+                ('TB', lazy_gettext("Top->Bottom")),
+                ('BT', lazy_gettext("Bottom->Top")),
+            ))
+        form = GraphForm(data=dt_nr_dr_data)
+        form.execution_date.choices = dt_nr_dr_data['dr_choices']
         external_logs = conf.get('elasticsearch', 'frontend')
-
+        data={}
         return self.render(
             'airflow/list_tasks.html',
             operators=sorted({op.__class__ for op in dag.tasks}, key=lambda x: x.__name__),
@@ -2012,7 +2001,9 @@ class Airflow(AirflowViewMixin, BaseView):
             dag=dag, 
             data=data, blur=blur, num_runs=num_runs,
             tasks=tasks,
-            show_external_logs=bool(external_logs))
+            show_external_logs=bool(external_logs),
+            task_instances=task_instances
+            )
 
     @expose('/duration')
     @login_required
@@ -3327,7 +3318,7 @@ class ConnectionModelView(wwwutils.SuperUserMixin, AirflowModelView):
         'extra__grpc__credentials_pem_file',
         'extra__grpc__scopes',
     )
-    verbose_name = "Connection"
+    verbose_name = _("Connection")
     verbose_name_plural = "Connections"
     column_default_sort = ('conn_id', False)
     column_list = ('conn_id', 'conn_type', 'host', 'port', 'is_encrypted', 'is_extra_encrypted',)

@@ -1169,8 +1169,6 @@ class Airflow(AirflowViewMixin, BaseView):
                     item['code']= attr_renderer[attr_name](source)
             task_instances.append(item)
 
-
-        data={}
         return self.render(
             'airflow/task_edit_list.html',
             task_instances=task_instances,
@@ -1182,7 +1180,7 @@ class Airflow(AirflowViewMixin, BaseView):
     @wwwutils.action_logging
     @provide_session
     def newtask(self, session=None):
-        dag_id = request.form['dag_id']
+        dag_id = request.args.get('dag_id')
         data_sources = session.query(Connection).order_by(Connection.conn_id).all()
         root = request.args.get('root', '')
         dag = dagbag.get_dag(dag_id)
@@ -1239,7 +1237,7 @@ class Airflow(AirflowViewMixin, BaseView):
     @provide_session
     def add_task(self, session=None):
         try:
-            dag_id = request.args.get('dag_id')
+            dag_id = request.form['dag_id']
             print('dag_id:%s' % dag_id)
             task_id = request.form['task_id']
             src_path = request.form['source_address']

@@ -22,31 +22,48 @@
 
 {% block head_css %}
 {{ super() }}
+<style>
+  #task_edit_list_alert {
+    width: 80%;
+    margin: auto;
+    position: fixed;
+    top: 80px;
+  }
+</style>
 {% endblock %}
 
 {% block body %}
 {{ super() }}
-
-<table id="task_list" class="table table-striped table-bordered">
+<div id="task_edit_list_alert" style="display: none; margin-top: 10px;" role="alert">
+    <span class="glyphicon glyphicon-exclamation-sign" aria-hidden="true"></span>
+    <span class="content"></span>
+</div>
+<table id="task_edit_list" class="table table-striped table-bordered">
+    
     <thead>
       <tr>
-          <td>{{_('Task')}}</td>
-          <td>{{_('Start Date')}}</td>
-          <td>{{_('End Date')}}</td>
-          <td>{{_('Tasks Duration')}}</td>
-          <td>{{_('Number of Retries')}}</td>
-          <td>{{_('Result')}}</td>
+          <th>{{_('Task')}}</th>
+          <th>源地址</th>
+          <th>源文件格式</th>
+          <th>目标地址</th>
+          <th>目标表</th>
+          <th>数据源</th>
+          <th>操作</th>
       </tr>
     </thead>
     <tbody>
-      {% for item in task_instances %}
+      {% for item in tasks %}
           <tr>
               <td><a href="{{url_for('airflow.taskedit', dag_id=dag.dag_id, task_id=item.task_id)}}">{{item.task_id}}</a></td>
-              <td>{{item.start_date}}</td>
-              <td>{{item.end_date}}</td>
-              <td>{{item.duration}}</td>
-              <td>{{item.try_number}}</td>
-              <td>{{item.state}}</td>
+              <td>{{item.src_path}}</td>
+              <td>{{item.file_pattern}}</td>
+              <td>{{item.dst_path}}</td>
+              <td>{{item.dst_tbl}}</td>
+              <td>{{ds_dict[item.conn_id]}}</td>
+              <td>
+                  <span class="glyphicon glyphicon-trash" title="删除" 
+                  data-task_id="{{item.task_id}}" onclick="task_delete_btn_handler(event)"></span>
+              </td>
           </tr>
       {% endfor %}
     </tbody>
@@ -54,4 +71,54 @@
 {% endblock %}
 {% block tail %}
 {{ super() }}
+<script>
+    function _requestSuccessHandler(target){
+        var deleteNode = target.parentNode;
+        for(deleteNode; !/^tr$/gi.test(deleteNode.tagName); deleteNode=deleteNode.parentNode){
+        }
+        // delete tr
+        deleteNode.parentNode.removeChild(deleteNode);
+        _alert('删除成功', 'success');
+    }
+    function _requestFailHandler(errorMessage){
+        _alert(errorMessage, 'error');
+    }
+    function _alert(message, state){
+        $('#task_edit_list_alert .content').text(message);
+        $('#task_edit_list_alert').attr('class', 'alert alert-'+state);
+        $('#task_edit_list_alert').fadeIn(100).delay(3000).fadeOut(100);
+    }
+    function task_delete_btn_handler(ev){
+        var target = ev.target;
+        var dataset = target.dataset;
+        var task_id = dataset['task_id'];
+
+        if(confirm('你确定要删除"'+task_id+'"吗?')) {
+            // confirm
+            $.ajax({
+                method: "GET",
+                url: '{{ url_for("airflow.delete_task") }}',
+                data: {
+                    dag_id: "{{dag.dag_id}}",
+                    task_id: task_id,
+                },
+                success: function (response_data) {
+                    if(response_data && !!response_data.success) {
+                        _requestSuccessHandler(target);
+                    } else {
+                        _requestFailHandler(response_data.message);
+                    }
+                },
+                failure: function (response_data) {
+                    _requestFailHandler('删除失败');
+                },
+                complete: function (jqXHT) {
+                    requestLock = false;
+                }
+            })
+        } else {
+            // cancel
+        }
+    }
+</script>
 {% endblock %}

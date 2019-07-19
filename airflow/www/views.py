@@ -1148,7 +1148,6 @@ class Airflow(AirflowViewMixin, BaseView):
                 task_regex=root,
                 include_downstream=False,
                 include_upstream=True)
-
         etl_tasks = session.query(ETLTask).filter(ETLTask.dag_id == dag_id).order_by(ETLTask.task_id).all()
         return self.render(
             'airflow/task_edit_list.html',
@@ -1161,7 +1160,7 @@ class Airflow(AirflowViewMixin, BaseView):
     @wwwutils.action_logging
     @provide_session
     def newtask(self, session=None):
-        dag_id = request.form('dag_id')
+        dag_id = request.args.get('dag_id')
         data_sources = session.query(Connection).order_by(Connection.conn_id).all()
         root = request.args.get('root', '')
         dag = dagbag.get_dag(dag_id)

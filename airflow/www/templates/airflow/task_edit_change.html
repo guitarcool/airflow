@@ -136,7 +136,7 @@
     <label class="col-form-label">数据源名称</label>
     <select name="data_source" class="form-control" value="{{ etlTask.conn_id }}">
       {% for source in dataSources %}
-      <option value="{{source}}">{{source}}</option>
+      <option value="{{source.id}}">{{source.conn_id}}</option>
       {% endfor %}
     </select>
   </div>

@@ -58,6 +58,10 @@
     resize: none;
   }
 
+  select[name="executetion_token"]~.hour-select {
+    display: none;
+  }
+
   input[name="period_type"][value="2"]:checked~.day-select {
     display: inline-block;
   }
@@ -143,7 +147,7 @@
   </div>
   <div class="form-group row">
     <label class="col-form-label">执行标志</label>
-    <select name="executetion_token" class="form-control" value="{{ etlTask.check_mode }}">
+    <select name="executetion_token" class="form-control" onchange="toggleExecutetionTokenTime()">
       {% for i in [[0,"标志文件"], [1,"文件大小不变"], [2,"固定时间之后"]] %}
         <option value="{{i[0]}}"
         {%-if etlTask.check_mode is none and i[0]==0 -%}selected{%- endif -%}
@@ -151,6 +155,14 @@
         >{{i[1]}}</option>
       {% endfor %}
     </select>
+    <span class="hour-select">
+      <select name="check_mode_remk" class="form-control inline-block">
+        {% for i in range(0, 23) %}
+        <option value="{{i}}" {%-if etlTask.check_mode_remk==i -%}selected{%- endif -%}>{{i}}</option>
+        {% endfor %}
+      </select>
+      点
+    </span>
   </div>
   <div class="form-group row">
     <label class="col-form-label">周期</label>
@@ -223,23 +235,7 @@
 </form>
 {% endblock %}
 {% block tail %}
-<script src="{{ admin_static.url(filename='vendor/bootstrap-daterangepicker/daterangepicker.js') }}"></script>
-<script src="{{ admin_static.url(filename='admin/js/form-1.0.0.js') }}"></script>
 <script>
-  $(document).ready(function () {
-    function date_change() {
-      execution_date = $("input#execution_date").val().replace(' ', 'T');
-      loc = decodeURIComponent(window.location.href);
-      loc = loc.replace('{{ execution_date }}', execution_date);
-      window.location = loc;
-    }
-    $("input#execution_date").on("change.daterangepicker", function () {
-      date_change();
-    });
-    $("input#execution_date").on("apply.daterangepicker", function () {
-      date_change();
-    });
-  });
 
   var requestLock = false;
   $(".btn.btn-submit").click(function () {
@@ -253,6 +249,7 @@
       target_table: f.target_table.value,
       data_source: f.data_source.value,
       executetion_token: f.executetion_token.value,
+      check_mode_remk: f.check_mode_remk.value,
       period_type: f.period_type.value,
       period_day: f.period_day.value,
       period_hour: f.period_hour.value,
@@ -293,6 +290,18 @@
       console.log("input error.")
     }
   });
+
+  function toggleExecutetionTokenTime(){
+    var target = $('select[name="executetion_token"]')[0];
+    var value = target.value;
+
+    if(value == 2){
+      $('select[name="executetion_token"]~.hour-select').show();
+    } else {
+      $('select[name="executetion_token"]~.hour-select').hide();
+    }
+  }
+  toggleExecutetionTokenTime();
 </script>
 {{ super() }}
 {% endblock %}

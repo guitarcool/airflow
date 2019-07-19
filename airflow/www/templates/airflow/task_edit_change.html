@@ -143,9 +143,12 @@
   <div class="form-group row">
     <label class="col-form-label">执行标志</label>
     <select name="executetion_token" class="form-control" value="{{ etlTask.check_mode }}">
-      <option value="0">标志文件</option>
-      <option value="1">文件大小不变</option>
-      <option value="2">固定时间之后</option>
+      {% for i in [[0,"标志文件"], [1,"文件大小不变"], [2,"固定时间之后"]] %}
+        <option value="{{i[0]}}"
+        {%-if etlTask.check_mode is none and i[0]==0 -%}selected{%- endif -%}
+        {%-if etlTask.check_mode==i[0] -%}selected{%- endif -%}
+        >{{i[1]}}</option>
+      {% endfor %}
     </select>
   </div>
   <div class="form-group row">

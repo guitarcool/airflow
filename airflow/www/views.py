@@ -1135,7 +1135,6 @@ class Airflow(AirflowViewMixin, BaseView):
     @wwwutils.action_logging
     @provide_session
     def taskeditlist(self, session=None):
-        default_dag_run = conf.getint('webserver', 'default_dag_run_display_number')
         dag_id = request.args.get('dag_id')
         dag = dagbag.get_dag(dag_id)
         if dag_id not in dagbag.dags:
@@ -1149,9 +1148,12 @@ class Airflow(AirflowViewMixin, BaseView):
                 include_downstream=False,
                 include_upstream=True)
         etl_tasks = session.query(ETLTask).filter(ETLTask.dag_id == dag_id).order_by(ETLTask.task_id).all()
+        data_sources = session.query(Connection).order_by(Connection.conn_id).all()
+        ds_dict = {data_source.id:data_source.conn_id for data_source in data_sources}
         return self.render(
             'airflow/task_edit_list.html',
             tasks=etl_tasks,
+            ds_dict=ds_dict,
             dag=dag
             )
 
@@ -1220,6 +1222,11 @@ class Airflow(AirflowViewMixin, BaseView):
             dag_id = request.args.get('dag_id')
             print('dag_id:%s' % dag_id)
             task_id = request.form['task_id']
+            if not task_id:
+                return wwwutils.json_response({
+                    'success': '0',
+                    'message': '任务名不能为空'
+                })
             src_path = request.form['source_address']
             file_pattern = request.form['source_format']
             dst_path = request.form['target_address']
@@ -1247,7 +1254,10 @@ class Airflow(AirflowViewMixin, BaseView):
                 ETLTask.task_id == task_id,
             ).order_by(ETLTask.task_id).first()
             if etl_task:
-                flash(lazy_gettext("Task [{}.{}] is already exists").format(dag_id, task_id), "error")
+                return wwwutils.json_response({
+                    'success': '0',
+                    'message': '任务[%s.%s]已经存在' % (dag_id, task_id)
+                })
             else:
                 etl_task = ETLTask(task_id, dag_id, src_path, file_pattern, dst_path, dst_tbl, conn_id, check_mode, '',
                                    period_type, period_weekday, period_hour, exec_logic_type, exec_logic_preset_type,

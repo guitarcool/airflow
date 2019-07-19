@@ -1106,7 +1106,7 @@ class Airflow(AirflowViewMixin, BaseView):
             root=root,
             dag=dag, title=title)
 
-    @expose('/taskedit')
+    @expose('/taskeditchange')
     @login_required
     @wwwutils.action_logging
     @provide_session

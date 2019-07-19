@@ -231,7 +231,6 @@
 </form>
 {% endblock %}
 {% block tail %}
-{{ super() }}
 <script src="{{ admin_static.url(filename='vendor/bootstrap-daterangepicker/daterangepicker.js') }}"></script>
 <script src="{{ admin_static.url(filename='admin/js/form-1.0.0.js') }}"></script>
 <script>
@@ -277,8 +276,13 @@
         url: '{{ url_for("airflow.add_task",dag_id=dag.dag_id) }}',
         data: sendData,
         success: function (response_data) {
-          $('#task_edit_alert_success .content').text('修改成功');
-          $('#task_edit_alert_success').fadeIn(100).delay(3000).fadeOut(100);
+          if(response_data && !!~~response_data.success) {
+            $('#task_edit_alert_success .content').text('修改成功');
+            $('#task_edit_alert_success').fadeIn(100).delay(3000).fadeOut(100);
+          } else {
+            $('#task_edit_alert_error .content').text(response.message || '修改失败');
+            $('#task_edit_alert_error').fadeIn(100).delay(3000).fadeOut(100);
+          }
         },
         failure: function (response_data) {
           $('#task_edit_alert_error .content').text('修改失败');
@@ -292,6 +296,6 @@
       console.log("input error.")
     }
   });
-
 </script>
+{{ super() }}
 {% endblock %}

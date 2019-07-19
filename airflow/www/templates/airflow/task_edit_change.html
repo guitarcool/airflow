@@ -87,7 +87,7 @@
 {% block navlinks %}
 <ul class="nav nav-tabs">
     <li>
-        <a href="{{ return_url }}">{{ _('List') }}{% if count %} ({{ count }}){% endif %}</a>
+        <a href="{{ url_for("airflow.taskeditlist", dag_id=dag.dag_id)}}">{{ _('List') }}{% if count %} ({{ count }}){% endif %}</a>
     </li>
     <li>
         <a href="{{ get_url('airflow.newtask', dag_id=dag.dag_id) }}" title="{{ _('Create New Record') }}">{{ _('Create') }}</a>
@@ -151,51 +151,28 @@
   <div class="form-group row">
     <label class="col-form-label">周期</label>
     <div class="">
-      <input type="radio" name="period_type" class="form-check-input" value="0" checked>
-      <label class="form-check-label">当天</label>
-      <input type="radio" name="period_type" class="form-check-input" value="1">
-      <label class="form-check-label">每天</label>
-      <input type="radio" name="period_type" class="form-check-input" value="2">
-      <label class="form-check-label">每周</label>
+      {% for i in [[0,"当天"], [1,"每天"], [2,"每周"]] %}
+      <input type="radio" name="period_type" class="form-check-input" value="{{i[0]}}" 
+       {%-if etlTask.period_type is none and i[0]==0 -%}checked{%- endif -%}
+       {%-if etlTask.period_type==i[0] -%}checked{%- endif -%}>
+      <label class="form-check-label">{{i[1]}}</label>
+      {% endfor %}
       <br/>
       <span class="day-select">
         周
         <select name="period_day" class="form-control inline-block" value="{{ etlTask.period_weekday }}">
-          <option value="0">日</option>
-          <option value="1">一</option>
-          <option value="2">二</option>
-          <option value="3">三</option>
-          <option value="4">四</option>
-          <option value="5">五</option>
-          <option value="6">六</option>
+          {% for i in [
+            [0,"日"], [1,"一"], [2,"二"], [3,"三"], [4,"四"], [5,"五"], [6,"六"]
+          ] %}
+          <option value="{{i[0]}}" {%-if etlTask.period_weekday==i[0] -%}selected{%- endif -%}>{{i[1]}}</option>
+          {% endfor %}
         </select>
       </span>
       <span class="hour-select">
         <select name="period_hour" class="form-control inline-block" value="{{ etlTask.period_hour }}">
-          <option value="0">0</option>
-          <option value="1">1</option>
-          <option value="2">2</option>
-          <option value="3">3</option>
-          <option value="4">4</option>
-          <option value="5">5</option>
-          <option value="6">6</option>
-          <option value="7">7</option>
-          <option value="8">8</option>
-          <option value="9">9</option>
-          <option value="10">10</option>
-          <option value="11">11</option>
-          <option value="12">12</option>
-          <option value="13">13</option>
-          <option value="14">14</option>
-          <option value="15">15</option>
-          <option value="16">16</option>
-          <option value="17">17</option>
-          <option value="18">18</option>
-          <option value="19">19</option>
-          <option value="20">20</option>
-          <option value="21">21</option>
-          <option value="22">22</option>
-          <option value="23">23</option>
+          {% for i in range(0, 23) %}
+          <option value="{{i}}" {%-if etlTask.period_hour==i -%}selected{%- endif -%}>{{i}}</option>
+          {% endfor %}
         </select>
         点
       </span>
@@ -204,16 +181,20 @@
   <div class="form-group row">
     <label class="col-form-label">执行逻辑</label>
     <br/>
-    <input type="radio" class="form-check-input" name="executetion_logic_type" value="0" checked><label
-      class="col-form-label">系统预置</label>
-    <input type="radio" class="form-check-input" name="executetion_logic_type" value="1"><label
-      class="col-form-label">自定义SQL</label>
+    {% for i in [[0,"系统预置"], [1,"自定义SQL"]] %}
+    <input type="radio" class="form-check-input" name="executetion_logic_type" value="{{i[0]}}" 
+      {%-if etlTask.exec_logic_type is none and i[0]==0 -%}checked{%- endif -%}
+      {%-if etlTask.exec_logic_type==i[0] -%}checked{%- endif -%}><label
+      class="col-form-label">{{i[1]}}</label>
+    {% endfor %}
     <div class="system-config-select">
       <select name="executetion_logic_default_setting" class="form-control" value="{{ etlTask.exec_logic_preset_type }}">
-        <option value="0">拉链</option>
-        <option value="1">覆盖插入</option>
-        <option value="2">更新</option>
-        <option value="3">Sqoop</option>
+        {% for i in [[0,"拉链"], [1,"覆盖插入"], [2,"更新"], [3,"Sqoop"]] %}
+          <option value="{{i[0]}}"
+          {%-if etlTask.exec_logic_preset_type is none and i[0]==0 -%}selected{%- endif -%}
+          {%-if etlTask.exec_logic_preset_type==i[0] -%}selected{%- endif -%}
+          >{{i[1]}}</option>
+        {% endfor %}
       </select>
     </div>
     <div class="custom-sql-input">
@@ -224,8 +205,12 @@
   <div class="form-group row">
     <label class="col-form-label">出错处理</label>
     <select name="error_handle" class="form-control" value="{{ etlTask.error_handle }}">
-      <option value="0">暂停</option>
-      <option value="1">忽略</option>
+      {% for i in [[0,"暂停"], [1,"忽略"]] %}
+      <option value="{{i[0]}}"
+      {%-if etlTask.error_handle is none and i[0]==0 -%}selected{%- endif -%}
+      {%-if etlTask.error_handle==i[0] -%}selected{%- endif -%}
+      >{{i[1]}}</option>
+      {% endfor %}
     </select>
   </div>
   <div class="form-group row">
@@ -234,7 +219,6 @@
 </form>
 {% endblock %}
 {% block tail %}
-{{ super() }}
 <script src="{{ admin_static.url(filename='vendor/bootstrap-daterangepicker/daterangepicker.js') }}"></script>
 <script src="{{ admin_static.url(filename='admin/js/form-1.0.0.js') }}"></script>
 <script>
@@ -288,7 +272,7 @@
         url: '{{ url_for("airflow.update_task") }}',
         data: sendData,
         success: function (response_data) {
-          if(response_data && !!response_data.success) {
+          if(response_data && !!~~response_data.success) {
             _requestSuccessHandler();
           } else {
             _requestFailHandler();
@@ -305,6 +289,6 @@
       console.log("input error.")
     }
   });
-
 </script>
+{{ super() }}
 {% endblock %}

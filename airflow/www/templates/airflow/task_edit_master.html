@@ -27,14 +27,6 @@
 {% block body %}
 {{ super() }}
     {% block navlinks %}
-        <ul class="nav nav-tabs">
-            <li class="active">
-                <a href="javascript:void(0)">{{ _('List') }}{% if count %} ({{ count }}){% endif %}</a>
-            </li>
-            <li class="">
-                <a href="{{ get_url('airflow.newtask', dag_id=dag.dag_id) }}" title="{{ _('Create New Record') }}">{{ _('Create') }}</a>
-            </li>
-        </ul>
     {% endblock %}
     {% block editbody %}
     {% endblock %}

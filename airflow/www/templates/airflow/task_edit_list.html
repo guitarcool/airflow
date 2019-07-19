@@ -32,6 +32,16 @@
 </style>
 {% endblock %}
 
+{% block navlinks %}
+<ul class="nav nav-tabs">
+    <li class="active">
+        <a href="javascript:void(0)">{{ _('List') }}{% if count %} ({{ count }}){% endif %}</a>
+    </li>
+    <li>
+        <a href="{{ get_url('airflow.newtask', dag_id=dag.dag_id) }}" title="{{ _('Create New Record') }}">{{ _('Create') }}</a>
+    </li>
+</ul>
+{% endblock %}
 {% block body %}
 {{ super() }}
 <div id="task_edit_list_alert" style="display: none; margin-top: 10px;" role="alert">
@@ -103,7 +113,7 @@
                     task_id: task_id,
                 },
                 success: function (response_data) {
-                    if(response_data && !!response_data.success) {
+                    if(response_data && !!~~response_data.success) {
                         _requestSuccessHandler(target);
                     } else {
                         _requestFailHandler(response_data.message);

@@ -1113,28 +1113,21 @@ class Airflow(AirflowViewMixin, BaseView):
     def taskedit(self, session=None):
         dag_id = request.args.get('dag_id')
         task_id = request.args.get('task_id')
+        data_sources = session.query(Connection).order_by(Connection.conn_id).all()
         root = request.args.get('root', '')
         dag = dagbag.get_dag(dag_id)
+        title = "Task Edit"
         etlTask = session.query(ETLTask).filter(
                 ETLTask.dag_id == dag_id,
                 ETLTask.task_id == task_id,
             ).first()
-        title = "Task Edit"
         return self.render(
-            'airflow/task_edit.html',
-            # task_attrs=task_attrs,
-            # ti_attrs=ti_attrs,
-            # failed_dep_reasons=failed_dep_reasons or no_failed_deps_result,
-            # task_id=task_id,
-            task_id='',
-            # execution_date=execution_date,
-            execution_date='123',
-            # special_attrs_rendered=special_attrs_rendered,
+            'airflow/task_edit_change.html',
             root=root,
             dag=dag,
             title=title,
-            targetTables = ['table1', 'table2'],
-            dataSources = ['a', 'b']
+            dataSources=data_sources,
+            etlTask=etlTask
             )
 
     @expose('/taskeditlist')
@@ -1189,14 +1182,14 @@ class Airflow(AirflowViewMixin, BaseView):
     @wwwutils.action_logging
     @provide_session
     def newtask(self, session=None):
-        dag_id = request.args.get('dag_id')
+        dag_id = request.form('dag_id')
         data_sources = session.query(Connection).order_by(Connection.conn_id).all()
         root = request.args.get('root', '')
         dag = dagbag.get_dag(dag_id)
         title = "Task Edit"
 
         return self.render(
-            'airflow/task_edit.html',
+            'airflow/task_edit_add.html',
             root=root,
             dag=dag,
             title=title,
@@ -1290,7 +1283,7 @@ class Airflow(AirflowViewMixin, BaseView):
     @provide_session
     def update_task(self, session=None):
         try:
-            dag_id = request.args.get('dag_id')
+            dag_id = request.form['dag_id']
             print('dag_id:%s' % dag_id)
             task_id = request.form['task_id']
             src_path = request.form['source_address']

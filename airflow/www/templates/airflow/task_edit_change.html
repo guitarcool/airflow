@@ -86,11 +86,11 @@
 
 {% block navlinks %}
 <ul class="nav nav-tabs">
-    <li class="">
+    <li>
         <a href="{{ return_url }}">{{ _('List') }}{% if count %} ({{ count }}){% endif %}</a>
     </li>
-    <li class="">
-        <a href="{{ get_url('airflow.taskedit', dag_id=dag.dag_id) }}" title="{{ _('Create New Record') }}">{{ _('Create') }}</a>
+    <li>
+        <a href="{{ get_url('airflow.newtask', dag_id=dag.dag_id) }}" title="{{ _('Create New Record') }}">{{ _('Create') }}</a>
     </li>
     <li class="active">
         <a href="javascript:void(0)">{{ _('Edit') }}</a>
@@ -113,32 +113,28 @@
   <div class="form-group row">
     <label class="col-form-label">任务名</label>
 
-    <input type="text" class="form-control" name="task_id" value="{{ task_id }}" required>
+    <input type="text" class="form-control" name="task_id" value="{{ request.args.get('task_id') }}" readonly required>
 
   </div>
   <div class="form-group row">
     <label class="col-form-label">源地址</label>
-    <input type="text" class="form-control" name="source_address" required>
+    <input type="text" class="form-control" name="source_address" value="{{ etlTask.src_path }}"" required>
   </div>
   <div class="form-group row">
     <label class="col-form-label">源文件格式</label>
-    <input type="text" class="form-control" name="source_format" required>
+    <input type="text" class="form-control" name="source_format" value="{{ etlTask.file_pattern }}" required>
   </div>
   <div class="form-group row">
     <label class="col-form-label">目标地址</label>
-    <input type="text" class="form-control" name="target_address" required>
+    <input type="text" class="form-control" name="target_address" value="{{ etlTask.dst_path }}" required>
   </div>
   <div class="form-group row">
     <label class="col-form-label">目标表</label>
-    <select name="target_table" class="form-control">
-      {% for source in targetTables %}
-      <option value="{{source}}">{{source}}</option>
-      {% endfor %}
-    </select>
+    <input type="text" class="form-control" name="target_table" value="{{ etlTask.dst_tbl }}" required>
   </div>
   <div class="form-group row">
     <label class="col-form-label">数据源名称</label>
-    <select name="data_source" class="form-control">
+    <select name="data_source" class="form-control" value="{{ etlTask.conn_id }}">
       {% for source in dataSources %}
       <option value="{{source}}">{{source}}</option>
       {% endfor %}
@@ -146,10 +142,10 @@
   </div>
   <div class="form-group row">
     <label class="col-form-label">执行标志</label>
-    <select name="executetion_token" class="form-control">
-      <option>标志文件</option>
-      <option>文件大小不变</option>
-      <option>固定时间之后</option>
+    <select name="executetion_token" class="form-control" value="{{ etlTask.check_mode }}">
+      <option value="0">标志文件</option>
+      <option value="1">文件大小不变</option>
+      <option value="2">固定时间之后</option>
     </select>
   </div>
   <div class="form-group row">
@@ -164,42 +160,42 @@
       <br/>
       <span class="day-select">
         周
-        <select name="period_day" class="form-control inline-block">
-          <option>日</option>
-          <option>一</option>
-          <option>二</option>
-          <option>三</option>
-          <option>四</option>
-          <option>五</option>
-          <option>六</option>
+        <select name="period_day" class="form-control inline-block" value="{{ etlTask.period_weekday }}">
+          <option value="0">日</option>
+          <option value="1">一</option>
+          <option value="2">二</option>
+          <option value="3">三</option>
+          <option value="4">四</option>
+          <option value="5">五</option>
+          <option value="6">六</option>
         </select>
       </span>
       <span class="hour-select">
-        <select name="period_hour" class="form-control inline-block">
-          <option>0</option>
-          <option>1</option>
-          <option>2</option>
-          <option>3</option>
-          <option>4</option>
-          <option>5</option>
-          <option>6</option>
-          <option>7</option>
-          <option>8</option>
-          <option>9</option>
-          <option>10</option>
-          <option>11</option>
-          <option>12</option>
-          <option>13</option>
-          <option>14</option>
-          <option>15</option>
-          <option>16</option>
-          <option>17</option>
-          <option>18</option>
-          <option>19</option>
-          <option>20</option>
-          <option>21</option>
-          <option>22</option>
-          <option>23</option>
+        <select name="period_hour" class="form-control inline-block" value="{{ etlTask.period_hour }}">
+          <option value="0">0</option>
+          <option value="1">1</option>
+          <option value="2">2</option>
+          <option value="3">3</option>
+          <option value="4">4</option>
+          <option value="5">5</option>
+          <option value="6">6</option>
+          <option value="7">7</option>
+          <option value="8">8</option>
+          <option value="9">9</option>
+          <option value="10">10</option>
+          <option value="11">11</option>
+          <option value="12">12</option>
+          <option value="13">13</option>
+          <option value="14">14</option>
+          <option value="15">15</option>
+          <option value="16">16</option>
+          <option value="17">17</option>
+          <option value="18">18</option>
+          <option value="19">19</option>
+          <option value="20">20</option>
+          <option value="21">21</option>
+          <option value="22">22</option>
+          <option value="23">23</option>
         </select>
         点
       </span>
@@ -213,23 +209,23 @@
     <input type="radio" class="form-check-input" name="executetion_logic_type" value="custom"><label
       class="col-form-label">自定义SQL</label>
     <div class="system-config-select">
-      <select name="executetion_logic_default_setting" class="form-control">
-        <option>拉链</option>
-        <option>覆盖插入</option>
-        <option>更新</option>
-        <option>Sqoop</option>
+      <select name="executetion_logic_default_setting" class="form-control" value="{{ etlTask.exec_logic_preset_type }}">
+        <option value="0">拉链</option>
+        <option value="1">覆盖插入</option>
+        <option value="2">更新</option>
+        <option value="3">Sqoop</option>
       </select>
     </div>
     <div class="custom-sql-input">
-      <textarea type="text" class="form-control" name="executetion_logic_custom_sql"></textarea>
+      <textarea type="text" class="form-control" name="executetion_logic_custom_sql" value="{{ etlTask.exec_logic_custom_sql }}"></textarea>
     </div>
 
   </div>
   <div class="form-group row">
     <label class="col-form-label">出错处理</label>
-    <select name="error_handle" class="form-control">
-      <option>暂停</option>
-      <option>忽略</option>
+    <select name="error_handle" class="form-control" value="{{ etlTask.error_handle }}">
+      <option value="0">暂停</option>
+      <option value="1">忽略</option>
     </select>
   </div>
   <div class="form-group row">
@@ -261,6 +257,7 @@
   $(".btn.btn-submit").click(function () {
     var f = document.forms["task_edit"];
     var sendData = {
+      dag_id: "{{dag.dag_id}}",
       task_id: f.task_id.value,
       source_address: f.source_address.value,
       source_format: f.source_format.value,
@@ -278,17 +275,27 @@
     }
     if (!requestLock) {
       requestLock = true;
+      function _requestSuccessHandler(){
+        $('#task_edit_alert_success .content').text('修改成功');
+        $('#task_edit_alert_success').fadeIn(100).delay(3000).fadeOut(100);
+      }
+      function _requestFailHandler(){
+        $('#task_edit_alert_error .content').text('修改失败');
+        $('#task_edit_alert_error').fadeIn(100).delay(3000).fadeOut(100);
+      }
       $.ajax({
         method: "POST",
-        url: '{{ url_for("airflow.update_task",dag_id=dag.dag_id) }}',
+        url: '{{ url_for("airflow.update_task") }}',
         data: sendData,
         success: function (response_data) {
-          $('#task_edit_alert_success .content').text('修改成功');
-          $('#task_edit_alert_success').fadeIn(100).delay(3000).fadeOut(100);
+          if(response_data && !!response_data.success) {
+            _requestSuccessHandler();
+          } else {
+            _requestFailHandler();
+          }
         },
         failure: function (response_data) {
-          $('#task_edit_alert_error .content').text('修改失败');
-          $('#task_edit_alert_error').fadeIn(100).delay(3000).fadeOut(100);
+            _requestFailHandler();
         },
         complete: function (jqXHT) {
           requestLock = false;

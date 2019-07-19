@@ -32,7 +32,7 @@
                 <a href="javascript:void(0)">{{ _('List') }}{% if count %} ({{ count }}){% endif %}</a>
             </li>
             <li class="">
-                <a href="{{ get_url('airflow.taskedit', dag_id=dag.dag_id) }}" title="{{ _('Create New Record') }}">{{ _('Create') }}</a>
+                <a href="{{ get_url('airflow.newtask', dag_id=dag.dag_id) }}" title="{{ _('Create New Record') }}">{{ _('Create') }}</a>
             </li>
         </ul>
     {% endblock %}

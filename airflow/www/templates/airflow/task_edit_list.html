@@ -41,7 +41,7 @@
     <tbody>
       {% for item in task_instances %}
           <tr>
-              <td onclick="call_modal('{{item.task_id}}', '{{item.execution_date}}', '{{item.try_number}}')"><a >{{item.task_id}}</a></td>
+              <td><a href="{{url_for('airflow.taskedit', dag_id=dag.dag_id, task_id=item.task_id)}}">{{item.task_id}}</a></td>
               <td>{{item.start_date}}</td>
               <td>{{item.end_date}}</td>
               <td>{{item.duration}}</td>

@@ -1149,31 +1149,10 @@ class Airflow(AirflowViewMixin, BaseView):
                 include_downstream=False,
                 include_upstream=True)
 
-        arrange = request.args.get('arrange', dag.orientation)
-
-        dt_nr_dr_data = get_date_time_num_runs_dag_runs_form_data(request, session, dag)
-        dt_nr_dr_data['arrange'] = arrange
-        dttm = dt_nr_dr_data['dttm']
-
-        # task_instances = {
-        #     ti.task_id: alchemy_to_dict(ti)
-        #     for ti in dag.get_task_instances(dttm, dttm, session=session)}
-        task_instances = []
-        for ti in dag.get_task_instances(dttm, dttm, session=session):
-            item=alchemy_to_dict(ti)
-            item['task_id']=ti.task_id
-            task = copy.copy(dag.get_task(ti.task_id))
-            for attr_name in attr_renderer:
-                if hasattr(task, attr_name):
-                    source = getattr(task, attr_name)
-                    item['code']= attr_renderer[attr_name](source)
-            task_instances.append(item)
-
-
-        data={}
+        etl_tasks = session.query(ETLTask).filter(ETLTask.dag_id == dag_id).order_by(ETLTask.task_id).all()
         return self.render(
             'airflow/task_edit_list.html',
-            task_instances=task_instances,
+            tasks=etl_tasks,
             dag=dag
             )
 
@@ -1264,12 +1243,19 @@ class Airflow(AirflowViewMixin, BaseView):
             #                   dst_path='dst_path', dst_tbl='dst_tbl', conn_id=1, check_mode=0, check_mode_remk='',
             #                   period_type=2, period_weekday=0, period_hour=1, exec_logic_type=0,
             #                   exec_logic_preset_type=0, exec_logic_custom_sql=0, error_handle=0)
-            etlTask = ETLTask(task_id, dag_id, src_path, file_pattern, dst_path, dst_tbl, conn_id, check_mode, '',
-                              period_type, period_weekday, period_hour, exec_logic_type, exec_logic_preset_type,
-                              exec_logic_custom_sql,
-                              error_handle)
-            session.add(etlTask)
-            session.commit()
+            etl_task = session.query(ETLTask).filter(
+                ETLTask.dag_id == dag_id,
+                ETLTask.task_id == task_id,
+            ).order_by(ETLTask.task_id).first()
+            if etl_task:
+                flash(lazy_gettext("Task [{}.{}] is already exists").format(dag_id, task_id), "error")
+            else:
+                etl_task = ETLTask(task_id, dag_id, src_path, file_pattern, dst_path, dst_tbl, conn_id, check_mode, '',
+                                   period_type, period_weekday, period_hour, exec_logic_type, exec_logic_preset_type,
+                                   exec_logic_custom_sql,
+                                   error_handle)
+                session.add(etl_task)
+                session.commit()
         except Exception as e:
             print(e)
             print(sys.exc_info())
@@ -1304,7 +1290,17 @@ class Airflow(AirflowViewMixin, BaseView):
             exec_logic_preset_type = request.form['executetion_logic_default_setting']
             exec_logic_custom_sql = request.form['executetion_logic_custom_sql']
             error_handle = request.form['error_handle']
-            # TODO
+
+            session.query(ETLTask).filter_by(
+                dag_id=dag_id, task_id=task_id).update(
+                {'src_path': src_path, 'file_pattern': file_pattern, 'dst_path': dst_path, 'dst_tbl': dst_tbl,
+                 'conn_id': conn_id, 'check_mode': check_mode, 'period_type': period_type,
+                 'period_weekday': period_weekday,
+                 'period_hour': period_hour, 'exec_logic_type': exec_logic_type,
+                 'exec_logic_preset_type': exec_logic_preset_type,
+                 'exec_logic_custom_sql': exec_logic_custom_sql, 'error_handle': error_handle
+                 })
+            session.commit()
         except Exception as e:
             print(e)
             print(sys.exc_info())
@@ -1450,7 +1446,7 @@ class Airflow(AirflowViewMixin, BaseView):
         # Upon successful delete return to origin
         return redirect(origin)
 
-    @expose('/trigger', methods=['GET'])
+    @expose('/trigger', methods=['POST'])
     @login_required
     @wwwutils.action_logging
     @wwwutils.notify_owner

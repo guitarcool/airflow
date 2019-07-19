@@ -274,7 +274,7 @@
       requestLock = true;
       $.ajax({
         method: "POST",
-        url: '{{ url_for("airflow.add_task",dag_id=dag.dag_id) }}',
+        url: '{{ url_for("airflow.add_task") }}',
         data: sendData,
         success: function (response_data) {
           $('#task_edit_alert_success .content').text('修改成功');

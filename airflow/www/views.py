@@ -1182,7 +1182,7 @@ class Airflow(AirflowViewMixin, BaseView):
     @wwwutils.action_logging
     @provide_session
     def newtask(self, session=None):
-        dag_id = request.form('dag_id')
+        dag_id = request.form['dag_id']
         data_sources = session.query(Connection).order_by(Connection.conn_id).all()
         root = request.args.get('root', '')
         dag = dagbag.get_dag(dag_id)

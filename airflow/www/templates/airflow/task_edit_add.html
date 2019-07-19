@@ -58,15 +58,15 @@
     resize: none;
   }
 
-  input[name="period_type"][value="weekly"]:checked~.day-select {
+  input[name="period_type"][value="2"]:checked~.day-select {
     display: inline-block;
   }
 
-  input[name="executetion_logic_type"][value="system"]:checked~.system-config-select {
+  input[name="executetion_logic_type"][value="0"]:checked~.system-config-select {
     display: block;
   }
 
-  input[name="executetion_logic_type"][value="custom"]:checked~.custom-sql-input {
+  input[name="executetion_logic_type"][value="1"]:checked~.custom-sql-input {
     display: block;
   }
 
@@ -148,11 +148,11 @@
   <div class="form-group row">
     <label class="col-form-label">周期</label>
     <div class="">
-      <input type="radio" name="period_type" class="form-check-input" value="today" checked>
+      <input type="radio" name="period_type" class="form-check-input" value="0" checked>
       <label class="form-check-label">当天</label>
-      <input type="radio" name="period_type" class="form-check-input" value="daily">
+      <input type="radio" name="period_type" class="form-check-input" value="1">
       <label class="form-check-label">每天</label>
-      <input type="radio" name="period_type" class="form-check-input" value="weekly">
+      <input type="radio" name="period_type" class="form-check-input" value="2">
       <label class="form-check-label">每周</label>
       <br/>
       <span class="day-select">
@@ -201,9 +201,9 @@
   <div class="form-group row">
     <label class="col-form-label">执行逻辑</label>
     <br/>
-    <input type="radio" class="form-check-input" name="executetion_logic_type" value="system" checked><label
+    <input type="radio" class="form-check-input" name="executetion_logic_type" value="0" checked><label
       class="col-form-label">系统预置</label>
-    <input type="radio" class="form-check-input" name="executetion_logic_type" value="custom"><label
+    <input type="radio" class="form-check-input" name="executetion_logic_type" value="1"><label
       class="col-form-label">自定义SQL</label>
     <div class="system-config-select">
       <select name="executetion_logic_default_setting" class="form-control">

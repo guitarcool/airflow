@@ -134,9 +134,10 @@
   </div>
   <div class="form-group row">
     <label class="col-form-label">数据源名称</label>
-    <select name="data_source" class="form-control" value="{{ etlTask.conn_id }}">
+    <select name="data_source" class="form-control">
       {% for source in dataSources %}
-      <option value="{{source.id}}">{{source.conn_id}}</option>
+      <option value="{{source.id}}" 
+       {%-if etlTask.conn_id==source.id -%}selected{%- endif -%}>{{source.conn_id}}</option>
       {% endfor %}
     </select>
   </div>
@@ -201,7 +202,7 @@
       </select>
     </div>
     <div class="custom-sql-input">
-      <textarea type="text" class="form-control" name="executetion_logic_custom_sql" value="{{ etlTask.exec_logic_custom_sql }}"></textarea>
+      <textarea type="text" class="form-control" name="executetion_logic_custom_sql" value="{{ etlTask.exec_logic_custom_sql }}">{{ etlTask.exec_logic_custom_sql }}</textarea>
     </div>
 
   </div>

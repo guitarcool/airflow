@@ -71,7 +71,7 @@ from airflow.api.common.experimental.mark_tasks import (set_dag_run_state_to_run
                                                         set_dag_run_state_to_failed)
 from airflow.exceptions import AirflowException
 from airflow.models import BaseOperator, Connection, DagRun, errors, XCom
-from airflow.models.etltask import ETLTask
+from airflow.models.etltask import ETLTask, ETLTaskType
 from airflow.operators.subdag_operator import SubDagOperator
 from airflow.operators.dummy_operator import DummyOperator
 from airflow.operators.python_operator import PythonOperator
@@ -1147,15 +1147,51 @@ class Airflow(AirflowViewMixin, BaseView):
                 task_regex=root,
                 include_downstream=False,
                 include_upstream=True)
-        etl_tasks = session.query(ETLTask).filter(ETLTask.dag_id == dag_id).order_by(ETLTask.task_id).all()
+        scheduled_tasks = session.query(ETLTask).filter(
+                ETLTask.dag_id == dag_id,
+                ETLTask.task_type == ETLTaskType.ScheduledTask
+            ).order_by(ETLTask.task_id).all()
         data_sources = session.query(Connection).order_by(Connection.conn_id).all()
         ds_dict = {data_source.id:data_source.conn_id for data_source in data_sources}
         return self.render(
             'airflow/task_edit_list.html',
-            tasks=etl_tasks,
+            tasks=scheduled_tasks,
             ds_dict=ds_dict,
             dag=dag
             )
+
+    @expose('/rerun_tasks_list')
+    @login_required
+    @wwwutils.action_logging
+    @provide_session
+    def alltasks(self, session=None):
+        dag_id = request.args.get('dag_id')
+        dag = dagbag.get_dag(dag_id)
+        if dag_id not in dagbag.dags:
+            flash('DAG "{0}" seems to be missing.'.format(dag_id), "error")
+            return redirect('/admin/')
+
+        root = request.args.get('root')
+        if root:
+            dag = dag.sub_dag(
+                task_regex=root,
+                include_downstream=False,
+                include_upstream=True)
+        rerun_tasks = session.query(ETLTask).filter(
+                ETLTask.dag_id == dag_id,
+                ETLTask.task_type == ETLTaskType.RerunTask
+            ).order_by(ETLTask.task_id).all()
+        for task in rerun_tasks:
+            task.rerun_log_file_names = task.rerun_log_file_names.split(',')
+        data_sources = session.query(Connection).order_by(Connection.conn_id).all()
+        ds_dict = {data_source.id: data_source.conn_id for data_source in data_sources}
+        return self.render(
+            'airflow/etltasks.html',
+            root=root,
+            dag=dag,
+            ds_dict=ds_dict,
+            tasks=rerun_tasks
+        )
 
     @expose('/newtask')
     @login_required
@@ -1163,9 +1199,18 @@ class Airflow(AirflowViewMixin, BaseView):
     @provide_session
     def newtask(self, session=None):
         dag_id = request.args.get('dag_id')
-        data_sources = session.query(Connection).order_by(Connection.conn_id).all()
-        root = request.args.get('root', '')
         dag = dagbag.get_dag(dag_id)
+        if dag_id not in dagbag.dags:
+            flash('DAG "{0}" seems to be missing.'.format(dag_id), "error")
+            return redirect('/admin/')
+
+        root = request.args.get('root')
+        if root:
+            dag = dag.sub_dag(
+                task_regex=root,
+                include_downstream=False,
+                include_upstream=True)
+        data_sources = session.query(Connection).order_by(Connection.conn_id).all()
         title = "Task Edit"
 
         return self.render(
@@ -1176,25 +1221,6 @@ class Airflow(AirflowViewMixin, BaseView):
             dataSources=data_sources
             )
 
-    @expose('/alltasks')
-    @login_required
-    @wwwutils.action_logging
-    @provide_session
-    def alltasks(self, session=None):
-        dag_id = request.args.get('dag_id')
-        root = request.args.get('root', '')
-        dag = dagbag.get_dag(dag_id)
-        title = "Task Edit"
-        tasks = session.query(ETLTask).filter(ETLTask.dag_id == dag_id).order_by(ETLTask.task_id).all()
-
-        # TODO
-        return self.render(
-            'airflow/etltasks.html',
-            root=root,
-            dag=dag,
-            title=title,
-            tasks=tasks
-        )
 
     @expose('/delete_task')
     @login_required

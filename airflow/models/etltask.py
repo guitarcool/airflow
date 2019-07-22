@@ -67,6 +67,11 @@ from airflow.utils.state import State
 from airflow.utils.timeout import timeout
 
 
+class ETLTaskType(Enum):
+    ScheduledTask = 0
+    RerunTask = 1
+
+
 class CheckMode(Enum):
     OKFlag = 0
     FileSize = 1
@@ -106,6 +111,13 @@ class ErrorHandle(Enum):
     Ignore = 1
 
 
+class RerunState(Enum):
+    NeverExecuted = 0
+    Running = 1
+    Succeed = 2
+    Failed = 3
+
+
 class ETLTask(Base, LoggingMixin):
     """
     ETLTask store the config information of a etl task .
@@ -115,6 +127,7 @@ class ETLTask(Base, LoggingMixin):
 
     task_id = Column(String(ID_LEN), primary_key=True)
     dag_id = Column(String(ID_LEN), primary_key=True)
+    task_type = Column(Integer())
     src_path = Column(String(100))
     file_pattern = Column(String(100))
     dst_path = Column(String(100))
@@ -129,17 +142,22 @@ class ETLTask(Base, LoggingMixin):
     exec_logic_preset_type = Column(Integer())
     exec_logic_custom_sql = Column(String(1000))
     error_handle = Column(Integer())
+    rerun_start_date = Column(String(20))
+    rerun_end_date = Column(String(20))
+    rerun_state = Column(Integer())
+    rerun_log_file_names = Column(String(200))
 
     __table_args__ = (
         Index('ti_period', period_type, period_hour),
         Index('ti_exec_logic', exec_logic_type, exec_logic_preset_type, exec_logic_custom_sql),
     )
 
-    def __init__(self, task_id, dag_id, src_path, file_pattern, dst_path, dst_tbl, conn_id, check_mode, check_mode_remk,
+    def __init__(self, task_id, dag_id, task_type, src_path, file_pattern, dst_path, dst_tbl, conn_id, check_mode, check_mode_remk,
                  period_type, period_weekday, period_hour, exec_logic_type, exec_logic_preset_type, exec_logic_custom_sql,
-                 error_handle):
+                 error_handle, rerun_start_date, rerun_end_date, rerun_state, rerun_log_file_names):
         self.task_id = task_id
         self.dag_id = dag_id
+        self.task_type = task_type
         self.src_path = src_path
         self.file_pattern = file_pattern
 
@@ -155,6 +173,10 @@ class ETLTask(Base, LoggingMixin):
         self.exec_logic_preset_type = exec_logic_preset_type
         self.exec_logic_custom_sql = exec_logic_custom_sql
         self.error_handle = error_handle
+        self.rerun_start_date = rerun_start_date
+        self.rerun_end_date = rerun_end_date
+        self.rerun_state = rerun_state
+        self.rerun_log_file_names = rerun_log_file_names
 
     @provide_session
     def get_connection(self, session):

@@ -38,6 +38,7 @@ def upgrade():
     op.create_table('etl_task',
                     sa.Column('task_id', sa.String(length=250), nullable=False),
                     sa.Column('dag_id', sa.String(length=250), nullable=False),
+                    sa.Column('task_type', sa.Integer, nullable=False),
                     sa.Column('src_path', sa.String(length=100), nullable=True),
                     sa.Column('file_pattern', sa.String(length=100), nullable=True),
                     sa.Column('dst_path', sa.String(length=100), nullable=True),
@@ -52,6 +53,10 @@ def upgrade():
                     sa.Column('exec_logic_preset_type', sa.Integer, nullable=True),
                     sa.Column('exec_logic_custom_sql', sa.String(length=1000), nullable=True),
                     sa.Column('error_handle', sa.Integer, nullable=True),
+                    sa.Column('rerun_start_date', sa.String(length=20), nullable=True),
+                    sa.Column('rerun_end_date', sa.String(length=20), nullable=True),
+                    sa.Column('rerun_state', sa.Integer, nullable=True),
+                    sa.Column('rerun_log_file_names', sa.String(length=200), nullable=True),
                     sa.PrimaryKeyConstraint('task_id', 'dag_id'))
 
 

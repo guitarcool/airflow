@@ -85,22 +85,20 @@
   .hour-select select{
       width: 50px;
   }
+
+  .rerun-date{
+    display: none;
+  }
+  .rerun-date>div{
+    display: inline-block;
+    width: 33%;
+  }
+  input[name="task_type"][value="1"]:checked~.rerun-date{
+    display: block;
+  }
 </style>
 {% endblock %}
 
-{% block navlinks %}
-<ul class="nav nav-tabs">
-    <li>
-        <a href="{{ url_for("airflow.taskeditlist", dag_id=dag.dag_id)}}">{{ _('List') }}{% if count %} ({{ count }}){% endif %}</a>
-    </li>
-    <li>
-        <a href="{{ get_url('airflow.newtask', dag_id=dag.dag_id) }}" title="{{ _('Create New Record') }}">{{ _('Create') }}</a>
-    </li>
-    <li class="active">
-        <a href="javascript:void(0)">{{ _('Edit') }}</a>
-    </li>
-</ul>
-{% endblock %}
 {% block body %}
 {{ super() }}
 <form method="get" id="task_edit" class="">
@@ -114,6 +112,27 @@
   </div>
   <input name="_csrf_token" type="hidden" value="{{ csrf_token() }}">
   <input type="hidden" value="{{ dag.dag_id }}" name="dag_id">
+  <div class="form-group row">
+    <label class="col-form-label">任务类型</label>
+    <br/>
+    {% for i in [[0,"调度任务"], [1,"重跑任务"]] %}
+    <input type="radio" name="task_type" class="form-check-input" value="{{i[0]}}" 
+     {%-if etlTask.task_type is none and i[0]==0 -%}checked{%- endif -%}
+     {%-if etlTask.task_type==i[0] -%}checked{%- endif -%}>
+    <label class="form-check-label">{{i[1]}}</label>
+    {% endfor %}
+    <div class="rerun-date input-daterange">
+      <div class="col">
+        <input class="form-control date-picker" name="rerun_start_date" type="text" data-date-format="yyyy-mm-dd">
+      </div>
+      <span>
+        到
+      </span>
+      <div class="col">
+          <input class="form-control date-picker" name="rerun_end_date" type="text" data-date-format="yyyy-mm-dd">
+      </div>
+    </div>
+  </div>
   <div class="form-group row">
     <label class="col-form-label">任务名</label>
 
@@ -235,8 +254,20 @@
 </form>
 {% endblock %}
 {% block tail %}
+<script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-datepicker/1.9.0/js/bootstrap-datepicker.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-datepicker/1.9.0/locales/bootstrap-datepicker.zh-CN.min.js"></script>
 <script>
-
+  var nowTime = new Date()
+  $('.input-daterange').datepicker({
+    language: 'zh-CN',
+    format: 'yyyy-mm-dd',
+    startDate: '0d',
+    autoclose: true,
+  })
+  $('.date-picker[name="rerun_start_date"]').datepicker('setDate', "{{etlTask.rerun_start_date}}")
+  $('.date-picker[name="rerun_end_date"]').datepicker('setDate', "{{etlTask.rerun_end_date}}")
+</script>
+<script>
   var requestLock = false;
   $(".btn.btn-submit").click(function () {
     var f = document.forms["task_edit"];
@@ -256,7 +287,10 @@
       executetion_logic_type: f.executetion_logic_type.value,
       executetion_logic_default_setting: f.executetion_logic_default_setting.value,
       executetion_logic_custom_sql: f.executetion_logic_custom_sql.value,
-      error_handle: f.error_handle.value
+      error_handle: f.error_handle.value,
+      task_type: f.task_type.value,
+      rerun_start_date: f.rerun_start_date.value,
+      rerun_end_date: f.rerun_end_date.value,
     }
     if (!requestLock) {
       requestLock = true;
@@ -264,8 +298,8 @@
         $('#task_edit_alert_success .content').text('修改成功');
         $('#task_edit_alert_success').fadeIn(100).delay(3000).fadeOut(100);
       }
-      function _requestFailHandler(){
-        $('#task_edit_alert_error .content').text('修改失败');
+      function _requestFailHandler(message){
+        $('#task_edit_alert_error .content').text(message||'修改失败');
         $('#task_edit_alert_error').fadeIn(100).delay(3000).fadeOut(100);
       }
       $.ajax({
@@ -276,7 +310,7 @@
           if(response_data && !!~~response_data.success) {
             _requestSuccessHandler();
           } else {
-            _requestFailHandler();
+            _requestFailHandler(response_data.message);
           }
         },
         failure: function (response_data) {

@@ -1186,7 +1186,7 @@ class Airflow(AirflowViewMixin, BaseView):
         data_sources = session.query(Connection).order_by(Connection.conn_id).all()
         ds_dict = {data_source.id: data_source.conn_id for data_source in data_sources}
         return self.render(
-            'airflow/etltasks.html',
+            'airflow/task_edit_list_rerun.html',
             root=root,
             dag=dag,
             ds_dict=ds_dict,

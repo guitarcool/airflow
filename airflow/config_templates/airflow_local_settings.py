@@ -45,6 +45,8 @@ DAG_PROCESSOR_MANAGER_LOG_LOCATION = \
 
 FILENAME_TEMPLATE = conf.get('core', 'LOG_FILENAME_TEMPLATE')
 
+ETL_FILENAME_TEMPLATE = conf.get('core', 'LOG_ETL_FILENAME_TEMPLATE')
+
 PROCESSOR_FILENAME_TEMPLATE = conf.get('core', 'LOG_PROCESSOR_FILENAME_TEMPLATE')
 
 # Storage bucket url for remote logging
@@ -87,6 +89,12 @@ DEFAULT_LOGGING_CONFIG = {
             'base_log_folder': os.path.expanduser(BASE_LOG_FOLDER),
             'filename_template': FILENAME_TEMPLATE,
         },
+        'etltask': {
+            'class': 'airflow.utils.log.file_etltask_handler.FileETLTaskHandler',
+            'formatter': 'airflow',
+            'base_log_folder': os.path.expanduser(BASE_LOG_FOLDER),
+            'filename_template': ETL_FILENAME_TEMPLATE,
+        },
         'processor': {
             'class': 'airflow.utils.log.file_processor_handler.FileProcessorHandler',
             'formatter': 'airflow',
@@ -102,6 +110,11 @@ DEFAULT_LOGGING_CONFIG = {
         },
         'airflow.task': {
             'handlers': ['task'],
+            'level': LOG_LEVEL,
+            'propagate': False,
+        },
+        'airflow.etltask': {
+            'handlers': ['etltask'],
             'level': LOG_LEVEL,
             'propagate': False,
         },

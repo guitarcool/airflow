@@ -27,7 +27,9 @@ import math
 import os
 import signal
 import time
+from concurrent.futures.thread import ThreadPoolExecutor
 from datetime import timedelta
+from datetime import datetime
 from enum import Enum
 from typing import Optional
 from urllib.parse import quote
@@ -65,6 +67,11 @@ from airflow.utils.sqlalchemy import UtcDateTime
 from airflow.models.connection import Connection
 from airflow.utils.state import State
 from airflow.utils.timeout import timeout
+
+
+def add_date(date_str):
+    date = datetime.strptime(date_str, '%Y-%m-%d') + timedelta(days=1)
+    return date.strftime('%Y-%m-%d')
 
 
 class ETLTaskType(Enum):
@@ -144,8 +151,8 @@ class ETLTask(Base, LoggingMixin):
     error_handle = Column(Integer())
     rerun_start_date = Column(String(20))
     rerun_end_date = Column(String(20))
-    rerun_state = Column(Integer())
-    rerun_log_file_names = Column(String(200))
+    rerun_state = Column(Integer(), default=0)
+    try_number = Column(Integer(), default=0)
 
     __table_args__ = (
         Index('ti_period', period_type, period_hour),
@@ -154,7 +161,7 @@ class ETLTask(Base, LoggingMixin):
 
     def __init__(self, task_id, dag_id, task_type, src_path, file_pattern, dst_path, dst_tbl, conn_id, check_mode, check_mode_remk,
                  period_type, period_weekday, period_hour, exec_logic_type, exec_logic_preset_type, exec_logic_custom_sql,
-                 error_handle, rerun_start_date, rerun_end_date, rerun_state, rerun_log_file_names):
+                 error_handle, rerun_start_date, rerun_end_date):
         self.task_id = task_id
         self.dag_id = dag_id
         self.task_type = task_type
@@ -175,8 +182,7 @@ class ETLTask(Base, LoggingMixin):
         self.error_handle = error_handle
         self.rerun_start_date = rerun_start_date
         self.rerun_end_date = rerun_end_date
-        self.rerun_state = rerun_state
-        self.rerun_log_file_names = rerun_log_file_names
+        self._log = logging.getLogger("airflow.etltask")
 
     @provide_session
     def get_connection(self, session):
@@ -190,3 +196,50 @@ class ETLTask(Base, LoggingMixin):
             Connection.id == self.conn_id,
         ).first()
         return conn
+
+    @provide_session
+    def set_state(self, state, session=None, commit=True):
+        if state == RerunState.Running.value:
+            self.try_number = self.try_number + 1
+        self.rerun_state = state
+        session.merge(self)
+        if commit:
+            session.commit()
+
+    def exec(self):
+        if self.task_type == ETLTaskType.ScheduledTask.value:
+            return
+        self.set_state(RerunState.Running.value)
+        self._log = logging.getLogger("airflow.etltask")
+        self._set_context(self)
+        with ThreadPoolExecutor(max_workers=1) as pool:
+            pool.submit(self.exec_rerun_task)
+
+    def exec_rerun_task(self):
+        try:
+            self.log.info('start to execute task: %s', self.task_id)
+            date = self.rerun_start_date
+            while datetime.strptime(date, '%Y-%m-%d') <= datetime.strptime(self.rerun_end_date, '%Y-%m-%d'):
+                # TODO 调用etl的下载加载程序
+                self.log.info('finish the etl process with date %s', date)
+                date = add_date(date)
+        except Exception as e:
+            self.log.error('execute task failed:', exc_info=True)
+            self.set_state(RerunState.Failed.value)
+        self.log.info('finish to execute task: %s', self.task_id)
+        self.set_state(RerunState.Succeed.value)
+
+    def get_log_filepath(self, try_number):
+        log = os.path.expanduser(configuration.conf.get('core', 'BASE_LOG_FOLDER'))
+        return ("{log}/{dag_id}/{task_id}/{try_number}.log".format(
+            log=log, dag_id=self.dag_id, task_id=self.task_id, try_number=try_number))
+
+    @property
+    def log_url(self):
+        base_url = configuration.conf.get('webserver', 'BASE_URL')
+        return base_url + (
+            "/etl_log?"
+            "task_id={task_id}"
+            "&dag_id={dag_id}"
+        ).format(task_id=self.task_id, dag_id=self.dag_id)
+

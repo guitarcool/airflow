@@ -55,8 +55,8 @@ def upgrade():
                     sa.Column('error_handle', sa.Integer, nullable=True),
                     sa.Column('rerun_start_date', sa.String(length=20), nullable=True),
                     sa.Column('rerun_end_date', sa.String(length=20), nullable=True),
-                    sa.Column('rerun_state', sa.Integer, nullable=True),
-                    sa.Column('rerun_log_file_names', sa.String(length=200), nullable=True),
+                    sa.Column('rerun_state', sa.Integer, nullable=True, default=0),
+                    sa.Column('try_number',  sa.Integer, nullable=True, default=0),
                     sa.PrimaryKeyConstraint('task_id', 'dag_id'))
 
 

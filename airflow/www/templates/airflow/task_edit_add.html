@@ -121,6 +121,7 @@
     <input type="radio" name="task_type" class="form-check-input" value="1">
     <label class="form-check-label">重跑任务</label>
     <div class="rerun-date input-daterange">
+      <span>重跑日期:</span>
       <div class="col">
         <input class="form-control date-picker" name="rerun_start_date" type="text" data-date-format="yyyy-mm-dd">
       </div>
@@ -171,7 +172,7 @@
     </select>
     <span class="hour-select">
       <select name="check_mode_remk" class="form-control inline-block">
-        {% for i in range(0, 23) %}
+        {% for i in range(0, 24) %}
         <option value="{{i}}">{{i}}</option>
         {% endfor %}
       </select>
@@ -271,7 +272,6 @@
   $('.input-daterange').datepicker({
     language: 'zh-CN',
     format: 'yyyy-mm-dd',
-    startDate: '0d',
     autoclose: true,
   })
   $('.date-picker').datepicker('setDate', new Date())

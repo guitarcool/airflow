@@ -80,9 +80,8 @@ def get_etl_task_names(dag_id, session):
     """
     Returns a list of scheduled etl_tasks'names for a dag, None if there was none.
     """
-    query = session.query(ETLTask.task_id,
-                          ETLTask.task_type == ETLTaskType.ScheduledTask.value
-                          ).filter(ETLTask.dag_id == dag_id)
+    query = session.query(ETLTask.task_id).filter(ETLTask.dag_id == dag_id,
+                                                  ETLTask.task_type == ETLTaskType.ScheduledTask.value)
     query = query.order_by(ETLTask.task_id)
     result = query.all()
     task_names = [r[0] for r in result]

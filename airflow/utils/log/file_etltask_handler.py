@@ -68,20 +68,20 @@ class FileETLTaskHandler(logging.Handler):
         if self.handler is not None:
             self.handler.close()
 
-    def _render_filename(self, etl_task):
+    def _render_filename(self, etl_task, try_number):
         if self.filename_jinja_template:
-            jinja_context = {'etl_task': etl_task}
+            jinja_context = {'etl_task': etl_task, 'try_number': try_number}
             return self.filename_jinja_template.render(**jinja_context)
 
         return self.filename_template.format(dag_id=etl_task.dag_id,
                                              task_id=etl_task.task_id,
-                                             try_number=etl_task.try_number)
+                                             try_number=try_number)
 
-    def _read(self, ti, try_number, metadata=None):
+    def _read(self, etl_task, try_number, metadata=None):
         """
         Template method that contains custom logic of reading
         logs given the try_number.
-        :param ti: task instance record
+        :param etl_task: etl task record
         :param try_number: current try_number to read log from
         :param metadata: log metadata,
                          can be used for steaming log reading and auto-tailing.
@@ -90,7 +90,7 @@ class FileETLTaskHandler(logging.Handler):
         # Task instance here might be different from task instance when
         # initializing the handler. Thus explicitly getting log location
         # is needed to get correct log path.
-        log_relative_path = self._render_filename(ti, try_number)
+        log_relative_path = self._render_filename(etl_task, try_number)
         location = os.path.join(self.local_base, log_relative_path)
 
         log = ""
@@ -105,9 +105,9 @@ class FileETLTaskHandler(logging.Handler):
                 log += "*** {}\n".format(str(e))
         else:
             url = os.path.join(
-                "http://{ti.hostname}:{worker_log_server_port}/log", log_relative_path
+                "http://{etl_task.hostname}:{worker_log_server_port}/log", log_relative_path
             ).format(
-                ti=ti,
+                etl_task=etl_task,
                 worker_log_server_port=conf.get('celery', 'WORKER_LOG_SERVER_PORT')
             )
             log += "*** Log file does not exist: {}\n".format(location)
@@ -130,14 +130,14 @@ class FileETLTaskHandler(logging.Handler):
 
         return log, {'end_of_log': True}
 
-    def read(self, task_instance, try_number=None, metadata=None):
+    def read(self, etl_task, try_number, metadata=None):
         """
         Read logs of given task instance from local machine.
-        :param task_instance: task instance object
-        :param try_number: task instance try_number to read logs from. If None
-                           it returns all logs separated by try_number
+        :param etl_task: etl task object
         :param metadata: log metadata,
                          can be used for steaming log reading and auto-tailing.
+        :param try_number: task instance try_number to read logs from. If None
+                           it returns all logs separated by try_number
         :return: a list of logs
         """
         # Task instance increments its try number when it starts to run.
@@ -146,7 +146,7 @@ class FileETLTaskHandler(logging.Handler):
         # after cli run and before try_number + 1 in DB will not be displayed.
 
         if try_number is None:
-            next_try = task_instance.next_try_number
+            next_try = etl_task.try_number
             try_numbers = list(range(1, next_try))
         elif try_number < 1:
             logs = [
@@ -159,7 +159,7 @@ class FileETLTaskHandler(logging.Handler):
         logs = [''] * len(try_numbers)
         metadatas = [{}] * len(try_numbers)
         for i, try_number in enumerate(try_numbers):
-            log, metadata = self._read(task_instance, try_number, metadata)
+            log, metadata = self._read(etl_task, try_number, metadata)
             logs[i] += log
             metadatas[i] = metadata
 
@@ -184,7 +184,7 @@ class FileETLTaskHandler(logging.Handler):
         # writable by both users, then it's possible that re-running a task
         # via the UI (or vice versa) results in a permission error as the task
         # tries to write to a log file created by the other user.
-        relative_path = self._render_filename(etl_task)
+        relative_path = self._render_filename(etl_task, etl_task.try_number)
         full_path = os.path.join(self.local_base, relative_path)
         directory = os.path.dirname(full_path)
         # Create the log file and give it group writable permissions

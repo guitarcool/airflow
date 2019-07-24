@@ -967,6 +967,83 @@ class Airflow(AirflowViewMixin, BaseView):
             metadata['end_of_log'] = True
             return jsonify(message=error_message, error=True, metadata=metadata)
 
+    @expose('/get_etltask_logs_with_metadata')
+    @login_required
+    @wwwutils.action_logging
+    @provide_session
+    def get_etltask_logs_with_metadata(self, session=None):
+        dag_id = request.args.get('dag_id')
+        task_id = request.args.get('task_id')
+        if request.args.get('try_number') is not None:
+            try_number = int(request.args.get('try_number'))
+        else:
+            try_number = None
+        response_format = request.args.get('format', 'json')
+
+        metadata = request.args.get('metadata')
+        metadata = json.loads(metadata)
+        print('-----------metadata--------------')
+        print(metadata)
+        # metadata may be null
+        if not metadata:
+            metadata = {}
+
+        logger = logging.getLogger('airflow.etltask')
+        task_log_reader = 'etltask'
+        handler = next((handler for handler in logger.handlers
+                        if handler.name == task_log_reader), None)
+
+        etl_task = session.query(ETLTask).filter(
+            ETLTask.dag_id == dag_id,
+            ETLTask.task_id == task_id,
+        ).first()
+
+        def _get_logs_with_metadata(try_number, metadata):
+            if etl_task is None:
+                logs = ["*** etl task did not exist in the DB\n"]
+                metadata['end_of_log'] = True
+            else:
+                logs, metadatas = handler.read(etl_task, try_number, metadata=metadata)
+                metadata = metadatas[0]
+            return logs, metadata
+
+        try:
+            if response_format == 'json':
+                logs, metadata = _get_logs_with_metadata(try_number, metadata)
+                message = logs[0] if try_number is not None else logs
+                return jsonify(message=message, metadata=metadata)
+
+            filename_template = conf.get('core', 'LOG_ETL_FILENAME_TEMPLATE')
+            attachment_filename = render_log_filename(
+                etl_task=etl_task,
+                try_number="all" if try_number is None else try_number,
+                filename_template=filename_template)
+            metadata['download_logs'] = True
+
+            def _generate_log_stream(try_number, metadata):
+                if try_number is None and etl_task is not None:
+                    next_try = etl_task.try_number
+                    try_numbers = list(range(1, next_try))
+                else:
+                    try_numbers = [try_number]
+                for try_number in try_numbers:
+                    metadata.pop('end_of_log', None)
+                    metadata.pop('max_offset', None)
+                    metadata.pop('offset', None)
+                    while 'end_of_log' not in metadata or not metadata['end_of_log']:
+                        logs, metadata = _get_logs_with_metadata(try_number, metadata)
+                        yield "\n".join(logs) + "\n"
+
+            return Response(_generate_log_stream(try_number, metadata),
+                            mimetype="text/plain",
+                            headers={"Content-Disposition": "attachment; filename={}".format(
+                                attachment_filename)})
+        except AttributeError as e:
+            error_message = ["Task log handler {} does not support read logs.\n{}\n"
+                                 .format(task_log_reader, str(e))]
+            metadata['end_of_log'] = True
+            return jsonify(message=error_message, error=True, metadata=metadata)
+
     @expose('/log')
     @login_required
     @wwwutils.action_logging
@@ -997,6 +1074,31 @@ class Airflow(AirflowViewMixin, BaseView):
             logs=logs, dag=dag, title="Log by attempts",
             dag_id=dag.dag_id, task_id=task_id,
             execution_date=execution_date, form=form,
+            root=root)
+
+    @expose('/etl_log')
+    @login_required
+    @wwwutils.action_logging
+    @provide_session
+    def etl_log(self, session=None):
+        dag_id = request.args.get('dag_id')
+        task_id = request.args.get('task_id')
+        dag = dagbag.get_dag(dag_id)
+
+        etl_task = session.query(ETLTask).filter(
+            ETLTask.dag_id == dag_id,
+            ETLTask.task_id == task_id,
+        ).first()
+
+        num_logs = 0
+        if etl_task is not None:
+            num_logs = etl_task.try_number
+        logs = [''] * num_logs
+        root = request.args.get('root', '')
+        return self.render(
+            'airflow/etl_task_log.html',
+            logs=logs, dag=dag, title="Log by attempts",
+            dag_id=dag.dag_id, task_id=task_id,
             root=root)
 
     @expose('/elasticsearch')
@@ -2050,7 +2152,6 @@ class Airflow(AirflowViewMixin, BaseView):
     def tasklist(self, session=None):
         default_dag_run = conf.getint('webserver', 'default_dag_run_display_number')
         dag_id = request.args.get('dag_id')
-        blur = conf.getboolean('webserver', 'demo_mode')
         dag = dagbag.get_dag(dag_id)
         if dag_id not in dagbag.dags:
             flash('DAG "{0}" seems to be missing.'.format(dag_id), "error")
@@ -2063,58 +2164,25 @@ class Airflow(AirflowViewMixin, BaseView):
                 include_downstream=False,
                 include_upstream=True)
 
-        arrange = request.args.get('arrange', dag.orientation)
-
-        base_date = request.args.get('base_date')
         num_runs = request.args.get('num_runs')
         num_runs = int(num_runs) if num_runs else default_dag_run
 
-        if base_date:
-            base_date = timezone.parse(base_date)
-        else:
-            base_date = dag.latest_execution_date or timezone.utcnow()
-
-        DR = models.DagRun
-        dag_runs = (
-            session.query(DR)
-            .filter(
-                DR.dag_id == dag.dag_id,
-                DR.execution_date <= base_date)
-            .order_by(DR.execution_date.desc())
-            .limit(num_runs)
-            .all()
-        )
-        dag_runs = {
-            dr.execution_date: alchemy_to_dict(dr) for dr in dag_runs}
-
-        dates = sorted(list(dag_runs.keys()))
-        max_date = max(dates) if dates else None
-        min_date = min(dates) if dates else None
-
-        def get_duration(tid):
-            duration=''
-            if isinstance(tid, dict) and tid.get("state") == State.RUNNING \
-                    and tid["start_date"] is not None:
-                d = timezone.utcnow() - pendulum.parse(tid["start_date"])
-                duration = d.total_seconds()
-            return duration
-        
         dt_nr_dr_data = get_date_time_num_runs_dag_runs_form_data(request, session, dag)
-        dt_nr_dr_data['arrange'] = arrange
         dttm = dt_nr_dr_data['dttm']
+        form = DateTimeWithNumRunsWithDagRunsForm(data=dt_nr_dr_data)
+        form.execution_date.choices = dt_nr_dr_data['dr_choices']
 
-        # task_instances = {
-        #     ti.task_id: alchemy_to_dict(ti)
-        #     for ti in dag.get_task_instances(dttm, dttm, session=session)}
         task_instances = []
         for ti in dag.get_task_instances(dttm, dttm, session=session):
-            item=alchemy_to_dict(ti)
-            item['task_id']=ti.task_id
+            item = alchemy_to_dict(ti)
+            item['start_date'] = ti.start_date.strftime('%Y-%m-%dT%H:%M:%S') if ti.start_date else ''
+            item['end_date'] = ti.end_date.strftime('%Y-%m-%dT%H:%M:%S') if ti.end_date else ''
+            item['task_id'] = ti.task_id
             task = copy.copy(dag.get_task(ti.task_id))
             for attr_name in attr_renderer:
                 if hasattr(task, attr_name):
                     source = getattr(task, attr_name)
-                    item['code']= attr_renderer[attr_name](source)
+                    item['code'] = attr_renderer[attr_name](source)
             task_instances.append(item)
         
         tasks = {
@@ -2125,25 +2193,14 @@ class Airflow(AirflowViewMixin, BaseView):
             for t in dag.tasks}
 
         session.commit()
-
-        class GraphForm(DateTimeWithNumRunsWithDagRunsForm):
-            arrange = SelectField("Layout", choices=(
-                ('LR', lazy_gettext("Left->Right")),
-                ('RL', lazy_gettext("Right->Left")),
-                ('TB', lazy_gettext("Top->Bottom")),
-                ('BT', lazy_gettext("Bottom->Top")),
-            ))
-        form = GraphForm(data=dt_nr_dr_data)
-        form.execution_date.choices = dt_nr_dr_data['dr_choices']
         external_logs = conf.get('elasticsearch', 'frontend')
-        data={}
         return self.render(
             'airflow/list_tasks.html',
             operators=sorted({op.__class__ for op in dag.tasks}, key=lambda x: x.__name__),
             root=root,
             form=form,
             dag=dag,
-            data=data, blur=blur, num_runs=num_runs,
+            num_runs=num_runs,
             tasks=tasks,
             show_external_logs=bool(external_logs),
             task_instances=task_instances

@@ -31,42 +31,17 @@ from concurrent.futures.thread import ThreadPoolExecutor
 from datetime import timedelta
 from datetime import datetime
 from enum import Enum
-from typing import Optional
-from urllib.parse import quote
-import lazy_object_proxy
-import pendulum
-
-import dill
 from sqlalchemy import (
     Column, Integer, String, Boolean, PickleType, Index, UniqueConstraint, func, DateTime, or_,
     and_
 )
-from sqlalchemy.orm import reconstructor
-from sqlalchemy.orm.session import Session
-
 from airflow import configuration, settings
-from airflow.exceptions import (
-    AirflowException, AirflowTaskTimeout, AirflowSkipException, AirflowRescheduleException
-)
 from airflow.models.base import Base, ID_LEN
-from airflow.models.log import Log
-from airflow.models.pool import Pool
-from airflow.models.taskfail import TaskFail
-from airflow.models.taskreschedule import TaskReschedule
-from airflow.models.variable import Variable
-from airflow.models.xcom import XCom, XCOM_RETURN_KEY
-from airflow.settings import Stats
-from airflow.ti_deps.dep_context import DepContext, QUEUE_DEPS, RUN_DEPS
 from airflow.utils import timezone
 from airflow.utils.db import provide_session
-from airflow.utils.email import send_email
-from airflow.utils.helpers import is_container
 from airflow.utils.log.logging_mixin import LoggingMixin
-from airflow.utils.net import get_hostname
-from airflow.utils.sqlalchemy import UtcDateTime
 from airflow.models.connection import Connection
-from airflow.utils.state import State
-from airflow.utils.timeout import timeout
+
 
 
 def add_date(date_str):

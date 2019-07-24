@@ -1330,6 +1330,7 @@ class Airflow(AirflowViewMixin, BaseView):
     def run_task(self, session=None):
         dag_id = request.args.get('dag_id')
         task_id = request.args.get('task_id')
+        origin = request.args.get('origin')
         if dag_id not in dagbag.dags:
             flash('DAG "{0}" seems to be missing.'.format(dag_id), "error")
             return redirect('/admin/')
@@ -1338,19 +1339,14 @@ class Airflow(AirflowViewMixin, BaseView):
             ETLTask.task_id == task_id,
         ).first()
         if not etl_task:
-            return wwwutils.json_response({
-                'success': '0',
-                'message': '任务%s不存在' % task_id
-            })
+            flash('任务{0}不存在'.format(task_id), "error")
+            return redirect(origin or '/admin/')
         elif etl_task.rerun_state == RerunState.Running.value:
-            return wwwutils.json_response({
-                'success': '0',
-                'message': '任务%s正在执行' % task_id
-            })
+            flash('任务{0}正在执行'.format(task_id), "error")
+            return redirect(origin or '/admin/')
         etl_task.exec()
-        return wwwutils.json_response({
-            'success': '1'
-        })
+        flash('执行成功', "success")            
+        return redirect(origin or '/admin/')
 
     @expose('/delete_task')
     @login_required

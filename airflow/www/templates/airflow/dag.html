@@ -102,12 +102,12 @@
           {{_('Code')}}
         </a>
       </li>
-      <li>
+      <!-- <li>
         <a href="{{ url_for("airflow.data_source", dag_id=dag.dag_id, root=root) }}">
           <span class="glyphicon glyphicon-hdd" aria-hidden="true"></span>
           {{_('Data Source')}}
         </a>
-      </li>
+      </li> -->
       <li>
         <a href="{{ url_for("airflow.group_stat", dag_id=dag.dag_id, root=root) }}">
           <span class="glyphicon glyphicon-stats" aria-hidden="true"></span>

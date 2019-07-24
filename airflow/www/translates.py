@@ -166,3 +166,14 @@ def _useless():
     _('Add Filter'),
     _('Page size')
     #List Permissions on Views/Menus
+
+    #/admin/connection
+    _('List'),
+    _('Create'),
+    _('With selected'),
+    _('Conn Id'),
+    _('Conn Type'),
+    _('Host'),
+    _('Port'),
+    _('Is Encrypted'),
+    _('Is Extra Encrypted')

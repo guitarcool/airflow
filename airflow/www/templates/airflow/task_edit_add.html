@@ -134,18 +134,18 @@
     </div>
   </div>
   <div class="form-group row">
+    <label class="col-form-label">任务名</label>
+
+    <input type="text" class="form-control" name="task_id" value="{{ task_id }}" required>
+
+  </div>
+  <div class="form-group row">
     <label class="col-form-label">数据源名称</label>
     <select name="data_source" class="form-control">
       {% for source in dataSources %}
       <option value="{{source.id}}">{{source.conn_id}}</option>
       {% endfor %}
     </select>
-  </div>
-  <div class="form-group row">
-    <label class="col-form-label">任务名</label>
-
-    <input type="text" class="form-control" name="task_id" value="{{ task_id }}" required>
-
   </div>
   <div class="form-group row">
     <label class="col-form-label">源地址</label>

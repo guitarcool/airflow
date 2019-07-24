@@ -1345,7 +1345,7 @@ class Airflow(AirflowViewMixin, BaseView):
             flash('任务{0}正在执行'.format(task_id), "error")
             return redirect(origin or '/admin/')
         etl_task.exec()
-        flash('执行成功', "success")            
+        flash('任务{0}开始执行'.format(task_id), "success")
         return redirect(origin or '/admin/')
 
     @expose('/delete_task')
@@ -2260,7 +2260,8 @@ class Airflow(AirflowViewMixin, BaseView):
         fails_totals = defaultdict(int)
         for tf in ti_fails:
             dict_key = (tf.dag_id, tf.task_id, tf.execution_date)
-            fails_totals[dict_key] += tf.duration
+            if tf.duration:
+                fails_totals[dict_key] += tf.duration
 
         for ti in tis:
             if ti.duration:

@@ -25,7 +25,7 @@ import hashlib
 import logging
 import math
 import os
-import signal
+import threading
 import time
 from concurrent.futures.thread import ThreadPoolExecutor
 from datetime import timedelta
@@ -187,8 +187,9 @@ class ETLTask(Base, LoggingMixin):
         self.set_state(RerunState.Running.value)
         self._log = logging.getLogger("airflow.etltask")
         self._set_context(self)
-        with ThreadPoolExecutor(max_workers=1) as pool:
-            pool.submit(self.exec_rerun_task)
+        t = threading.Thread(target=self.exec_rerun_task, name='exec_rerun_task')
+        t.start()
+        print('完毕')
 
     def exec_rerun_task(self):
         try:
@@ -196,6 +197,7 @@ class ETLTask(Base, LoggingMixin):
             date = self.rerun_start_date
             while datetime.strptime(date, '%Y-%m-%d') <= datetime.strptime(self.rerun_end_date, '%Y-%m-%d'):
                 # TODO 调用etl的下载加载程序
+                time.sleep(2)
                 self.log.info('finish the etl process with date %s', date)
                 date = add_date(date)
         except Exception as e:

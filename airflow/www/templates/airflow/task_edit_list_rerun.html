@@ -70,9 +70,7 @@
                   {% endfor %}
               </td>
               <td>
-                  {% for log in item.rerun_log_file_names %}
-                  <a>{{log}}</a>
-                  {% endfor %}
+                  <a href="{{ url_for("airflow.etl_log", dag_id=dag.dag_id, task_id=item.task_id) }}">{{_("Detail")}}</a>
               </td>
               <td>
                   <a class="glyphicon glyphicon-play" title="执行" href="{{ url_for("airflow.run_task", dag_id=dag.dag_id, task_id=item.task_id, origin=url_for("airflow.alltasks", dag_id=dag.dag_id))}}"></a>

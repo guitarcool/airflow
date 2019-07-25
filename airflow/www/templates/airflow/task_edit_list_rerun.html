@@ -73,7 +73,9 @@
                   <a href="{{ url_for("airflow.etl_log", dag_id=dag.dag_id, task_id=item.task_id) }}">{{_("Detail")}}</a>
               </td>
               <td>
-                  <a class="glyphicon glyphicon-play" title="执行" href="{{ url_for("airflow.run_task", dag_id=dag.dag_id, task_id=item.task_id, origin=url_for("airflow.alltasks", dag_id=dag.dag_id))}}"></a>
+                  <a class="glyphicon glyphicon-play" title="执行" 
+                   href="{{ url_for("airflow.run_task", dag_id=dag.dag_id, task_id=item.task_id, origin=url_for("airflow.alltasks", dag_id=dag.dag_id))}}"
+                   onclick="return task_run_btn_handler(this, '{{item.task_id}}')"></a>
                   <span class="glyphicon glyphicon-trash" title="删除" 
                   data-task_id="{{item.task_id}}" onclick="task_delete_btn_handler(event)"></span>
               </td>
@@ -132,6 +134,14 @@
         } else {
             // cancel
         }
+    }
+
+    function task_run_btn_handler(link, dag_id) {
+      if (confirm("{{_('Are you sure you want to run \'\"+dag_id+\"\' now?')}}")) {
+        window.location.href=link.href;
+      }
+      // Never follow the link
+      return false;
     }
 </script>
 {% endblock %}

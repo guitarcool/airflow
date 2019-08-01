@@ -71,7 +71,8 @@ from airflow.api.common.experimental.mark_tasks import (set_dag_run_state_to_run
                                                         set_dag_run_state_to_failed)
 from airflow.exceptions import AirflowException
 from airflow.models import BaseOperator, Connection, DagRun, errors, XCom
-from airflow.models.etltask import ETLTask, ETLTaskType, RerunState
+from airflow.models.etltask import ETLTask, ETLTaskType
+from airflow.models.reruntask import ReRunTask
 from airflow.operators.subdag_operator import SubDagOperator
 from airflow.operators.dummy_operator import DummyOperator
 from airflow.operators.python_operator import PythonOperator
@@ -1217,14 +1218,15 @@ class Airflow(AirflowViewMixin, BaseView):
     def taskedit(self, session=None):
         dag_id = request.args.get('dag_id')
         task_id = request.args.get('task_id')
-        data_sources = session.query(Connection).order_by(Connection.conn_id).all()
         root = request.args.get('root', '')
         dag = dagbag.get_dag(dag_id)
-        title = "Task Edit"
         etlTask = session.query(ETLTask).filter(
                 ETLTask.dag_id == dag_id,
                 ETLTask.task_id == task_id,
             ).first()
+        title = "Task Edit"
+        data_sources = session.query(Connection).order_by(Connection.conn_id).all()
+
         return self.render(
             'airflow/task_edit_change.html',
             root=root,
@@ -1251,49 +1253,17 @@ class Airflow(AirflowViewMixin, BaseView):
                 task_regex=root,
                 include_downstream=False,
                 include_upstream=True)
-        scheduled_tasks = session.query(ETLTask).filter(
-                ETLTask.dag_id == dag_id,
-                ETLTask.task_type == ETLTaskType.ScheduledTask.value
-            ).order_by(ETLTask.task_id).all()
+        tasks = session.query(ETLTask).filter(
+                ETLTask.dag_id == dag_id
+            ).order_by(ETLTask.task_type, ETLTask.task_id).all()
         data_sources = session.query(Connection).order_by(Connection.conn_id).all()
         ds_dict = {data_source.id:data_source.conn_id for data_source in data_sources}
         return self.render(
             'airflow/task_edit_list.html',
-            tasks=scheduled_tasks,
+            tasks=tasks,
             ds_dict=ds_dict,
             dag=dag
             )
-
-    @expose('/rerun_tasks_list')
-    @login_required
-    @wwwutils.action_logging
-    @provide_session
-    def alltasks(self, session=None):
-        dag_id = request.args.get('dag_id')
-        dag = dagbag.get_dag(dag_id)
-        if dag_id not in dagbag.dags:
-            flash('DAG "{0}" seems to be missing.'.format(dag_id), "error")
-            return redirect('/admin/')
-
-        root = request.args.get('root')
-        if root:
-            dag = dag.sub_dag(
-                task_regex=root,
-                include_downstream=False,
-                include_upstream=True)
-        rerun_tasks = session.query(ETLTask).filter(
-                ETLTask.dag_id == dag_id,
-                ETLTask.task_type == ETLTaskType.RerunTask.value
-            ).order_by(ETLTask.task_id).all()
-        data_sources = session.query(Connection).order_by(Connection.conn_id).all()
-        ds_dict = {data_source.id: data_source.conn_id for data_source in data_sources}
-        return self.render(
-            'airflow/task_edit_list_rerun.html',
-            root=root,
-            dag=dag,
-            ds_dict=ds_dict,
-            tasks=rerun_tasks
-        )
 
     @expose('/newtask')
     @login_required
@@ -1323,31 +1293,6 @@ class Airflow(AirflowViewMixin, BaseView):
             dataSources=data_sources
             )
 
-    @expose('/run_task')
-    @login_required
-    @wwwutils.action_logging
-    @provide_session
-    def run_task(self, session=None):
-        dag_id = request.args.get('dag_id')
-        task_id = request.args.get('task_id')
-        origin = request.args.get('origin')
-        if dag_id not in dagbag.dags:
-            flash('DAG "{0}" seems to be missing.'.format(dag_id), "error")
-            return redirect('/admin/')
-        etl_task = session.query(ETLTask).filter(
-            ETLTask.dag_id == dag_id,
-            ETLTask.task_id == task_id,
-        ).first()
-        if not etl_task:
-            flash('任务{0}不存在'.format(task_id), "error")
-            return redirect(origin or '/admin/')
-        elif etl_task.rerun_state == RerunState.Running.value:
-            flash('任务{0}正在执行'.format(task_id), "error")
-            return redirect(origin or '/admin/')
-        etl_task.exec()
-        flash('任务{0}开始执行'.format(task_id), "success")
-        return redirect(origin or '/admin/')
-
     @expose('/delete_task')
     @login_required
     @wwwutils.action_logging
@@ -1372,7 +1317,6 @@ class Airflow(AirflowViewMixin, BaseView):
     def add_task(self, session=None):
         try:
             dag_id = request.args.get('dag_id')
-            print('dag_id:%s' % dag_id)
             task_id = request.form['task_id']
             if not task_id:
                 return wwwutils.json_response({
@@ -1380,31 +1324,18 @@ class Airflow(AirflowViewMixin, BaseView):
                     'message': '任务名不能为空'
                 })
             task_type = request.form['task_type']
-            src_path = request.form['source_address']
-            file_pattern = request.form['source_format']
-            dst_path = request.form['target_address']
-            dst_tbl = request.form['target_table']
-            conn_id = request.form['data_source']
-            print('conn_id: %s' % conn_id)
-            check_mode = request.form['executetion_token']
-            check_mode_remk = request.form['check_mode_remk']
-            print('check_mode: %s' % check_mode)
+            conn_id = request.form['conn_id']
+            sys_id = request.form['sys_id']
+            src_path = request.form['src_path']
+            dst_path = request.form['dst_path']
+            flag_to_download = request.form['flag_to_download']
+            time_to_download = request.form['time_to_download']
             period_type = request.form['period_type']
-            print('period_type: %s' % period_type)
             period_weekday = request.form['period_day']
-            print('period_weekday: %s' % period_weekday)
             period_hour = request.form['period_hour']
-            print('period_hour: %s' % period_hour)
-            exec_logic_type = request.form['executetion_logic_type']
-            exec_logic_preset_type = request.form['executetion_logic_default_setting']
-            exec_logic_custom_sql = request.form['executetion_logic_custom_sql']
-            error_handle = request.form['error_handle']
-            rerun_start_date = request.form['rerun_start_date']
-            rerun_end_date = request.form['rerun_end_date']
-            # etlTask = ETLTask(task_id='gas1', dag_id='hy_demo', src_path='src_path', file_pattern='file_pattern',
-            #                   dst_path='dst_path', dst_tbl='dst_tbl', conn_id=1, check_mode=0, check_mode_remk='',
-            #                   period_type=2, period_weekday=0, period_hour=1, exec_logic_type=0,
-            #                   exec_logic_preset_type=0, exec_logic_custom_sql=0, error_handle=0)
+            tbls_ignored_errors = request.form['tbls_ignored_errors']
+            python_file_path = request.form['python_file_path']
+            dependencies = request.form['dependencies']
             etl_task = session.query(ETLTask).filter(
                 ETLTask.dag_id == dag_id,
                 ETLTask.task_id == task_id,
@@ -1415,10 +1346,9 @@ class Airflow(AirflowViewMixin, BaseView):
                     'message': '任务[%s.%s]已经存在' % (dag_id, task_id)
                 })
             else:
-                etl_task = ETLTask(task_id, dag_id, task_type, src_path, file_pattern, dst_path, dst_tbl, conn_id,
-                                   check_mode, check_mode_remk, period_type, period_weekday, period_hour,
-                                   exec_logic_type, exec_logic_preset_type, exec_logic_custom_sql, error_handle,
-                                   rerun_start_date, rerun_end_date)
+                etl_task = ETLTask(task_id, dag_id, task_type, conn_id, sys_id, src_path, dst_path,
+                                   flag_to_download, time_to_download, period_type, period_weekday,
+                                   period_hour, tbls_ignored_errors, python_file_path, dependencies)
                 session.add(etl_task)
                 session.commit()
         except Exception as e:
@@ -1438,37 +1368,24 @@ class Airflow(AirflowViewMixin, BaseView):
             print('dag_id:%s' % dag_id)
             task_id = request.form['task_id']
             task_type = request.form['task_type']
-            src_path = request.form['source_address']
-            file_pattern = request.form['source_format']
-            dst_path = request.form['target_address']
-            dst_tbl = request.form['target_table']
-            conn_id = request.form['data_source']
-            print('conn_id: %s' % conn_id)
-            check_mode = request.form['executetion_token']
-            check_mode_remk = request.form['check_mode_remk']
-            print('check_mode: %s' % check_mode)
+            conn_id = request.form['conn_id']
+            sys_id = request.form['sys_id']
+            src_path = request.form['src_path']
+            dst_path = request.form['dst_path']
+            flag_to_download = request.form['flag_to_download']
+            time_to_download = request.form['time_to_download']
             period_type = request.form['period_type']
-            print('period_type: %s' % period_type)
             period_weekday = request.form['period_day']
-            print('period_weekday: %s' % period_weekday)
             period_hour = request.form['period_hour']
-            print('period_hour: %s' % period_hour)
-            exec_logic_type = request.form['executetion_logic_type']
-            exec_logic_preset_type = request.form['executetion_logic_default_setting']
-            exec_logic_custom_sql = request.form['executetion_logic_custom_sql']
-            error_handle = request.form['error_handle']
-            rerun_start_date = request.form['rerun_start_date']
-            rerun_end_date = request.form['rerun_end_date']
-
-            session.query(ETLTask).filter_by(
-                dag_id=dag_id, task_id=task_id).update(
-                {'task_type': task_type, 'src_path': src_path, 'file_pattern': file_pattern, 'dst_path': dst_path,
-                 'dst_tbl': dst_tbl,'conn_id': conn_id, 'check_mode': check_mode, 'check_mode_remk': check_mode_remk,
-                 'period_type': period_type, 'period_weekday': period_weekday, 'period_hour': period_hour,
-                 'exec_logic_type': exec_logic_type, 'exec_logic_preset_type': exec_logic_preset_type,
-                 'exec_logic_custom_sql': exec_logic_custom_sql, 'error_handle': error_handle,
-                 'rerun_start_date': rerun_start_date, 'rerun_end_date': rerun_end_date,
-                 })
+            tbls_ignored_errors = request.form['tbls_ignored_errors']
+            python_file_path = request.form['python_file_path']
+            dependencies = request.form['dependencies']
+            etl_task = session.query(ETLTask).filter(
+                ETLTask.dag_id == dag_id,
+                ETLTask.task_id == task_id,
+            ).first()
+            etl_task.update(task_type, conn_id, sys_id, src_path, dst_path, flag_to_download, time_to_download,
+                            period_type, period_weekday, period_hour, tbls_ignored_errors, python_file_path, dependencies)
             session.commit()
         except Exception as e:
             print(e)
@@ -1476,6 +1393,94 @@ class Airflow(AirflowViewMixin, BaseView):
         return wwwutils.json_response({
             'success': '1'
         })
+
+    @expose('/rerun_tasks_list')
+    @login_required
+    @wwwutils.action_logging
+    @provide_session
+    def alltasks(self, session=None):
+        dag_id = request.args.get('dag_id')
+        dag = dagbag.get_dag(dag_id)
+        if dag_id not in dagbag.dags:
+            flash('DAG "{0}" seems to be missing.'.format(dag_id), "error")
+            return redirect('/admin/')
+
+        root = request.args.get('root')
+        if root:
+            dag = dag.sub_dag(
+                task_regex=root,
+                include_downstream=False,
+                include_upstream=True)
+        rerun_tasks = session.query(ETLTask).filter(
+                ETLTask.dag_id == dag_id
+            ).order_by(ETLTask.task_id).all()
+        data_sources = session.query(Connection).order_by(Connection.conn_id).all()
+        ds_dict = {data_source.id: data_source.conn_id for data_source in data_sources}
+        return self.render(
+            'airflow/task_edit_list_rerun.html',
+            root=root,
+            dag=dag,
+            ds_dict=ds_dict,
+            tasks=rerun_tasks
+        )
+
+    @expose('/add_rerun_task', methods=['POST'])
+    @login_required
+    @wwwutils.action_logging
+    @provide_session
+    def add_task(self, session=None):
+        dag_id = request.args.get('dag_id')
+        task_id = request.form['task_id']
+        if not task_id:
+            return wwwutils.json_response({
+                'success': '0',
+                'message': '任务名不能为空'
+            })
+        etl_task_id = request.form['etl_task_id']
+        rerun_start_date = request.form['rerun_start_date']
+        rerun_end_date = request.form['rerun_end_date']
+        rerun_downstreams = request.form['rerun_downstreams']
+        rerun_task = session.query(ReRunTask).filter(
+            ReRunTask.dag_id == dag_id,
+            ReRunTask.id == task_id,
+        ).first()
+        if rerun_task:
+            return wwwutils.json_response({
+                'success': '0',
+                'message': '重跑任务[%s.%s]已经存在' % (dag_id, task_id)
+            })
+        else:
+            rerun_task = ReRunTask(task_id, dag_id, etl_task_id, rerun_start_date, rerun_end_date, rerun_downstreams)
+            session.add(rerun_task)
+            session.commit()
+        return wwwutils.json_response({
+            'success': '1'
+        })
+
+    @expose('/run_task')
+    @login_required
+    @wwwutils.action_logging
+    @provide_session
+    def run_task(self, session=None):
+        dag_id = request.args.get('dag_id')
+        task_id = request.args.get('task_id')
+        origin = request.args.get('origin')
+        if dag_id not in dagbag.dags:
+            flash('DAG "{0}" seems to be missing.'.format(dag_id), "error")
+            return redirect('/admin/')
+        etl_task = session.query(ETLTask).filter(
+            ETLTask.dag_id == dag_id,
+            ETLTask.task_id == task_id,
+        ).first()
+        if not etl_task:
+            flash('任务{0}不存在'.format(task_id), "error")
+            return redirect(origin or '/admin/')
+        elif etl_task.rerun_state == ReRunTask.Running.value:
+            flash('任务{0}正在执行'.format(task_id), "error")
+            return redirect(origin or '/admin/')
+        etl_task.exec()
+        flash('任务{0}开始执行'.format(task_id), "success")
+        return redirect(origin or '/admin/')
 
     @expose('/xcom')
     @login_required

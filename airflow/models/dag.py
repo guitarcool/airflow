@@ -76,17 +76,16 @@ def get_last_dagrun(dag_id, session, include_externally_triggered=False):
     return query.first()
 
 
-def get_etl_task_names(dag_id, session):
+def get_etl_task_ids(dag_id, session):
     """
-    Returns a list of scheduled etl_tasks'names for a dag, None if there was none.
+    Returns a list of etl_tasks'ids for a dag, None if there was none.
     """
-    query = session.query(ETLTask.task_id).filter(ETLTask.dag_id == dag_id,
-                                                  ETLTask.task_type == ETLTaskType.ScheduledTask.value)
+    query = session.query(ETLTask.task_id).filter(ETLTask.dag_id == dag_id)
     query = query.order_by(ETLTask.task_id)
     result = query.all()
-    task_names = [r[0] for r in result]
-    print('etl_task_names:%s' % task_names)
-    return task_names
+    task_ids = [r[0] for r in result]
+    print('task_ids:%s' % task_ids)
+    return task_ids
 
 
 @functools.total_ordering
@@ -490,7 +489,7 @@ class DAG(BaseDag, LoggingMixin):
 
     @provide_session
     def etl_tasks(self, session=None):
-        return get_etl_task_names(self.dag_id, session=session)
+        return get_etl_task_ids(self.dag_id, session=session)
 
 
     @property

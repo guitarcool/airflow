@@ -302,7 +302,7 @@
       period_hour: f.period_hour.value,
       tbls_ignored_errors: f.tbls_ignored_errors.value,
       python_file_path: f['python_file_path_'+taskType] && f['python_file_path_'+taskType].value || '',
-      dependencies: JSON.stringify(dependenciesData)
+      dependencies: dependenciesData
     }
     if (!requestLock) {
       requestLock = true;

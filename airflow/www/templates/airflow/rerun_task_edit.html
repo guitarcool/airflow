@@ -154,7 +154,7 @@
       etl_task_id: f.etl_task_id.value,
       rerun_start_date: f.rerun_start_date.value,
       rerun_end_date: f.rerun_end_date.value,
-      rerun_downstreams: JSON.stringify(downstreamsData)
+      rerun_downstreams: downstreamsData
     }
 
     if (!requestLock) {

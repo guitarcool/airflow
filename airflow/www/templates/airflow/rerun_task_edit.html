@@ -1,0 +1,198 @@
+{#
+    #
+    # Licensed to the Apache Software Foundation (ASF) under one
+    # or more contributor license agreements.  See the NOTICE file
+    # distributed with this work for additional information
+    # regarding copyright ownership.  The ASF licenses this file
+    # to you under the Apache License, Version 2.0 (the
+    # "License"); you may not use this file except in compliance
+    # with the License.  You may obtain a copy of the License at
+    # 
+    #   http://www.apache.org/licenses/LICENSE-2.0
+    # 
+    # Unless required by applicable law or agreed to in writing,
+    # software distributed under the License is distributed on an
+    # "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+    # KIND, either express or implied.  See the License for the
+    # specific language governing permissions and limitations
+    # under the License.
+    #
+    #}
+{% extends "airflow/rerun_task_master.html" %}
+
+{% block head_css %}
+{{ super() }}
+<link href="https://cdn.bootcss.com/bootstrap-multiselect/0.9.15/css/bootstrap-multiselect.css" rel="stylesheet">
+<link href="{{ admin_static.url(filename='vendor/bootstrap-daterangepicker/daterangepicker-bs2.css') }}"
+  rel="stylesheet">
+<style>
+  #task_edit {
+    width: 80%;
+    margin-left: 25px;
+  }
+
+  #task_edit td {
+    position: relative;
+  }
+
+  #task_edit tr td:first-child {
+    width: 20%;
+  }
+
+  #task_edit .alert {
+    width: 80%;
+    margin: auto;
+    position: fixed;
+    top: 80px;
+  }
+
+  .inline-block {
+      display: inline-block;
+  }
+
+  .rerun-date>div{
+    display: inline-block;
+    width: 33%;
+  }
+  input[name="task_type"][value="1"]:checked~.rerun-date{
+    display: block;
+  }
+</style>
+{% endblock %}
+
+{% block body %}
+{{ super() }}
+<form method="get" id="task_edit" class="">
+  <div id="task_edit_alert_success" style="display: none; margin-top: 10px;" class="alert alert-success" role="alert">
+    <span class="glyphicon glyphicon-exclamation-sign" aria-hidden="true"></span>
+    <span class="content"></span>
+  </div>
+  <div id="task_edit_alert_error" style="display: none; margin-top: 10px;" class="alert alert-error" role="alert">
+    <span class="glyphicon glyphicon-exclamation-sign" aria-hidden="true"></span>
+    <span class="content"></span>
+  </div>
+  <input name="_csrf_token" type="hidden" value="{{ csrf_token() }}">
+  <input type="hidden" value="{{ dag.dag_id }}" name="dag_id">
+  <div class="form-group row">
+    <label class="col-form-label">任务名</label>
+    <input type="text" class="form-control" name="task_id" 
+     value="{% if rerunTask %} {{ request.args.get('task_id') }}{% endif %}"
+     {% if request.args.get('task_id') %}readonly{% endif %}
+    required>
+  </div>
+  <div class="form-group row">
+    <label class="col-form-label">重跑任务名</label>
+    <select class="form-control" name="etl_task_id">
+        {% for id in dag.task_ids %}
+        <option value="{{id}}">{{id}}</option>
+        {% endfor %}
+    </select>
+  </div>
+  <div class="form-group row">
+    <label class="col-form-label">重跑日期</label>
+    <div class="rerun-date input-daterange">
+      <div class="col">
+        <input class="form-control date-picker" name="rerun_start_date" type="text" data-date-format="yyyy-mm-dd">
+      </div>
+      <span>
+        到
+      </span>
+      <div class="col">
+          <input class="form-control date-picker" name="rerun_end_date" type="text" data-date-format="yyyy-mm-dd">
+      </div>
+    </div>
+  </div>
+  <div class="form-group row">
+    <label class="col-form-label">后置依赖项</label>
+    <br/>
+    <select class="form-control dependencies-select" multiple="multiple" name="rerun_downstreams">
+      {% for id in dag.task_ids %}
+      <option value="{{id}}">{{id}}</option>
+      {% endfor %}
+    </select>
+  </div>
+  <div class="form-group row">
+    <div class="btn btn-submit btn-primary">提交</div>
+  </div>
+</form>
+{% endblock %}
+{% block tail %}
+<script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-datepicker/1.9.0/js/bootstrap-datepicker.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-datepicker/1.9.0/locales/bootstrap-datepicker.zh-CN.min.js"></script>
+<script src="{{ url_for('static', filename='bootstrap-multiselect.min.js') }}"></script>
+<script>
+  var nowTime = new Date()
+  $('.input-daterange').datepicker({
+    language: 'zh-CN',
+    format: 'yyyy-mm-dd',
+    autoclose: true,
+  })
+  {% if rerunTask %}
+  $('.date-picker[name="rerun_start_date"]').datepicker('setDate', "{{rerunTask.rerun_start_date}}")
+  $('.date-picker[name="rerun_end_date"]').datepicker('setDate', "{{rerunTask.rerun_end_date}}")
+  {% else %}
+  $('.date-picker').datepicker('setDate', new Date())
+  {% endif %}
+</script>
+<script>
+  var formType = 0; //0:add 1:edit
+  $(document).ready(function() {
+    var f = document.forms["task_edit"];
+    if(!!f.task_id.value){
+        formType = 1;
+    }
+
+    $('.dependencies-select').multiselect();
+  })
+  var requestLock = false;
+  $(".btn.btn-submit").click(function () {
+    var f = document.forms["task_edit"];
+    var downstreamsData = $('.dependencies-select option:selected').map(function(a, item){return item.value;}).toArray();
+    var sendData = {
+      dag_id: "{{dag.dag_id}}",
+      task_id: f.task_id.value,
+      etl_task_id: f.etl_task_id.value,
+      rerun_start_date: f.rerun_start_date.value,
+      rerun_end_date: f.rerun_end_date.value,
+      rerun_downstreams: JSON.stringify(downstreamsData)
+    }
+
+    if (!requestLock) {
+      requestLock = true;
+      function _requestSuccessHandler(){
+        $('#task_edit_alert_success .content').text('添加成功');
+        $('#task_edit_alert_success').fadeIn(100).delay(3000).fadeOut(100);
+      }
+      function _requestFailHandler(message){
+        $('#task_edit_alert_error .content').text(message||'添加失败');
+        $('#task_edit_alert_error').fadeIn(100).delay(3000).fadeOut(100);
+      }
+
+      var postUrl = formType===0 ? '{{ url_for("airflow.add_rerun_task") }}' : '{{ url_for("airflow.add_rerun_task") }}';   //FIXME: 
+      $.ajax({
+        method: "POST",
+        url: postUrl,
+        data: sendData,
+        traditional: true,
+        success: function (response_data) {
+          if(response_data && !!~~response_data.success) {
+            _requestSuccessHandler();
+          } else {
+            _requestFailHandler(response_data.message);
+          }
+        },
+        failure: function (response_data) {
+            _requestFailHandler();
+        },
+        complete: function (jqXHT) {
+          requestLock = false;
+        }
+      })
+    } else {
+      console.log("input error.")
+    }
+  });
+
+</script>
+{{ super() }}
+{% endblock %}

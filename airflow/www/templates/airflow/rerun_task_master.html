@@ -29,10 +29,10 @@
     {% block navlinks %}
     <ul class="nav nav-tabs">
         <li class="">
-            <a href="{{ url_for("airflow.taskeditlist", dag_id=dag.dag_id)}}">调度任务{% if count %} ({{ count }}){% endif %}</a>
+            <a href="{{ url_for("airflow.alltasks", dag_id=dag.dag_id)}}">重跑任务{% if count %} ({{ count }}){% endif %}</a>
         </li>
         <li>
-            <a href="{{ get_url('airflow.newtask', dag_id=dag.dag_id) }}" title="{{ _('Create New Record') }}">{{ _('Create') }}</a>
+            <a href="{{ get_url('airflow.rerun_task_edit', dag_id=dag.dag_id) }}" title="{{ _('Create New Record') }}">{{ _('Create') }}</a>
         </li>
     </ul>
     {% endblock %}

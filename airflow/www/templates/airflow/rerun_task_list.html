@@ -1,0 +1,140 @@
+{#
+    #
+    # Licensed to the Apache Software Foundation (ASF) under one
+    # or more contributor license agreements.  See the NOTICE file
+    # distributed with this work for additional information
+    # regarding copyright ownership.  The ASF licenses this file
+    # to you under the Apache License, Version 2.0 (the
+    # "License"); you may not use this file except in compliance
+    # with the License.  You may obtain a copy of the License at
+    # 
+    #   http://www.apache.org/licenses/LICENSE-2.0
+    # 
+    # Unless required by applicable law or agreed to in writing,
+    # software distributed under the License is distributed on an
+    # "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+    # KIND, either express or implied.  See the License for the
+    # specific language governing permissions and limitations
+    # under the License.
+    #
+    #}
+{% extends "airflow/rerun_task_master.html" %}
+
+{% block head_css %}
+{{ super() }}
+<style>
+  #task_edit_list_alert {
+    width: 80%;
+    margin: auto;
+    position: fixed;
+    top: 80px;
+  }
+</style>
+{% endblock %}
+
+{% block body %}
+{{ super() }}
+<div id="task_edit_list_alert" style="display: none; margin-top: 10px;" role="alert">
+    <span class="glyphicon glyphicon-exclamation-sign" aria-hidden="true"></span>
+    <span class="content"></span>
+</div>
+<table id="task_edit_list" class="table table-striped table-bordered">
+    
+    <thead>
+      <tr>
+          <th>{{_('Task')}}</th>
+          <th>重跑任务名</th>
+          <th>重跑起始日期</th>
+          <th>重跑结束日期</th>
+          <th>后置依赖项</th>
+          <th>操作</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for item in tasks %}
+          <tr>
+              <!-- <td><a href="{{url_for('airflow.taskedit', dag_id=dag.dag_id, task_id=item.task_id)}}">{{item.task_id}}</a></td> -->
+              <td>{{item.task_id}}</td>
+              <td>{{item.dst_tbl}}</td>
+              <td>{{item.rerun_start_date}}</td>
+              <td>{{item.rerun_end_date}}</td>
+              <td>
+                  {% for i in [[0, "未执行"], [1, "正在执行"], [2, "执行成功"], [3, "执行失败"]] %}
+                  {% if item.rerun_state==i[0] %}
+                    {{i[1]}}
+                  {% endif %}
+                  {% endfor %}
+              </td>
+              <td>
+                  <a class="glyphicon glyphicon-play" title="执行" 
+                   href="{{ url_for("airflow.run_task", dag_id=dag.dag_id, task_id=item.task_id, origin=url_for("airflow.alltasks", dag_id=dag.dag_id))}}"
+                   onclick="return task_run_btn_handler(this, '{{item.task_id}}')"></a>
+                  <span class="glyphicon glyphicon-trash" title="删除" 
+                  data-task_id="{{item.task_id}}" onclick="task_delete_btn_handler(event)"></span>
+              </td>
+          </tr>
+      {% endfor %}
+    </tbody>
+</table>
+{% endblock %}
+{% block tail %}
+{{ super() }}
+<script>
+    function _requestSuccessHandler(target){
+        var deleteNode = target.parentNode;
+        for(deleteNode; !/^tr$/gi.test(deleteNode.tagName); deleteNode=deleteNode.parentNode){
+        }
+        // delete tr
+        deleteNode.parentNode.removeChild(deleteNode);
+        _alert('删除成功', 'success');
+    }
+    function _requestFailHandler(errorMessage){
+        _alert(errorMessage, 'error');
+    }
+    function _alert(message, state){
+        $('#task_edit_list_alert .content').text(message);
+        $('#task_edit_list_alert').attr('class', 'alert alert-'+state);
+        $('#task_edit_list_alert').fadeIn(100).delay(3000).fadeOut(100);
+    }
+    function task_delete_btn_handler(ev){
+        var target = ev.target;
+        var dataset = target.dataset;
+        var task_id = dataset['task_id'];
+
+        if(confirm('你确定要删除"'+task_id+'"吗?')) {
+            // confirm
+            $.ajax({
+                method: "GET",
+                url: '{{ url_for("airflow.delete_task") }}',
+                data: {
+                    dag_id: "{{dag.dag_id}}",
+                    task_id: task_id,
+                },
+                success: function (response_data) {
+                    if(response_data && !!~~response_data.success) {
+                        _requestSuccessHandler(target);
+                    } else {
+                        _requestFailHandler(response_data.message);
+                    }
+                },
+                failure: function (response_data) {
+                    _requestFailHandler('删除失败');
+                },
+                complete: function (jqXHT) {
+                    requestLock = false;
+                }
+            })
+        } else {
+            // cancel
+        }
+    }
+
+    function task_run_btn_handler(link, dag_id) {
+      if (confirm("{{_('Are you sure you want to run \'\"+dag_id+\"\' now?')}}")) {
+        window.location.href=link.href;
+      }
+      // Never follow the link
+      return false;
+    }
+</script>
+{% endblock %}

@@ -1417,18 +1417,53 @@ class Airflow(AirflowViewMixin, BaseView):
         data_sources = session.query(Connection).order_by(Connection.conn_id).all()
         ds_dict = {data_source.id: data_source.conn_id for data_source in data_sources}
         return self.render(
-            'airflow/task_edit_list_rerun.html',
+            'airflow/rerun_task_list.html',
             root=root,
             dag=dag,
             ds_dict=ds_dict,
             tasks=rerun_tasks
         )
 
+    @expose('/reruntaskedit')
+    @login_required
+    @wwwutils.action_logging
+    @provide_session
+    def rerun_task_edit(self, session=None):
+        dag_id = request.args.get('dag_id')
+        dag = dagbag.get_dag(dag_id)
+        task_id = request.args.get('task_id')
+        if dag_id not in dagbag.dags:
+            flash('DAG "{0}" seems to be missing.'.format(dag_id), "error")
+            return redirect('/admin/')
+
+        rerunTask = session.query(ReRunTask).filter(
+                ReRunTask.dag_id == dag_id,
+                ReRunTask.task_id == task_id,
+            ).first()
+
+        root = request.args.get('root')
+        if root:
+            dag = dag.sub_dag(
+                task_regex=root,
+                include_downstream=False,
+                include_upstream=True)
+        data_sources = session.query(Connection).order_by(Connection.conn_id).all()
+        title = "Task Edit"
+
+        return self.render(
+            'airflow/rerun_task_edit.html',
+            root=root,
+            dag=dag,
+            title=title,
+            dataSources=data_sources,
+            rerunTask=rerunTask
+            )
+
     @expose('/add_rerun_task', methods=['POST'])
     @login_required
     @wwwutils.action_logging
     @provide_session
-    def add_task(self, session=None):
+    def add_rerun_task(self, session=None):
         dag_id = request.args.get('dag_id')
         task_id = request.form['task_id']
         if not task_id:

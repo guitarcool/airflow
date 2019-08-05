@@ -22,8 +22,7 @@
 
 {% block head_css %}
 {{ super() }}
-<link href="{{ admin_static.url(filename='vendor/bootstrap-daterangepicker/daterangepicker-bs2.css') }}"
-  rel="stylesheet">
+<link href="https://cdn.bootcss.com/bootstrap-multiselect/0.9.15/css/bootstrap-multiselect.css" rel="stylesheet">
 <link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-datepicker/1.9.0/css/bootstrap-datepicker3.standalone.css"
   rel="stylesheet">
 <style>
@@ -94,7 +93,17 @@
     display: inline-block;
     width: 33%;
   }
-  input[name="task_type"][value="1"]:checked~.rerun-date{
+  .switch-options,
+  .switch-options .switch-option {
+    width: 100%;
+  }
+  .switch-options .switch-option {
+    display: none;
+  }
+  .switch-options.show-0 .switch-option.type-0,
+  .switch-options.show-1 .switch-option.type-1,
+  .switch-options.show-2 .switch-option.type-2,
+  .switch-options.show-3 .switch-option.type-3 {
     display: block;
   }
 </style>
@@ -114,12 +123,20 @@
   <input name="_csrf_token" type="hidden" value="{{ csrf_token() }}">
   <input type="hidden" value="{{ dag.dag_id }}" name="dag_id">
   <div class="form-group row">
+    <label class="col-form-label">任务名</label>
+    <input type="text" class="form-control" name="task_id" value="{{ task_id }}" required>
+  </div>
+  <div class="form-group row">
     <label class="col-form-label">任务类型</label>
     <br/>
     <input type="radio" name="task_type" class="form-check-input" value="0" checked>
-    <label class="form-check-label">调度任务</label>
+    <label class="form-check-label">下载任务</label>
     <input type="radio" name="task_type" class="form-check-input" value="1">
-    <label class="form-check-label">重跑任务</label>
+    <label class="form-check-label">dds加载任务</label>
+    <input type="radio" name="task_type" class="form-check-input" value="2">
+    <label class="form-check-label">UDM任务</label>
+    <input type="radio" name="task_type" class="form-check-input" value="3">
+    <label class="form-check-label">报表任务</label>
     <div class="rerun-date input-daterange">
       <span>重跑日期:</span>
       <div class="col">
@@ -133,130 +150,164 @@
       </div>
     </div>
   </div>
-  <div class="form-group row">
-    <label class="col-form-label">任务名</label>
-
-    <input type="text" class="form-control" name="task_id" value="{{ task_id }}" required>
-
-  </div>
-  <div class="form-group row">
-    <label class="col-form-label">数据源名称</label>
-    <select name="data_source" class="form-control">
-      {% for source in dataSources %}
-      <option value="{{source.id}}">{{source.conn_id}}</option>
-      {% endfor %}
-    </select>
-  </div>
-  <div class="form-group row">
-    <label class="col-form-label">源地址</label>
-    <input type="text" class="form-control" name="source_address" required>
-  </div>
-  <div class="form-group row">
-    <label class="col-form-label">源文件格式</label>
-    <input type="text" class="form-control" name="source_format" required>
-  </div>
-  <div class="form-group row">
-    <label class="col-form-label">目标地址</label>
-    <input type="text" class="form-control" name="target_address" required>
-  </div>
-  <div class="form-group row">
-    <label class="col-form-label">目标表</label>
-    <input type="text" class="form-control" name="target_table" required>
-  </div>
-  <div class="form-group row">
-    <label class="col-form-label">执行标志</label>
-    <select name="executetion_token" class="form-control" onchange="toggleExecutetionTokenTime()">
-      <option value="0">标志文件</option>
-      <option value="1">文件大小不变</option>
-      <option value="2">固定时间之后</option>
-    </select>
-    <span class="hour-select">
-      <select name="check_mode_remk" class="form-control inline-block">
-        {% for i in range(0, 24) %}
-        <option value="{{i}}">{{i}}</option>
-        {% endfor %}
-      </select>
-      点
-    </span>
-  </div>
-  <div class="form-group row">
-    <label class="col-form-label">周期</label>
-    <div class="">
-      <input type="radio" name="period_type" class="form-check-input" value="0" checked>
-      <label class="form-check-label">当天</label>
-      <input type="radio" name="period_type" class="form-check-input" value="1">
-      <label class="form-check-label">每天</label>
-      <input type="radio" name="period_type" class="form-check-input" value="2">
-      <label class="form-check-label">每周</label>
-      <br/>
-      <span class="day-select">
-        周
-        <select name="period_day" class="form-control inline-block">
-          <option value="0">日</option>
-          <option value="1">一</option>
-          <option value="2">二</option>
-          <option value="3">三</option>
-          <option value="4">四</option>
-          <option value="5">五</option>
-          <option value="6">六</option>
+  <div class="switch-options">
+    <div class="switch-option type-0">
+      <div class="form-group row">
+        <label class="col-form-label">数据源名称</label>
+        <select name="data_source" class="form-control">
+          {% for source in dataSources %}
+          <option value="{{source.id}}">{{source.conn_id}}</option>
+          {% endfor %}
         </select>
-      </span>
-      <span class="hour-select">
-        <select name="period_hour" class="form-control inline-block">
-          <option value="0">0</option>
-          <option value="1">1</option>
-          <option value="2">2</option>
-          <option value="3">3</option>
-          <option value="4">4</option>
-          <option value="5">5</option>
-          <option value="6">6</option>
-          <option value="7">7</option>
-          <option value="8">8</option>
-          <option value="9">9</option>
-          <option value="10">10</option>
-          <option value="11">11</option>
-          <option value="12">12</option>
-          <option value="13">13</option>
-          <option value="14">14</option>
-          <option value="15">15</option>
-          <option value="16">16</option>
-          <option value="17">17</option>
-          <option value="18">18</option>
-          <option value="19">19</option>
-          <option value="20">20</option>
-          <option value="21">21</option>
-          <option value="22">22</option>
-          <option value="23">23</option>
+      </div>
+      <div class="form-group row">
+        <label class="col-form-label">系统ID</label>
+        <input type="text" class="form-control" name="sys_id_0" required>
+      </div>
+      <div class="form-group row">
+        <label class="col-form-label">源地址</label>
+        <input type="text" class="form-control" name="source_address" required>
+      </div>
+      <!-- <div class="form-group row">
+        <label class="col-form-label">源文件格式</label>
+        <input type="text" class="form-control" name="source_format" required>
+      </div> -->
+      <div class="form-group row">
+        <label class="col-form-label">目标地址</label>
+        <input type="text" class="form-control" name="target_address" required>
+      </div>
+      <!-- <div class="form-group row">
+        <label class="col-form-label">目标表</label>
+        <input type="text" class="form-control" name="target_table" required>
+      </div> -->
+      <div class="form-group row">
+        <label class="col-form-label">下载执行标志</label>
+        <select name="executetion_token" class="form-control" onchange="toggleExecutetionTokenTime()">
+          <option value="0">标志文件</option>
+          <option value="1">文件大小不变</option>
+          <option value="2">固定时间之后</option>
         </select>
-        点
-      </span>
+        <span class="hour-select">
+          <select name="check_mode_remk" class="form-control inline-block">
+            {% for i in range(0, 24) %}
+            <option value="{{i}}">{{i}}</option>
+            {% endfor %}
+          </select>
+          点
+        </span>
+      </div>
+      <div class="form-group row">
+        <label class="col-form-label">周期</label>
+        <div class="">
+          <input type="radio" name="period_type" class="form-check-input" value="0" checked>
+          <label class="form-check-label">当天</label>
+          <input type="radio" name="period_type" class="form-check-input" value="1">
+          <label class="form-check-label">每天</label>
+          <input type="radio" name="period_type" class="form-check-input" value="2">
+          <label class="form-check-label">每周</label>
+          <br/>
+          <span class="day-select">
+            周
+            <select name="period_day" class="form-control inline-block">
+              <option value="0">日</option>
+              <option value="1">一</option>
+              <option value="2">二</option>
+              <option value="3">三</option>
+              <option value="4">四</option>
+              <option value="5">五</option>
+              <option value="6">六</option>
+            </select>
+          </span>
+          <span class="hour-select">
+            <select name="period_hour" class="form-control inline-block">
+              <option value="0">0</option>
+              <option value="1">1</option>
+              <option value="2">2</option>
+              <option value="3">3</option>
+              <option value="4">4</option>
+              <option value="5">5</option>
+              <option value="6">6</option>
+              <option value="7">7</option>
+              <option value="8">8</option>
+              <option value="9">9</option>
+              <option value="10">10</option>
+              <option value="11">11</option>
+              <option value="12">12</option>
+              <option value="13">13</option>
+              <option value="14">14</option>
+              <option value="15">15</option>
+              <option value="16">16</option>
+              <option value="17">17</option>
+              <option value="18">18</option>
+              <option value="19">19</option>
+              <option value="20">20</option>
+              <option value="21">21</option>
+              <option value="22">22</option>
+              <option value="23">23</option>
+            </select>
+            点
+          </span>
+        </div>
+      </div>
+
+      <!-- <div class="form-group row">
+        <label class="col-form-label">执行逻辑</label>
+        <br/>
+        <input type="radio" class="form-check-input" name="executetion_logic_type" value="0" checked><label
+          class="col-form-label">系统预置</label>
+        <input type="radio" class="form-check-input" name="executetion_logic_type" value="1"><label
+          class="col-form-label">自定义SQL</label>
+        <div class="system-config-select">
+          <select name="executetion_logic_default_setting" class="form-control">
+            <option value="0">拉链</option>
+            <option value="1">覆盖插入</option>
+            <option value="2">更新</option>
+            <option value="3">Sqoop</option>
+          </select>
+        </div>
+        <div class="custom-sql-input">
+          <textarea type="text" class="form-control" name="executetion_logic_custom_sql"></textarea>
+        </div>
+      </div> -->
+
+      <!-- <div class="form-group row">
+        <label class="col-form-label">出错处理</label>
+        <select name="error_handle" class="form-control">
+          <option value="0">暂停</option>
+          <option value="1">忽略</option>
+        </select>
+      </div> -->
+      <div class="form-group row">
+        <label class="col-form-label">出错忽略的表</label>
+        <input type="text" class="form-control" name="tbls_ignored_errors">
+      </div>
+    </div>
+    <div class="switch-option type-1">
+      <div class="form-group row">
+        <label class="col-form-label">系统ID</label>
+        <input type="text" name="sys_id_1" class="form-control"/>
+      </div>
+    </div>
+    <div class="switch-option type-2">
+      <div class="form-group row">
+        <label class="col-form-label">python脚本</label>
+        <input type="text" class="form-control" name="python_file_path_2"></input>      
+      </div>
+    </div>
+    <div class="switch-option type-3">
+      <div class="form-group row">
+        <label class="col-form-label">python脚本</label>
+        <input type="text" class="form-control" name="python_file_path_3"></input>      
+      </div>
     </div>
   </div>
   <div class="form-group row">
-    <label class="col-form-label">执行逻辑</label>
+    <label class="col-form-label">依赖项</label>
     <br/>
-    <input type="radio" class="form-check-input" name="executetion_logic_type" value="0" checked><label
-      class="col-form-label">系统预置</label>
-    <input type="radio" class="form-check-input" name="executetion_logic_type" value="1"><label
-      class="col-form-label">自定义SQL</label>
-    <div class="system-config-select">
-      <select name="executetion_logic_default_setting" class="form-control">
-        <option value="0">拉链</option>
-        <option value="1">覆盖插入</option>
-        <option value="2">更新</option>
-        <option value="3">Sqoop</option>
-      </select>
-    </div>
-    <div class="custom-sql-input">
-      <textarea type="text" class="form-control" name="executetion_logic_custom_sql"></textarea>
-    </div>
-
-  </div>
-  <div class="form-group row">
-    <label class="col-form-label">出错处理</label>
-    <select name="error_handle" class="form-control">
-      <option value="0">暂停</option>
-      <option value="1">忽略</option>
+    <select class="form-control dependencies-select" multiple="multiple" placeholder="请选择">
+      {% for id in dag.task_ids %}
+      <option value="{{id}}">{{id}}</option>
+      {% endfor %}
     </select>
   </div>
   <div class="form-group row">
@@ -267,6 +318,7 @@
 {% block tail %}
 <script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-datepicker/1.9.0/js/bootstrap-datepicker.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-datepicker/1.9.0/locales/bootstrap-datepicker.zh-CN.min.js"></script>
+<script src="{{ url_for('static', filename='bootstrap-multiselect.min.js') }}"></script>
 <script>
   var nowTime = new Date()
   $('.input-daterange').datepicker({
@@ -277,29 +329,40 @@
   $('.date-picker').datepicker('setDate', new Date())
 </script>
 <script>
+  $(document).ready(function() {
+    switchOption();
+    $('.dependencies-select').multiselect();
+  })
   var requestLock = false;
+  // switch form
+  function switchOption(value){
+    var f = document.forms["task_edit"];
+    var task_type = f.task_type.value;
+    $('.switch-options').attr('class', 'switch-options '+('show-'+task_type));
+  }
+  $('input[name="task_type"').change(switchOption)
+  
+  // submit form
   $(".btn.btn-submit").click(function () {
     var f = document.forms["task_edit"];
+    var dependenciesData = $('.dependencies-select option:selected').map(function(a, item){return item.value;}).toArray();
+    var taskType = f.task_type.value;
     var sendData = {
       dag_id: "{{dag.dag_id}}",
       task_id: f.task_id.value,
-      source_address: f.source_address.value,
-      source_format: f.source_format.value,
-      target_address: f.target_address.value,
-      target_table: f.target_table.value,
-      data_source: f.data_source.value,
-      executetion_token: f.executetion_token.value,
-      check_mode_remk: f.check_mode_remk.value,
+      task_type: f.task_type.value,
+      conn_id: f.data_source.value,
+      sys_id: f['sys_id_'+taskType] && f['sys_id_'+taskType].value || '',
+      src_path: f.source_address.value,
+      dst_path: f.target_address.value,
+      flag_to_download: f.executetion_token.value,
+      time_to_download: f.check_mode_remk.value,
       period_type: f.period_type.value,
       period_day: f.period_day.value,
       period_hour: f.period_hour.value,
-      executetion_logic_type: f.executetion_logic_type.value,
-      executetion_logic_default_setting: f.executetion_logic_default_setting.value,
-      executetion_logic_custom_sql: f.executetion_logic_custom_sql.value,
-      error_handle: f.error_handle.value,
-      task_type: f.task_type.value,
-      rerun_start_date: f.rerun_start_date.value,
-      rerun_end_date: f.rerun_end_date.value,
+      tbls_ignored_errors: f.tbls_ignored_errors.value,
+      python_file_path: f['python_file_path_'+taskType] && f['python_file_path_'+taskType].value || '',
+      dependencies: JSON.stringify(dependenciesData)
     }
     if (!requestLock) {
       requestLock = true;

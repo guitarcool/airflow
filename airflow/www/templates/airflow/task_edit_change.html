@@ -22,6 +22,7 @@
 
 {% block head_css %}
 {{ super() }}
+<link href="https://cdn.bootcss.com/bootstrap-multiselect/0.9.15/css/bootstrap-multiselect.css" rel="stylesheet">
 <link href="{{ admin_static.url(filename='vendor/bootstrap-daterangepicker/daterangepicker-bs2.css') }}"
   rel="stylesheet">
 <style>
@@ -93,13 +94,31 @@
     display: inline-block;
     width: 33%;
   }
-  input[name="task_type"][value="1"]:checked~.rerun-date{
+  .switch-options .switch-option {
+    display: none;
+  }
+  .switch-options.show-0 .switch-option.type-0,
+  .switch-options.show-1 .switch-option.type-1,
+  .switch-options.show-2 .switch-option.type-2,
+  .switch-options.show-3 .switch-option.type-3 {
     display: block;
   }
 </style>
 {% endblock %}
-
 {% block body %}
+{% block navlinks %}
+<ul class="nav nav-tabs">
+    <li class="">
+        <a href="{{ url_for("airflow.taskeditlist", dag_id=dag.dag_id)}}">调度任务{% if count %} ({{ count }}){% endif %}</a>
+    </li>
+    <li>
+        <a href="{{ get_url('airflow.newtask', dag_id=dag.dag_id) }}" title="{{ _('Create New Record') }}">{{ _('Create') }}</a>
+    </li>
+    <li class="active">
+        <a href="javascript::void 0;">{{ _('Edit') }}</a>
+    </li>
+</ul>
+{% endblock %}
 {{ super() }}
 <form method="get" id="task_edit" class="">
   <div id="task_edit_alert_success" style="display: none; margin-top: 10px;" class="alert alert-success" role="alert">
@@ -113,139 +132,122 @@
   <input name="_csrf_token" type="hidden" value="{{ csrf_token() }}">
   <input type="hidden" value="{{ dag.dag_id }}" name="dag_id">
   <div class="form-group row">
+    <label class="col-form-label">任务名</label>
+    <input type="text" class="form-control" name="task_id" value="{{ request.args.get('task_id') }}" readonly required>
+  </div>
+  <div class="form-group row">
     <label class="col-form-label">任务类型</label>
     <br/>
-    {% for i in [[0,"调度任务"], [1,"重跑任务"]] %}
+    {% for i in [[0,"下载任务"], [1,"dds加载任务"], [2,"UDM任务"], [3,"报表任务"]] %}
     <input type="radio" name="task_type" class="form-check-input" value="{{i[0]}}" 
-     {%-if etlTask.task_type is none and i[0]==0 -%}checked{%- endif -%}
+     {%-if not etlTask.task_type and i[0]==0 -%}checked{%- endif -%}
      {%-if etlTask.task_type==i[0] -%}checked{%- endif -%}>
     <label class="form-check-label">{{i[1]}}</label>
     {% endfor %}
-    <div class="rerun-date input-daterange">
-      <span>重跑日期:</span>
-      <div class="col">
-        <input class="form-control date-picker" name="rerun_start_date" type="text" data-date-format="yyyy-mm-dd">
+  </div>
+  <div class="switch-options">
+    <div class="switch-option type-0">
+      <div class="form-group row">
+        <label class="col-form-label">数据源</label>
+        <select name="data_source" class="form-control">
+          {% for source in dataSources %}
+          <option value="{{source.id}}"
+            {%-if etlTask.conn_id==source.id -%}selected{%- endif -%}>{{source.conn_id}}</option>
+          {% endfor %}
+        </select>
       </div>
-      <span>
-        到
-      </span>
-      <div class="col">
-          <input class="form-control date-picker" name="rerun_end_date" type="text" data-date-format="yyyy-mm-dd">
+      <div class="form-group row">
+        <label class="col-form-label">系统ID</label>
+        <input type="text" class="form-control" name="sys_id_0">
+      </div>
+      <div class="form-group row">
+        <label class="col-form-label">源地址</label>
+        <input type="text" class="form-control" name="source_address" value="{{ etlTask.src_path }}">
+      </div>
+      <div class="form-group row">
+        <label class="col-form-label">目标地址</label>
+        <input type="text" class="form-control" name="target_address" value="{{ etlTask.dst_path }}">
+      </div>
+      <div class="form-group row">
+        <label class="col-form-label">下载执行标志</label>
+        <select name="executetion_token" class="form-control" onchange="toggleExecutetionTokenTime()">
+          {% for i in [[0,"标志文件"], [1,"文件大小不变"], [2,"固定时间之后"]] %}
+            <option value="{{i[0]}}"
+            {%-if not etlTask and i[0]==0 -%}selected{%- endif -%}
+            {%-if etlTask.flag_to_download==i[0] -%}selected{%- endif -%}
+            >{{i[1]}}</option>
+          {% endfor %}
+        </select>
+        <span class="hour-select">
+          <select name="check_mode_remk" class="form-control inline-block">
+            {% for i in range(0, 24) %}
+            <option value="{{i}}" {%- if eltTask and (etlTask.time_to_download|int == i) -%}selected{%- endif -%}>{{i}}</option>
+            {% endfor %}
+          </select>
+          点
+        </span>
+      </div>
+
+      <div class="form-group row">
+        <label class="col-form-label">周期</label>
+        <div class="">
+          {% for i in [[0,"当天"], [1,"每天"], [2,"每周"]] %}
+          <input type="radio" name="period_type" class="form-check-input" value="{{i[0]}}" 
+            {%-if not etlTask.period_type and i[0]==0 -%}checked{%- endif -%}
+            {%-if etlTask.period_type==i[0] -%}checked{%- endif -%}>
+          <label class="form-check-label">{{i[1]}}</label>
+          {% endfor %}
+          <br/>
+          <span class="day-select">
+            周
+            <select name="period_day" class="form-control inline-block" value="{{ etlTask.period_weekday }}">
+              {% for i in [
+                [0,"日"], [1,"一"], [2,"二"], [3,"三"], [4,"四"], [5,"五"], [6,"六"]
+              ] %}
+              <option value="{{i[0]}}" {%-if etlTask.period_weekday==i[0] -%}selected{%- endif -%}>{{i[1]}}</option>
+              {% endfor %}
+            </select>
+          </span>
+          <span class="hour-select">
+            <select name="period_hour" class="form-control inline-block" value="{{ etlTask.period_hour }}">
+              {% for i in range(0, 24) %}
+              <option value="{{i}}" {%-if etlTask.period_hour==i -%}selected{%- endif -%}>{{i}}</option>
+              {% endfor %}
+            </select>
+            点
+          </span>
+        </div>
+      </div>
+      <div class="form-group row">
+        <label class="col-form-label">出错忽略的表</label>
+        <input type="text" class="form-control" name="tbls_ignored_errors" value="{{etlTask.tbls_ignored_errors}}">
+      </div>
+    </div>
+    <div class="switch-option type-1">
+      <div class="form-group row">
+        <label class="col-form-label">系统ID</label>
+        <input type="text" name="sys_id_1" class="form-control" value="{{ etlTask.sys_id }}"/>
+      </div>
+    </div>
+    <div class="switch-option type-2">
+      <div class="form-group row">
+        <label class="col-form-label">python脚本</label>
+        <input type="text" class="form-control" name="python_file_path_2"></input>      
+      </div>
+    </div>
+    <div class="switch-option type-3">
+      <div class="form-group row">
+        <label class="col-form-label">python脚本</label>
+        <input type="text" class="form-control" name="python_file_path_3"></input>      
       </div>
     </div>
   </div>
   <div class="form-group row">
-    <label class="col-form-label">任务名</label>
-
-    <input type="text" class="form-control" name="task_id" value="{{ request.args.get('task_id') }}" readonly required>
-
-  </div>
-  <div class="form-group row">
-    <label class="col-form-label">数据源名称</label>
-    <select name="data_source" class="form-control">
-      {% for source in dataSources %}
-      <option value="{{source.id}}"
-       {%-if etlTask.conn_id==source.id -%}selected{%- endif -%}>{{source.conn_id}}</option>
-      {% endfor %}
-    </select>
-  </div>
-  <div class="form-group row">
-    <label class="col-form-label">源地址</label>
-    <input type="text" class="form-control" name="source_address" value="{{ etlTask.src_path }}"" required>
-  </div>
-  <div class="form-group row">
-    <label class="col-form-label">源文件格式</label>
-    <input type="text" class="form-control" name="source_format" value="{{ etlTask.file_pattern }}" required>
-  </div>
-  <div class="form-group row">
-    <label class="col-form-label">目标地址</label>
-    <input type="text" class="form-control" name="target_address" value="{{ etlTask.dst_path }}" required>
-  </div>
-  <div class="form-group row">
-    <label class="col-form-label">目标表</label>
-    <input type="text" class="form-control" name="target_table" value="{{ etlTask.dst_tbl }}" required>
-  </div>
-  <div class="form-group row">
-    <label class="col-form-label">执行标志</label>
-    <select name="executetion_token" class="form-control" onchange="toggleExecutetionTokenTime()">
-      {% for i in [[0,"标志文件"], [1,"文件大小不变"], [2,"固定时间之后"]] %}
-        <option value="{{i[0]}}"
-        {%-if etlTask.check_mode is none and i[0]==0 -%}selected{%- endif -%}
-        {%-if etlTask.check_mode==i[0] -%}selected{%- endif -%}
-        >{{i[1]}}</option>
-      {% endfor %}
-    </select>
-    <span class="hour-select">
-      <select name="check_mode_remk" class="form-control inline-block">
-        {% for i in range(0, 24) %}
-        <option value="{{i}}" {%- if (etlTask.check_mode_remk|int == i) -%}selected{%- endif -%}>{{i}}</option>
-        {% endfor %}
-      </select>
-      点
-    </span>
-  </div>
-  <div class="form-group row">
-    <label class="col-form-label">周期</label>
-    <div class="">
-      {% for i in [[0,"当天"], [1,"每天"], [2,"每周"]] %}
-      <input type="radio" name="period_type" class="form-check-input" value="{{i[0]}}" 
-       {%-if etlTask.period_type is none and i[0]==0 -%}checked{%- endif -%}
-       {%-if etlTask.period_type==i[0] -%}checked{%- endif -%}>
-      <label class="form-check-label">{{i[1]}}</label>
-      {% endfor %}
-      <br/>
-      <span class="day-select">
-        周
-        <select name="period_day" class="form-control inline-block" value="{{ etlTask.period_weekday }}">
-          {% for i in [
-            [0,"日"], [1,"一"], [2,"二"], [3,"三"], [4,"四"], [5,"五"], [6,"六"]
-          ] %}
-          <option value="{{i[0]}}" {%-if etlTask.period_weekday==i[0] -%}selected{%- endif -%}>{{i[1]}}</option>
-          {% endfor %}
-        </select>
-      </span>
-      <span class="hour-select">
-        <select name="period_hour" class="form-control inline-block" value="{{ etlTask.period_hour }}">
-          {% for i in range(0, 24) %}
-          <option value="{{i}}" {%-if etlTask.period_hour==i -%}selected{%- endif -%}>{{i}}</option>
-          {% endfor %}
-        </select>
-        点
-      </span>
-    </div>
-  </div>
-  <div class="form-group row">
-    <label class="col-form-label">执行逻辑</label>
+    <label class="col-form-label">依赖项</label>
     <br/>
-    {% for i in [[0,"系统预置"], [1,"自定义SQL"]] %}
-    <input type="radio" class="form-check-input" name="executetion_logic_type" value="{{i[0]}}" 
-      {%-if etlTask.exec_logic_type is none and i[0]==0 -%}checked{%- endif -%}
-      {%-if etlTask.exec_logic_type==i[0] -%}checked{%- endif -%}><label
-      class="col-form-label">{{i[1]}}</label>
-    {% endfor %}
-    <div class="system-config-select">
-      <select name="executetion_logic_default_setting" class="form-control" value="{{ etlTask.exec_logic_preset_type }}">
-        {% for i in [[0,"拉链"], [1,"覆盖插入"], [2,"更新"], [3,"Sqoop"]] %}
-          <option value="{{i[0]}}"
-          {%-if etlTask.exec_logic_preset_type is none and i[0]==0 -%}selected{%- endif -%}
-          {%-if etlTask.exec_logic_preset_type==i[0] -%}selected{%- endif -%}
-          >{{i[1]}}</option>
-        {% endfor %}
-      </select>
-    </div>
-    <div class="custom-sql-input">
-      <textarea type="text" class="form-control" name="executetion_logic_custom_sql" value="{{ etlTask.exec_logic_custom_sql }}">{{ etlTask.exec_logic_custom_sql }}</textarea>
-    </div>
-
-  </div>
-  <div class="form-group row">
-    <label class="col-form-label">出错处理</label>
-    <select name="error_handle" class="form-control" value="{{ etlTask.error_handle }}">
-      {% for i in [[0,"暂停"], [1,"忽略"]] %}
-      <option value="{{i[0]}}"
-      {%-if etlTask.error_handle is none and i[0]==0 -%}selected{%- endif -%}
-      {%-if etlTask.error_handle==i[0] -%}selected{%- endif -%}
-      >{{i[1]}}</option>
+    <select class="form-control dependencies-select" multiple="multiple" placeholder="请选择">
+      {% for id in dag.task_ids %}
+      <option value="{{id}}" {% if etlTask and id in etlTask.dependencies %}selected{% endif %}>{{id}}</option>
       {% endfor %}
     </select>
   </div>
@@ -257,6 +259,7 @@
 {% block tail %}
 <script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-datepicker/1.9.0/js/bootstrap-datepicker.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-datepicker/1.9.0/locales/bootstrap-datepicker.zh-CN.min.js"></script>
+<script src="{{ url_for('static', filename='bootstrap-multiselect.min.js') }}"></script>
 <script>
   var nowTime = new Date()
   $('.input-daterange').datepicker({
@@ -268,29 +271,38 @@
   $('.date-picker[name="rerun_end_date"]').datepicker('setDate', "{{etlTask.rerun_end_date}}")
 </script>
 <script>
+  $(document).ready(function() {
+    switchOption();
+    $('.dependencies-select').multiselect();
+  })
   var requestLock = false;
+  // switch form
+  function switchOption(value){
+    var f = document.forms["task_edit"];
+    var task_type = f.task_type.value;
+    $('.switch-options').attr('class', 'switch-options '+('show-'+task_type));
+  }
+  $('input[name="task_type"').change(switchOption)
   $(".btn.btn-submit").click(function () {
     var f = document.forms["task_edit"];
+    var dependenciesData = $('.dependencies-select option:selected').map(function(a, item){return item.value;}).toArray();
+    var taskType = f.task_type.value;
     var sendData = {
       dag_id: "{{dag.dag_id}}",
       task_id: f.task_id.value,
-      source_address: f.source_address.value,
-      source_format: f.source_format.value,
-      target_address: f.target_address.value,
-      target_table: f.target_table.value,
-      data_source: f.data_source.value,
-      executetion_token: f.executetion_token.value,
-      check_mode_remk: f.check_mode_remk.value,
+      task_type: f.task_type.value,
+      conn_id: f.data_source.value,
+      sys_id: f['sys_id_'+taskType] && f['sys_id_'+taskType].value || '',
+      src_path: f.source_address.value,
+      dst_path: f.target_address.value,
+      flag_to_download: f.executetion_token.value,
+      time_to_download: f.check_mode_remk.value,
       period_type: f.period_type.value,
       period_day: f.period_day.value,
       period_hour: f.period_hour.value,
-      executetion_logic_type: f.executetion_logic_type.value,
-      executetion_logic_default_setting: f.executetion_logic_default_setting.value,
-      executetion_logic_custom_sql: f.executetion_logic_custom_sql.value,
-      error_handle: f.error_handle.value,
-      task_type: f.task_type.value,
-      rerun_start_date: f.rerun_start_date.value,
-      rerun_end_date: f.rerun_end_date.value,
+      tbls_ignored_errors: f.tbls_ignored_errors.value,
+      python_file_path: f['python_file_path_'+taskType] && f['python_file_path_'+taskType].value || '',
+      dependencies: JSON.stringify(dependenciesData)
     }
     if (!requestLock) {
       requestLock = true;

@@ -84,9 +84,9 @@ class ETLTask(Base, LoggingMixin):
     period_type = Column(Integer())
     period_weekday = Column(Integer())
     period_hour = Column(Integer())
-    _tbls_ignored_errors = Column(String(1000))
+    tbls_ignored_errors = Column(String(1000))
     python_file_path = Column(String(100))
-    _dependencies = Column(String(1000))
+    _dependencies = Column('dependencies', String(1000))
 
     __table_args__ = (
         Index('ti_period', period_type, period_hour),
@@ -129,19 +129,18 @@ class ETLTask(Base, LoggingMixin):
 
     @property
     def dependencies(self):
+        if not self._dependencies:
+            return []
         return [i.strip() for i in self._dependencies.split(',')]
 
     @dependencies.setter
     def dependencies(self, dependencies_list):
-        self._dependencies = ','.jion(dependencies_list)
+        self._dependencies = ','.join(dependencies_list) if dependencies_list else ''
 
-    @property
-    def tbls_ignored_errors(self):
-        return [i.strip() for i in self._tbls_ignored_errors.split(',')]
-
-    @tbls_ignored_errors.setter
-    def tbls_ignored_errors(self, tbls_list):
-        self._tbls_ignored_errors = ','.jion(tbls_list)
+    def get_ignored_tbls(self):
+        if not self.tbls_ignored_errors:
+            return ''
+        return [i.strip() for i in self.tbls_ignored_errors.split(',')]
 
     @provide_session
     def get_connection(self, session):

@@ -76,16 +76,13 @@ def get_last_dagrun(dag_id, session, include_externally_triggered=False):
     return query.first()
 
 
-def get_etl_task_ids(dag_id, session):
+def get_etl_tasks(dag_id, session):
     """
-    Returns a list of etl_tasks'ids for a dag, None if there was none.
+    Returns a list of etl_tasks for a dag, None if there was none.
     """
-    query = session.query(ETLTask.task_id).filter(ETLTask.dag_id == dag_id)
-    query = query.order_by(ETLTask.task_id)
-    result = query.all()
-    task_ids = [r[0] for r in result]
-    print('task_ids:%s' % task_ids)
-    return task_ids
+    query = session.query(ETLTask).filter(ETLTask.dag_id == dag_id).order_by(ETLTask.task_id)
+    tasks = query.all()
+    return tasks
 
 
 @functools.total_ordering
@@ -489,8 +486,23 @@ class DAG(BaseDag, LoggingMixin):
 
     @provide_session
     def etl_tasks(self, session=None):
-        return get_etl_task_ids(self.dag_id, session=session)
+        """
+        Returns a list of etl_tasks for a dag, None if there was none.
+        """
+        query = session.query(ETLTask).filter(ETLTask.dag_id == self.dag_id).order_by(ETLTask.task_id)
+        tasks = query.all()
+        return tasks
 
+    def get_tasks_downstreams(self):
+        """
+        Returns the downstream ids of each task in the given DAG.
+        :return: A dict of each tasks' all downstream ids
+        :rtype: dict{task_id:downstream_ids}
+        """
+        return {
+            task.task_id: task.get_flat_relative_ids(upstream=False)
+            for task in self.tasks
+        }
 
     @property
     def dag_id(self):
@@ -1579,3 +1591,5 @@ class DagModel(Base):
         except Exception:
             session.rollback()
             raise
+
+

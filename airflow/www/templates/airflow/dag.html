@@ -69,7 +69,7 @@
           <span class="glyphicon glyphicon-edit" aria-hidden="true"></span>
           {{_('Add Task')}}
       </a></li>
-      <li><a href="{{ url_for("airflow.alltasks", dag_id=dag.dag_id, num_runs=num_runs, root=root) }}">
+      <li><a href="{{ url_for("airflow.rerun_tasks_list", dag_id=dag.dag_id, num_runs=num_runs, root=root) }}">
           <span class="glyphicon glyphicon-list-alt" aria-hidden="true"></span>
           重跑任务
       </a></li>

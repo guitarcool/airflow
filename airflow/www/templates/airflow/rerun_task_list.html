@@ -67,7 +67,7 @@
               </td>
               <td>
                   <a class="glyphicon glyphicon-play" title="执行" 
-                   href="{{ url_for("airflow.run_task", dag_id=dag.dag_id, task_id=item.task_id, origin=url_for("airflow.alltasks", dag_id=dag.dag_id))}}"
+                   href="{{ url_for("airflow.run_task", dag_id=dag.dag_id, task_id=item.task_id, origin=url_for("airflow.rerun_tasks_list", dag_id=dag.dag_id))}}"
                    onclick="return task_run_btn_handler(this, '{{item.task_id}}')"></a>
                   <span class="glyphicon glyphicon-trash" title="删除" 
                   data-task_id="{{item.task_id}}" onclick="task_delete_btn_handler(event)"></span>

@@ -41,7 +41,7 @@ def upgrade():
                     sa.Column('etl_task_id', sa.String(length=250)),
                     sa.Column('rerun_start_date', sa.String(length=20), nullable=True),
                     sa.Column('rerun_end_date', sa.String(length=20), nullable=True),
-                    sa.Column('_rerun_downstreams', sa.String(length=1000), nullable=True),
+                    sa.Column('rerun_downstreams', sa.String(length=1000), nullable=True),
                     sa.PrimaryKeyConstraint('task_id', 'dag_id'))
 
 

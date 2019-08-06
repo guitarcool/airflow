@@ -27,7 +27,7 @@ class ReRunTask(Base, LoggingMixin):
     etl_task_id = Column(String(250))
     rerun_start_date = Column(String(20))
     rerun_end_date = Column(String(20))
-    _rerun_downstreams = Column(String(1000))
+    _rerun_downstreams = Column('rerun_downstreams', String(1000))
 
     def __init__(self, task_id, dag_id, etl_task_id, rerun_start_date, rerun_end_date, rerun_downstreams):
         self.task_id = task_id
@@ -37,13 +37,21 @@ class ReRunTask(Base, LoggingMixin):
         self.rerun_end_date = rerun_end_date
         self.rerun_downstreams = rerun_downstreams
 
+    def update(self, etl_task_id, rerun_start_date, rerun_end_date, rerun_downstreams):
+        self.etl_task_id = etl_task_id
+        self.rerun_start_date = rerun_start_date
+        self.rerun_end_date = rerun_end_date
+        self.rerun_downstreams = rerun_downstreams
+
     @property
     def rerun_downstreams(self):
+        if not self._rerun_downstreams:
+            return []
         return [i.strip() for i in self._rerun_downstreams.split(',')]
 
     @rerun_downstreams.setter
     def rerun_downstreams(self, downstream_list):
-        self._rerun_downstreams = ','.jion(downstream_list)
+        self._rerun_downstreams = ','.jion(downstream_list) if downstream_list else ''
 
     # @provide_session
     # def set_state(self, state, session=None, commit=True):

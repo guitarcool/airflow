@@ -71,11 +71,10 @@ from airflow.api.common.experimental.mark_tasks import (set_dag_run_state_to_run
                                                         set_dag_run_state_to_failed)
 from airflow.exceptions import AirflowException
 from airflow.models import BaseOperator, Connection, DagRun, errors, XCom
+from airflow.models.downloadconfig import DownloadConfig
 from airflow.models.etltask import ETLTask, ETLTaskType
 from airflow.models.reruntask import ReRunTask
 from airflow.operators.subdag_operator import SubDagOperator
-from airflow.operators.dummy_operator import DummyOperator
-from airflow.operators.python_operator import PythonOperator
 from airflow.ti_deps.dep_context import DepContext, QUEUE_DEPS, SCHEDULER_DEPS
 from airflow.utils import timezone
 from airflow.utils.dates import infer_time_unit, scale_time_units, parse_execution_date
@@ -1210,7 +1209,6 @@ class Airflow(AirflowViewMixin, BaseView):
             dag=dag, title=title)
 
 
-
     @expose('/taskeditchange')
     @login_required
     @wwwutils.action_logging
@@ -1257,7 +1255,7 @@ class Airflow(AirflowViewMixin, BaseView):
                 ETLTask.dag_id == dag_id
             ).order_by(ETLTask.task_type, ETLTask.task_id).all()
         data_sources = session.query(Connection).order_by(Connection.conn_id).all()
-        ds_dict = {data_source.id:data_source.conn_id for data_source in data_sources}
+        ds_dict = {data_source.id: data_source.conn_id for data_source in data_sources}
         return self.render(
             'airflow/task_edit_list.html',
             tasks=tasks,
@@ -1335,7 +1333,7 @@ class Airflow(AirflowViewMixin, BaseView):
             period_hour = request.form['period_hour']
             tbls_ignored_errors = request.form['tbls_ignored_errors']
             python_file_path = request.form['python_file_path']
-            dependencies = request.form['dependencies']
+            dependencies = request.form.getlist('dependencies[]')
             etl_task = session.query(ETLTask).filter(
                 ETLTask.dag_id == dag_id,
                 ETLTask.task_id == task_id,
@@ -1398,7 +1396,7 @@ class Airflow(AirflowViewMixin, BaseView):
     @login_required
     @wwwutils.action_logging
     @provide_session
-    def alltasks(self, session=None):
+    def rerun_tasks_list(self, session=None):
         dag_id = request.args.get('dag_id')
         dag = dagbag.get_dag(dag_id)
         if dag_id not in dagbag.dags:
@@ -1411,35 +1409,26 @@ class Airflow(AirflowViewMixin, BaseView):
                 task_regex=root,
                 include_downstream=False,
                 include_upstream=True)
-        rerun_tasks = session.query(ETLTask).filter(
-                ETLTask.dag_id == dag_id
-            ).order_by(ETLTask.task_id).all()
-        data_sources = session.query(Connection).order_by(Connection.conn_id).all()
-        ds_dict = {data_source.id: data_source.conn_id for data_source in data_sources}
+        rerun_tasks = session.query(ReRunTask).filter(
+                ReRunTask.dag_id == dag_id
+            ).order_by(ReRunTask.task_id).all()
         return self.render(
             'airflow/rerun_task_list.html',
             root=root,
             dag=dag,
-            ds_dict=ds_dict,
             tasks=rerun_tasks
         )
 
-    @expose('/reruntaskedit')
+    @expose('/new_rerun_task')
     @login_required
     @wwwutils.action_logging
     @provide_session
-    def rerun_task_edit(self, session=None):
+    def new_rerun_task(self, session=None):
         dag_id = request.args.get('dag_id')
         dag = dagbag.get_dag(dag_id)
-        task_id = request.args.get('task_id')
         if dag_id not in dagbag.dags:
             flash('DAG "{0}" seems to be missing.'.format(dag_id), "error")
             return redirect('/admin/')
-
-        rerunTask = session.query(ReRunTask).filter(
-                ReRunTask.dag_id == dag_id,
-                ReRunTask.task_id == task_id,
-            ).first()
 
         root = request.args.get('root')
         if root:
@@ -1447,17 +1436,16 @@ class Airflow(AirflowViewMixin, BaseView):
                 task_regex=root,
                 include_downstream=False,
                 include_upstream=True)
-        data_sources = session.query(Connection).order_by(Connection.conn_id).all()
-        title = "Task Edit"
 
+        task_downstreams = dag.get_tasks_downstreams()  # Type: Dict[str:List]
+        title = "Re-run Task ADD"
         return self.render(
-            'airflow/rerun_task_edit.html',
+            'airflow/rerun_task_add.html',
             root=root,
-            dag=dag,
+            dag=dag,  # 通过dag.task_ids 获取重跑任务名列表
+            task_downstreams=task_downstreams,  # 每个任务所有的后置依赖项 Type: Dict[str:List]
             title=title,
-            dataSources=data_sources,
-            rerunTask=rerunTask
-            )
+        )
 
     @expose('/add_rerun_task', methods=['POST'])
     @login_required
@@ -1474,7 +1462,7 @@ class Airflow(AirflowViewMixin, BaseView):
         etl_task_id = request.form['etl_task_id']
         rerun_start_date = request.form['rerun_start_date']
         rerun_end_date = request.form['rerun_end_date']
-        rerun_downstreams = request.form['rerun_downstreams']
+        rerun_downstreams = request.form.getlist['rerun_downstreams[]']
         rerun_task = session.query(ReRunTask).filter(
             ReRunTask.dag_id == dag_id,
             ReRunTask.id == task_id,
@@ -1487,7 +1475,84 @@ class Airflow(AirflowViewMixin, BaseView):
         else:
             rerun_task = ReRunTask(task_id, dag_id, etl_task_id, rerun_start_date, rerun_end_date, rerun_downstreams)
             session.add(rerun_task)
+        return wwwutils.json_response({
+            'success': '1'
+        })
+
+    @expose('/rerun_task_edit')
+    @login_required
+    @wwwutils.action_logging
+    @provide_session
+    def rerun_task_edit(self, session=None):
+        dag_id = request.args.get('dag_id')
+        dag = dagbag.get_dag(dag_id)
+        task_id = request.args.get('task_id')
+        if dag_id not in dagbag.dags:
+            flash('DAG "{0}" seems to be missing.'.format(dag_id), "error")
+            return redirect('/admin/')
+
+        rerun_task = session.query(ReRunTask).filter(
+            ReRunTask.dag_id == dag_id,
+            ReRunTask.task_id == task_id,
+        ).first()
+
+        root = request.args.get('root')
+        if root:
+            dag = dag.sub_dag(
+                task_regex=root,
+                include_downstream=False,
+                include_upstream=True)
+
+        task_downstreams = dag.get_tasks_downstreams()
+        title = "Re-run Task Edit"
+
+        return self.render(
+            'airflow/rerun_task_edit.html',
+            root=root,
+            dag=dag,
+            title=title,
+            rerun_task=rerun_task,
+            task_downstreams=task_downstreams,  # 每个任务所有的后置依赖项 Type: Dict[str:List]
+            )
+
+    @expose('/update_rerun_task', methods=['POST'])
+    @login_required
+    @wwwutils.action_logging
+    @provide_session
+    def update_rerun_task(self, session=None):
+        try:
+            dag_id = request.form['dag_id']
+            task_id = request.form['task_id']
+            etl_task_id = request.form['etl_task_id']
+            rerun_start_date = request.form['rerun_start_date']
+            rerun_end_date = request.form['rerun_end_date']
+            rerun_downstreams = request.form['rerun_downstreams']
+            rerun_task = session.query(ReRunTask).filter(
+                ReRunTask.dag_id == dag_id,
+                ReRunTask.id == task_id,
+            ).first()
+            rerun_task.update(etl_task_id, rerun_start_date, rerun_end_date, rerun_downstreams)
             session.commit()
+        except Exception as e:
+            print(e)
+            print(sys.exc_info())
+        return wwwutils.json_response({
+            'success': '1'
+        })
+
+    @expose('/delete_rerun_task')
+    @login_required
+    @wwwutils.action_logging
+    @provide_session
+    def delete_rerun_task(self, session=None):
+        dag_id = request.args.get('dag_id')
+        task_id = request.args.get('task_id')
+        session.query(ReRunTask).filter(
+            ReRunTask.dag_id == dag_id,
+            ReRunTask.task_id == task_id
+        ).delete()
+        session.commit()
+
         return wwwutils.json_response({
             'success': '1'
         })
@@ -2155,6 +2220,116 @@ class Airflow(AirflowViewMixin, BaseView):
                 'task_type': t.task_type,
             }
             for t in dag.tasks}
+        if not tasks:
+            flash(lazy_gettext("No tasks found"), "error")
+        session.commit()
+        doc_md = markdown.markdown(dag.doc_md) if hasattr(dag, 'doc_md') and dag.doc_md else ''
+
+        external_logs = conf.get('elasticsearch', 'frontend')
+        return self.render(
+            'airflow/graph.html',
+            dag=dag,
+            form=form,
+            width=request.args.get('width', "100%"),
+            height=request.args.get('height', "800"),
+            execution_date=dttm.isoformat(),
+            state_token=state_token(dt_nr_dr_data['dr_state']),
+            doc_md=doc_md,
+            arrange=arrange,
+            operators=sorted({op.__class__ for op in dag.tasks}, key=lambda x: x.__name__),
+            blur=blur,
+            root=root or '',
+            task_instances=task_instances,
+            tasks=tasks,
+            nodes=nodes,
+            edges=edges,
+            show_external_logs=bool(external_logs))
+
+
+    @expose('/task_graph')
+    @login_required
+    @wwwutils.gzipped
+    @wwwutils.action_logging
+    @provide_session
+    def task_graph(self, session=None):
+        dag_id = request.args.get('dag_id')
+        task_id = request.args.get('task_id')
+        blur = conf.getboolean('webserver', 'demo_mode')
+        dag = dagbag.get_dag(dag_id)
+        if dag_id not in dagbag.dags:
+            flash('DAG "{0}" seems to be missing.'.format(dag_id), "error")
+            return redirect('/admin/')
+
+        root = request.args.get('root')
+        if root:
+            dag = dag.sub_dag(
+                task_regex=root,
+                include_upstream=True,
+                include_downstream=False)
+
+        arrange = request.args.get('arrange', dag.orientation)
+
+        nodes = []
+        edges = []
+        display_tasks = []
+
+        def get_upstream(task):
+            for t in task.upstream_list:
+                edge = {
+                    'u': t.task_id,
+                    'v': task.task_id,
+                }
+                if edge not in edges:
+                    edges.append(edge)
+
+        def get_all_downstream(task):
+            display_tasks.append(task.task_id)
+            for t in task.downstream_list:
+                edge = {
+                    'u': task.task_id,
+                    'v': t.task_id,
+                }
+                if edge not in edges:
+                    edges.append(edge)
+                    get_all_downstream(t)
+        task = dag.get_task(task_id)
+        get_upstream(task)
+        get_all_downstream(task)
+
+        for task in dag.tasks:
+            # if task.task_id in display_tasks:
+            nodes.append({
+                'id': task.task_id,
+                'value': {
+                    'label': task.task_id,
+                    'labelStyle': "fill:{0};".format(task.ui_fgcolor),
+                    'style': "fill:{0};".format(task.ui_color),
+                }
+            })
+        dt_nr_dr_data = get_date_time_num_runs_dag_runs_form_data(request, session, dag)
+        dt_nr_dr_data['arrange'] = arrange
+        dttm = dt_nr_dr_data['dttm']
+
+        class GraphForm(DateTimeWithNumRunsWithDagRunsForm):
+            arrange = SelectField("Layout", choices=(
+                ('LR', lazy_gettext("Left->Right")),
+                ('RL', lazy_gettext("Right->Left")),
+                ('TB', lazy_gettext("Top->Bottom")),
+                ('BT', lazy_gettext("Bottom->Top")),
+            ))
+
+        form = GraphForm(data=dt_nr_dr_data)
+        form.execution_date.choices = dt_nr_dr_data['dr_choices']
+
+        task_instances = {
+            ti.task_id: alchemy_to_dict(ti)
+            for ti in dag.get_task_instances(dttm, dttm, session=session) if ti.task_id in display_tasks}
+        tasks = {
+            t.task_id: {
+                'dag_id': t.dag_id,
+                'task_type': t.task_type,
+            }
+            for t in dag.tasks if t.task_id in display_tasks}
         if not tasks:
             flash(lazy_gettext("No tasks found"), "error")
         session.commit()
@@ -3120,6 +3295,45 @@ class KnownEventTypeView(wwwutils.DataProfilingMixin, AirflowModelView):
 #     models.DagPickle,
 #     Session, name="Pickles", category="Manage")
 # admin.add_view(mv)
+
+class DownLoadConfigView(wwwutils.DataProfilingMixin, AirflowModelView):
+    verbose_name = "downLoad config"
+    verbose_name_plural = "downLoad configs"
+    # edit_template = 'airflow/download_config_edit.html'
+    form_columns = (
+        'sys_id',
+        'connection',
+        'src_path',
+        'dst_path',
+        'flag_to_download',
+        'time_to_download',
+    )
+    column_list = ('sys_id', 'connection', 'src_path', 'dst_path', 'flag_to_download')
+    column_filters = ('sys_id', 'connection.conn_id', 'src_path', 'dst_path', 'flag_to_download')
+    column_searchable_list = ('sys_id',)
+    column_default_sort = ('sys_id', False)
+    column_sortable_list = (
+        'sys_id', 'connection', 'src_path', 'dst_path', 'flag_to_download'
+    )
+    form_args = {
+        'sys_id': {
+            'validators': {
+                validators.DataRequired(),
+            },
+        },
+        'connection': {
+            'validators': {
+                validators.DataRequired(),
+            },
+        },
+    }
+
+    form_choices = {
+        'flag_to_download': DownloadConfig._download_flag_types
+    }
+    column_choices = {
+        'flag_to_download': DownloadConfig._download_flag_types
+    }
 
 
 class VariableView(wwwutils.DataProfilingMixin, AirflowModelView):

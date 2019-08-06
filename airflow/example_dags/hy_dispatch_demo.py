@@ -6,7 +6,7 @@ from airflow.operators.python_operator import PythonOperator
 from datetime import timedelta
 from datetime import datetime
 import pendulum
-
+#
 # DAG_NAME = 'hy_demo'
 # local_tz = pendulum.timezone("Asia/Shanghai")
 #
@@ -29,28 +29,26 @@ import pendulum
 # )
 #
 #
-# def print_msg(etl_task, **kwargs):
-#     print('task_id:' + etl_task.task_id)
-#     print('task_id:' + etl_task.src_path)
+# def load(etl_task, **kwargs):
+#     print(etl_task.get_connection().id)
 #
 #
-# static_tasks = ['btop', 'card', 'ccpt', 'ccrd', 'core', 'credit']
-# dynamic_tasks = main_dag.etl_tasks()
+# etl_tasks = main_dag.etl_tasks()
 #
-# for name in static_tasks:
+#
+# task_dict = {}  # type: Dict[str, ETLTask]
+#
+# for etl_task in etl_tasks:
 #     task = PythonOperator(
-#         task_id=name.strip(),
-#         python_callable=print_msg,
+#         task_id=etl_task.task_id.strip(),
+#         python_callable=load,
 #         provide_context=True,
 #         dag=main_dag)
+#     task_dict[etl_task.task_id] = task
 #
-#     task
-#
-# for name in dynamic_tasks:
-#     task = PythonOperator(
-#         task_id=name.strip(),
-#         python_callable=print_msg,
-#         provide_context=True,
-#         dag=main_dag)
-#
-#     task
+# for etl_task in etl_tasks:
+#     dependencies = etl_task.dependencies
+#     for dependency in dependencies:
+#         print('--------dependency--------')
+#         print(dependency)
+#         task_dict[dependency] >> task_dict[etl_task.task_id]

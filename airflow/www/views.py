@@ -1437,13 +1437,13 @@ class Airflow(AirflowViewMixin, BaseView):
                 include_downstream=False,
                 include_upstream=True)
 
-        task_downstreams = dag.get_tasks_downstreams()  # Type: Dict[str:List]
+        tasks_downstreams = dag.get_tasks_downstreams()  # Dict key:task_id value:downstreams
         title = "Re-run Task ADD"
         return self.render(
             'airflow/rerun_task_add.html',
             root=root,
             dag=dag,  # 通过dag.task_ids 获取重跑任务名列表
-            task_downstreams=task_downstreams,  # 每个任务所有的后置依赖项 Type: Dict[str:List]
+            tasks_downstreams=tasks_downstreams,  # 每个任务所有的后置依赖项 Type: Dict[str:List]
             title=title,
         )
 

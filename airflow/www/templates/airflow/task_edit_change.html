@@ -247,7 +247,9 @@
     <br/>
     <select class="form-control dependencies-select" multiple="multiple" placeholder="请选择">
       {% for id in dag.task_ids %}
+      {% if id != request.args.get('task_id') %}
       <option value="{{id}}" {% if etlTask and id in etlTask.dependencies %}selected{% endif %}>{{id}}</option>
+      {% endif %}
       {% endfor %}
     </select>
   </div>

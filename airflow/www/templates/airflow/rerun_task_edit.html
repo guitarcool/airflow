@@ -106,7 +106,7 @@
     <label class="col-form-label">后置依赖项</label>
     <br/>
     <select class="form-control dependencies-select" multiple="multiple" name="rerun_downstreams">
-      {% for id in dag.task_ids %}
+      {% for id in task_downstreams %}
       {% if id != request.args.get('task_id') %}
       <option value="{{id}}">{{id}}</option>
       {% endif %}

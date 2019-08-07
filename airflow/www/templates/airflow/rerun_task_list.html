@@ -53,17 +53,13 @@
     <tbody>
       {% for item in tasks %}
           <tr>
-              <!-- <td><a href="{{url_for('airflow.taskedit', dag_id=dag.dag_id, task_id=item.task_id)}}">{{item.task_id}}</a></td> -->
-              <td>{{item.task_id}}</td>
+              <td><a href="{{url_for('airflow.rerun_task_edit', dag_id=dag.dag_id, task_id=item.task_id)}}">{{item.task_id}}</a></td>
+              <!-- <td>{{item.task_id}}</td> -->
               <td>{{item.dst_tbl}}</td>
               <td>{{item.rerun_start_date}}</td>
               <td>{{item.rerun_end_date}}</td>
               <td>
-                  {% for i in [[0, "未执行"], [1, "正在执行"], [2, "执行成功"], [3, "执行失败"]] %}
-                  {% if item.rerun_state==i[0] %}
-                    {{i[1]}}
-                  {% endif %}
-                  {% endfor %}
+                  {{item.rerun_downstreams}}
               </td>
               <td>
                   <a class="glyphicon glyphicon-play" title="执行" 

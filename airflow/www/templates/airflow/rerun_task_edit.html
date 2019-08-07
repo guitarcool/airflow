@@ -84,7 +84,9 @@
     <label class="col-form-label">重跑任务名</label>
     <select class="form-control" name="etl_task_id">
         {% for id in dag.task_ids %}
-        <option value="{{id}}">{{id}}</option>
+        <option value="{{id}}" 
+        {% if rerunTask and rerunTask.etl_task_id==id %}selected{% endif %}
+        >{{id}}</option>
         {% endfor %}
     </select>
   </div>
@@ -145,7 +147,17 @@
     }
 
     $('.dependencies-select').multiselect();
+    removeDuplicatedOption();
   })
+  function removeDuplicatedOption(){
+    var target = $('select[name="etl_task_id"]').get()[0];
+    var value = target.value;
+
+    $('.multiselect-container li').show();
+    $('.multiselect-container .checkbox[title="'+value+'"]').parent().parent().attr('style', 'display:none');
+    $('.dependencies-select').multiselect('deselect', value);
+  }
+  $('select[name="etl_task_id"]').change(removeDuplicatedOption)
   var requestLock = false;
   $(".btn.btn-submit").click(function () {
     var f = document.forms["task_edit"];
@@ -170,7 +182,7 @@
         $('#task_edit_alert_error').fadeIn(100).delay(3000).fadeOut(100);
       }
 
-      var postUrl = formType===0 ? '{{ url_for("airflow.add_rerun_task") }}' : '{{ url_for("airflow.add_rerun_task") }}';   //FIXME: 
+      var postUrl = formType===0 ? '{{ url_for("airflow.add_rerun_task") }}' : '{{ url_for("airflow.update_rerun_task") }}';
       $.ajax({
         method: "POST",
         url: postUrl,

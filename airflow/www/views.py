@@ -1511,7 +1511,7 @@ class Airflow(AirflowViewMixin, BaseView):
             root=root,
             dag=dag,
             title=title,
-            rerun_task=rerun_task,
+            rerunTask=rerun_task,
             task_downstreams=task_downstreams,  # 每个任务所有的后置依赖项 Type: Dict[str:List]
             )
 

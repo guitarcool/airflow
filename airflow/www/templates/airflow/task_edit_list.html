@@ -43,11 +43,7 @@
     <thead>
       <tr>
           <th>{{_('Task')}}</th>
-          <th>数据源</th>
-          <th>源地址</th>
-          <th>源文件格式</th>
-          <th>目标地址</th>
-          <th>目标表</th>
+          <th>任务类型</th>
           <th>操作</th>
       </tr>
     </thead>
@@ -55,11 +51,13 @@
       {% for item in tasks %}
           <tr>
               <td><a href="{{url_for('airflow.taskedit', dag_id=dag.dag_id, task_id=item.task_id)}}">{{item.task_id}}</a></td>
-              <td>{{ds_dict[item.conn_id]}}</td>
-              <td>{{item.src_path}}</td>
-              <td>{{item.file_pattern}}</td>
-              <td>{{item.dst_path}}</td>
-              <td>{{item.dst_tbl}}</td>
+              <td>
+                {% for i in [[0,"下载任务"], [1,"dds加载任务"], [2,"UDM任务"], [3,"报表任务"]] %}
+                {% if item.task_type==i[0] %}
+                  {{i[1]}}
+                {% endif %}
+                {% endfor %}
+              </td>
               <td>
                   <span class="glyphicon glyphicon-trash" title="删除" 
                   data-task_id="{{item.task_id}}" onclick="task_delete_btn_handler(event)"></span>

@@ -275,7 +275,9 @@
 <script>
   $(document).ready(function() {
     switchOption();
-    $('.dependencies-select').multiselect();
+    $('.dependencies-select').multiselect({
+        enableFiltering: true
+    });
   })
   var requestLock = false;
   // switch form

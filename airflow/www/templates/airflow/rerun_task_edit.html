@@ -146,7 +146,9 @@
         formType = 1;
     }
 
-    $('.dependencies-select').multiselect();
+    $('.dependencies-select').multiselect({
+        enableFiltering: true
+    });
     removeDuplicatedOption();
   })
   function removeDuplicatedOption(){

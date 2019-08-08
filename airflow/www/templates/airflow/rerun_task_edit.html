@@ -108,11 +108,7 @@
     <label class="col-form-label">后置依赖项</label>
     <br/>
     <select class="form-control dependencies-select" multiple="multiple" name="rerun_downstreams">
-      {% for id in task_downstreams %}
-      {% if id != request.args.get('task_id') %}
-      <option value="{{id}}">{{id}}</option>
-      {% endif %}
-      {% endfor %}
+      
     </select>
   </div>
   <div class="form-group row">
@@ -140,6 +136,22 @@
 </script>
 <script>
   var formType = 0; //0:add 1:edit
+  var downStreamOptions={};
+  var selectedDownStreamOptions=[];
+  {% if etlTask and etlTask.rerun_downstreams %}
+    selectedDownStreamOptions = '{{etlTask.rerun_downstreams|join(',')|safe}}'.split(',');
+  {% endif %}
+  {% for id in task_downstreams %}
+  downStreamOptions['{{id}}']='{{task_downstreams.get(id)|join(',')|safe}}'
+  {% endfor %}
+  var i;
+  for(i in downStreamOptions){
+    var str=downStreamOptions[i];
+    !!str?(downStreamOptions[i]=str.split(',').map(function(name) {
+      return {label: name, title: name, value: name, }
+    }))
+    :(downStreamOptions[i]=[]);
+  }
   $(document).ready(function() {
     var f = document.forms["task_edit"];
     if(!!f.task_id.value){
@@ -149,17 +161,16 @@
     $('.dependencies-select').multiselect({
         enableFiltering: true
     });
-    removeDuplicatedOption();
+    setDownStreamOptions();
   })
-  function removeDuplicatedOption(){
+  function setDownStreamOptions(){
     var target = $('select[name="etl_task_id"]').get()[0];
     var value = target.value;
-
-    $('.multiselect-container li').show();
-    $('.multiselect-container .checkbox[title="'+value+'"]').parent().parent().attr('style', 'display:none');
-    $('.dependencies-select').multiselect('deselect', value);
+    var options = downStreamOptions[value] || [];
+    $('.dependencies-select').multiselect('dataprovider', options);
+    options.length>0 ? $('.dependencies-select').multiselect('enable') : $('.dependencies-select').multiselect('disable');
   }
-  $('select[name="etl_task_id"]').change(removeDuplicatedOption)
+  $('select[name="etl_task_id"]').change(setDownStreamOptions)
   var requestLock = false;
   $(".btn.btn-submit").click(function () {
     var f = document.forms["task_edit"];
@@ -208,7 +219,6 @@
       console.log("input error.")
     }
   });
-
 </script>
 {{ super() }}
 {% endblock %}

@@ -155,7 +155,24 @@ class ETLTask(Base, LoggingMixin):
         ).first()
         return conn
 
+    def execute(self):
+        if self.task_type == ETLTaskType.DownloadTask.value:
+            self._exec_download()
+        elif self.task_type == ETLTaskType.LoadDDSTask.value:
+            self._exec_load_dds()
+        elif self.task_type == ETLTaskType.UDMTask.value:
+            self._exec_udm()
+        else:
+            self._exec_report()
 
+    def _exec_download(self):
+        pass
 
+    def _exec_load_dds(self):
+        pass
 
+    def _exec_udm(self):
+        pass
 
+    def _exec_report(self):
+        pass

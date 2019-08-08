@@ -76,7 +76,8 @@ def get_last_dagrun(dag_id, session, include_externally_triggered=False):
     return query.first()
 
 
-def get_etl_tasks(dag_id, session):
+@provide_session
+def get_etl_tasks(dag_id, session=None):
     """
     Returns a list of etl_tasks for a dag, None if there was none.
     """
@@ -487,7 +488,7 @@ class DAG(BaseDag, LoggingMixin):
     @provide_session
     def etl_tasks(self, session=None):
         """
-        Returns a list of etl_tasks for a dag, None if there was none.
+        Returns a list of etl_tasks for this dag, None if there was none.
         """
         query = session.query(ETLTask).filter(ETLTask.dag_id == self.dag_id).order_by(ETLTask.task_id)
         tasks = query.all()

@@ -1,11 +1,22 @@
+import datetime
+import os
 from enum import Enum
 
+import pytz
+from jinja2 import Environment, PackageLoader
+from pendulum import pendulum
 from sqlalchemy import (
     Column, Integer, String, Boolean, PickleType, Index, UniqueConstraint, func, DateTime
 )
 
-from airflow import LoggingMixin
-from airflow.models import Base, ID_LEN
+from airflow import LoggingMixin, settings
+from airflow.api.common.experimental import delete_dag
+from airflow.models import Base, ID_LEN, DagRun
+from airflow.utils.db import provide_session
+
+RERUN_DAG_PREFIX = 'rerun__'
+RERUN_TEMPLATE_PACKAGE = 'airflow.dags'
+RERUN_TEMPLATE_FILE_NAME = 'rerun_dag.j2'
 
 
 class RerunState(Enum):
@@ -36,12 +47,18 @@ class ReRunTask(Base, LoggingMixin):
         self.rerun_start_date = rerun_start_date
         self.rerun_end_date = rerun_end_date
         self.rerun_downstreams = rerun_downstreams
+        self.rerun_dag_id = RERUN_DAG_PREFIX + self.task_id
 
     def update(self, etl_task_id, rerun_start_date, rerun_end_date, rerun_downstreams):
         self.etl_task_id = etl_task_id
         self.rerun_start_date = rerun_start_date
         self.rerun_end_date = rerun_end_date
         self.rerun_downstreams = rerun_downstreams
+
+    @property
+    def rerun_dag_file_path(self):
+        rerun_dag_file_name = self.rerun_dag_id + '.py'
+        return os.path.join(settings.DAGS_FOLDER, rerun_dag_file_name)
 
     @property
     def rerun_downstreams(self):
@@ -52,6 +69,40 @@ class ReRunTask(Base, LoggingMixin):
     @rerun_downstreams.setter
     def rerun_downstreams(self, downstream_list):
         self._rerun_downstreams = ','.jion(downstream_list) if downstream_list else ''
+
+    def create_or_update_rerun_dag(self):
+        """
+        根据rerun_dag.j2模版在AIRFLOW_HOME目录下生成dag文件
+        :return:
+        """
+
+        env = Environment(loader=PackageLoader(RERUN_TEMPLATE_PACKAGE))
+        template = env.get_template(RERUN_TEMPLATE_FILE_NAME)
+        rerun_task_ids = [self.etl_task_id].extend(self.downstreams)
+        content = template.render(dag_id=self.rerun_dag_id, base_dag_id=self.dag_id,
+                                  start_date=self.rerun_start_date, end_date=self.rerun_end_date,
+                                  rerun_task_ids=rerun_task_ids.__str__())
+        with open(self.rerun_dag_file_path, 'w') as fp:
+            fp.write(content)
+
+    def delete_rerun_dag(self):
+        # 1.删除生成的dag文件
+        os.remove(self.rerun_dag_file_path)
+        # 2.调用dag删除接口
+        delete_dag.delete_dag(self.rerun_dag_id)
+
+    @property
+    @provide_session
+    def rerun_status(self, session=None):
+        execution_date = datetime.strptime(self.rerun_end_date, '%Y-%m-%d').astimezone(pytz.utc)
+        dagrun = (
+            session.query(DagRun).filter(
+                DagRun.dag_id == self.dag_id,
+                DagRun.execution_date == execution_date).first())
+        if dagrun:
+            return dagrun.get_state()
+        else:
+            return None
 
     # @provide_session
     # def set_state(self, state, session=None, commit=True):

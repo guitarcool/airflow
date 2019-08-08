@@ -69,7 +69,7 @@ from airflow import jobs
 from airflow.api.common.experimental.mark_tasks import (set_dag_run_state_to_running,
                                                         set_dag_run_state_to_success,
                                                         set_dag_run_state_to_failed)
-from airflow.exceptions import AirflowException
+from airflow.exceptions import AirflowException, DagNotFound, DagFileExists
 from airflow.models import BaseOperator, Connection, DagRun, errors, XCom
 from airflow.models.downloadconfig import DownloadConfig
 from airflow.models.etltask import ETLTask, ETLTaskType
@@ -1474,6 +1474,7 @@ class Airflow(AirflowViewMixin, BaseView):
             })
         else:
             rerun_task = ReRunTask(task_id, dag_id, etl_task_id, rerun_start_date, rerun_end_date, rerun_downstreams)
+            rerun_task.create_or_update_rerun_dag()
             session.add(rerun_task)
         return wwwutils.json_response({
             'success': '1'
@@ -1532,6 +1533,7 @@ class Airflow(AirflowViewMixin, BaseView):
                 ReRunTask.id == task_id,
             ).first()
             rerun_task.update(etl_task_id, rerun_start_date, rerun_end_date, rerun_downstreams)
+            rerun_task.create_or_update_rerun_dag()
             session.commit()
         except Exception as e:
             print(e)
@@ -1547,12 +1549,13 @@ class Airflow(AirflowViewMixin, BaseView):
     def delete_rerun_task(self, session=None):
         dag_id = request.args.get('dag_id')
         task_id = request.args.get('task_id')
-        session.query(ReRunTask).filter(
+        rerun_task = session.query(ReRunTask).filter(
             ReRunTask.dag_id == dag_id,
             ReRunTask.task_id == task_id
-        ).delete()
+        )
+        rerun_task.delete_rerun_dag()
+        rerun_task.delete()
         session.commit()
-
         return wwwutils.json_response({
             'success': '1'
         })

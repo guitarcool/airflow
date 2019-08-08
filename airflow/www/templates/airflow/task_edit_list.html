@@ -59,8 +59,14 @@
                 {% endfor %}
               </td>
               <td>
-                  <span class="glyphicon glyphicon-trash" title="删除" 
-                  data-task_id="{{item.task_id}}" onclick="task_delete_btn_handler(event)"></span>
+                  <a href="{{url_for('airflow.taskedit', dag_id=dag.dag_id, task_id=item.task_id)}}">
+                        <span class="glyphicon glyphicon-edit" title="编辑"
+                        data-task_id="{{item.task_id}}"></span>
+                  </a>
+                  <a href="javascript::void(0)">
+                        <span class="glyphicon glyphicon-trash" title="删除" 
+                        data-task_id="{{item.task_id}}" onclick="task_delete_btn_handler(event)"></span>
+                  </a>
               </td>
           </tr>
       {% endfor %}

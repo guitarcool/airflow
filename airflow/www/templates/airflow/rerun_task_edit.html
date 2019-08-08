@@ -136,8 +136,11 @@
 </script>
 <script>
   var formType = 0; //0:add 1:edit
+  var readonly = false;
   var downStreamOptions={};
   var selectedDownStreamOptions=[];
+
+  // initialize downstream options
   {% if etlTask and etlTask.rerun_downstreams %}
     selectedDownStreamOptions = '{{etlTask.rerun_downstreams|join(',')|safe}}'.split(',');
   {% endif %}
@@ -148,10 +151,14 @@
   for(i in downStreamOptions){
     var str=downStreamOptions[i];
     !!str?(downStreamOptions[i]=str.split(',').map(function(name) {
-      return {label: name, title: name, value: name, }
+      return {label: name, title: name, value: name, selected: selectedDownStreamOptions.indexOf(name)>0}
     }))
     :(downStreamOptions[i]=[]);
   }
+
+  {% if etlTask and not etlTask.rerun_status %}
+  var readonly=true;
+  {% endif %}
   $(document).ready(function() {
     var f = document.forms["task_edit"];
     if(!!f.task_id.value){

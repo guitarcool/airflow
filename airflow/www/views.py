@@ -49,7 +49,7 @@ from flask_admin.babel import lazy_gettext
 from flask_admin.contrib.sqla import ModelView
 from flask_admin.form.fields import DateTimeField
 from flask_admin.tools import iterdecode
-from flask_babel import lazy_gettext, gettext as _
+from flask_babelex import Babel, lazy_gettext, gettext as _
 import lazy_object_proxy
 from jinja2 import escape
 from jinja2.sandbox import ImmutableSandboxedEnvironment

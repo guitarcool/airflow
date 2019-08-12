@@ -558,7 +558,7 @@ class Airflow(AirflowViewMixin, BaseView):
         return self.render(
             'airflow/nvd3.html',
             chart=chart,
-            title="Airflow - Chart",
+            title=lazy_gettext("Airflow - Chart"),
             sql=sql,
             label=chart.label,
             embed=embed)
@@ -1071,7 +1071,7 @@ class Airflow(AirflowViewMixin, BaseView):
         root = request.args.get('root', '')
         return self.render(
             'airflow/ti_log.html',
-            logs=logs, dag=dag, title="Log by attempts",
+            logs=logs, dag=dag, title=lazy_gettext("Log by attempts"),
             dag_id=dag.dag_id, task_id=task_id,
             execution_date=execution_date, form=form,
             root=root)
@@ -1097,7 +1097,7 @@ class Airflow(AirflowViewMixin, BaseView):
         root = request.args.get('root', '')
         return self.render(
             'airflow/etl_task_log.html',
-            logs=logs, dag=dag, title="Log by attempts",
+            logs=logs, dag=dag, title=lazy_gettext("Log by attempts"),
             dag_id=dag.dag_id, task_id=task_id,
             root=root)
 
@@ -3035,7 +3035,7 @@ class QueryView(wwwutils.DataProfilingMixin, AirflowViewMixin, BaseView):
         session.commit()
         return self.render(
             'airflow/query.html', form=form,
-            title="Ad Hoc Query",
+            title=lazy_gettext("Ad Hoc Query"),
             results=results or '',
             has_data=has_data)
 
@@ -3496,7 +3496,7 @@ class DagRunModelView(ModelViewOnly):
     )
     form_overrides = dict(execution_date=DateTimeField)
 
-    @action('new_delete', "Delete", _("Are you sure you want to delete selected records?"))
+    @action('new_delete', "Delete", lazy_gettext("Are you sure you want to delete selected records?"))
     @provide_session
     def action_new_delete(self, ids, session=None):
         deleted = set(session.query(models.DagRun)
@@ -3773,7 +3773,7 @@ class ConnectionModelView(wwwutils.SuperUserMixin, AirflowModelView):
         'extra__grpc__credentials_pem_file',
         'extra__grpc__scopes',
     )
-    verbose_name = _("Connection")
+    verbose_name = lazy_gettext("Connection")
     verbose_name_plural = "Connections"
     column_default_sort = ('conn_id', False)
     column_list = ('conn_id', 'conn_type', 'host', 'port', 'is_encrypted', 'is_extra_encrypted',)

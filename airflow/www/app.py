@@ -27,7 +27,7 @@ from flask_wtf.csrf import CSRFProtect
 from six.moves.urllib.parse import urlparse
 from werkzeug.wsgi import DispatcherMiddleware
 from werkzeug.contrib.fixers import ProxyFix
-from flask_babelex import Babel, gettext as _
+from flask_babelex import Babel, gettext as _, lazy_gettext
 
 import airflow
 from airflow import configuration as conf
@@ -95,56 +95,57 @@ def create_app(config=None, session=None, testing=False):
         from airflow.www import views
 
         admin = Admin(
-            app, name='Airflow',
+            app, name=lazy_gettext('Airflow'),
             static_url_path='/admin',
-            index_view=views.HomeView(endpoint='', url='/admin', name="DAGs"),
+            index_view=views.HomeView(endpoint='', url='/admin', name=lazy_gettext("DAGs")),
             template_mode='bootstrap3',
         )
         av = admin.add_view
         vs = views
-        av(vs.Airflow(name='DAGs', category='DAGs'))
+        av(vs.Airflow(name=lazy_gettext('DAGs'), category=lazy_gettext('DAGs')))
 
+        print('Data Profiling:',lazy_gettext("Data Profiling"))
         if not conf.getboolean('core', 'secure_mode'):
-            av(vs.QueryView(name='Ad Hoc Query', category="Data Profiling"))
+            av(vs.QueryView(name=lazy_gettext('Ad Hoc Query'), category=lazy_gettext("Data Profiling")))
             av(vs.ChartModelView(
-                models.Chart, Session, name="Charts", category="Data Profiling"))
+                models.Chart, Session, name=lazy_gettext("Charts"), category=lazy_gettext("Data Profiling")))
         av(vs.KnownEventView(
             models.KnownEvent,
-            Session, name="Known Events", category="Data Profiling"))
+            Session, name=lazy_gettext("Known Events"), category=lazy_gettext("Data Profiling")))
         av(vs.SlaMissModelView(
             models.SlaMiss,
-            Session, name="SLA Misses", category="Browse"))
+            Session, name=lazy_gettext("SLA Misses"), category=lazy_gettext("Browse")))
         av(vs.TaskInstanceModelView(models.TaskInstance,
-            Session, name="Task Instances", category="Browse"))
+            Session, name=lazy_gettext("Task Instances"), category=lazy_gettext("Browse")))
         av(vs.LogModelView(
-            models.Log, Session, name="Logs", category="Browse"))
+            models.Log, Session, name=lazy_gettext("Logs"), category=lazy_gettext("Browse")))
         av(vs.JobModelView(
-            jobs.BaseJob, Session, name="Jobs", category="Browse"))
+            jobs.BaseJob, Session, name=lazy_gettext("Jobs"), category=lazy_gettext("Browse")))
         av(vs.PoolModelView(
-            models.Pool, Session, name="Pools", category="Admin"))
+            models.Pool, Session, name=lazy_gettext("Pools"), category=lazy_gettext("Admin")))
         av(vs.ConfigurationView(
-            name='Configuration', category="Admin"))
+            name=lazy_gettext('Configuration'), category=lazy_gettext("Admin")))
         av(vs.UserModelView(
-            models.User, Session, name="Users", category="Admin"))
+            models.User, Session, name=lazy_gettext("Users"), category=lazy_gettext("Admin")))
         av(vs.ConnectionModelView(
-            Connection, Session, name="Connections", category="Admin"))
+            Connection, Session, name=lazy_gettext("Connections"), category=lazy_gettext("Admin")))
         av(vs.VariableView(
-            models.Variable, Session, name="Variables", category="Admin"))
+            models.Variable, Session, name=lazy_gettext("Variables"), category=lazy_gettext("Admin")))
         av(vs.XComView(
-            models.XCom, Session, name="XComs", category="Admin"))
+            models.XCom, Session, name=lazy_gettext("XComs"), category=lazy_gettext("Admin")))
 
         admin.add_link(base.MenuLink(
-            category='Docs', name='Documentation',
+            category=lazy_gettext('Docs'), name=lazy_gettext('Documentation'),
             url='https://airflow.apache.org/'))
         admin.add_link(
-            base.MenuLink(category='Docs',
-                          name='GitHub',
+            base.MenuLink(category=lazy_gettext('Docs'),
+                          name=lazy_gettext('GitHub'),
                           url='https://github.com/apache/airflow'))
 
-        av(vs.VersionView(name='Version', category="About"))
+        av(vs.VersionView(name=lazy_gettext('Version'), category=lazy_gettext("About")))
 
         av(vs.DagRunModelView(
-            models.DagRun, Session, name="DAG Runs", category="Browse"))
+            models.DagRun, Session, name=lazy_gettext("DAG Runs"), category=lazy_gettext("Browse")))
         av(vs.DagModelView(models.DagModel, Session, name=None))
         # Hack to not add this view to the menu
         admin._menu = admin._menu[:-1]

@@ -73,7 +73,7 @@
                   <a class="glyphicon glyphicon-play" title="执行" 
                    href="{{ url_for("airflow.run_task", dag_id=dag.dag_id, task_id=item.task_id, origin=url_for("airflow.rerun_tasks_list", dag_id=dag.dag_id))}}"
                    onclick="return task_run_btn_handler(this, '{{item.task_id}}')"></a>
-                  <a href="{{url_for('airflow.graph', dag_id=item.rerun_dag_id, root=root)}}">
+                  <a href="{{url_for('airflow.rerun_task_edit', dag_id=item.rerun_dag_id, root=root, task_id=item.task_id)}}">
                         <span class="glyphicon glyphicon-edit" title="编辑"
                         data-task_id="{{item.task_id}}"></span>
                   </a>
@@ -125,7 +125,7 @@
                         _requestFailHandler(response_data.message);
                     }
                 },
-                failure: function (response_data) {
+                error: function (response_data) {
                     _requestFailHandler('删除失败');
                 },
                 complete: function (jqXHT) {

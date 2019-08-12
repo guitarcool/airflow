@@ -207,7 +207,7 @@
             $('#data_source_alert_success .content').text('修改成功');
             $('#data_source_alert_success').fadeIn(100).delay(3000).fadeOut(100);
           },
-          failure: function (response_data) {
+          error: function (response_data) {
             $('#data_source_alert_error .content').text('修改失败');
             $('#data_source_alert_error').fadeIn(100).delay(3000).fadeOut(100);
           },

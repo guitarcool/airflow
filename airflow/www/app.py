@@ -105,7 +105,6 @@ def create_app(config=None, session=None, testing=False):
         vs = views
         av(vs.Airflow(name=lazy_gettext('DAGs'), category=lazy_gettext('DAGs')))
 
-        print('Data Profiling:',lazy_gettext("Data Profiling"))
         if not conf.getboolean('core', 'secure_mode'):
             av(vs.QueryView(name=lazy_gettext('Ad Hoc Query'), category=lazy_gettext("Data Profiling")))
             av(vs.ChartModelView(

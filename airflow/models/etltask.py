@@ -18,6 +18,8 @@
 # under the License.
 
 import logging
+import importlib
+import os
 from datetime import timedelta
 from datetime import datetime
 from enum import Enum
@@ -85,15 +87,16 @@ class ETLTask(Base, LoggingMixin):
     period_weekday = Column(Integer())
     period_hour = Column(Integer())
     tbls_ignored_errors = Column(String(1000))
-    python_file_path = Column(String(100))
+    python_module_name = Column(String(100))
     _dependencies = Column('dependencies', String(1000))
 
     __table_args__ = (
         Index('ti_period', period_type, period_hour),
     )
 
-    def __init__(self, task_id, dag_id, task_type, conn_id, sys_id, src_path, dst_path, flag_to_download, time_to_download,
-                 period_type, period_weekday, period_hour, tbls_ignored_errors, python_file_path, dependencies):
+    def __init__(self, task_id, dag_id, task_type, conn_id, sys_id, src_path, dst_path, flag_to_download,
+                 time_to_download,
+                 period_type, period_weekday, period_hour, tbls_ignored_errors, python_module_name, dependencies):
         self.task_id = task_id
         self.dag_id = dag_id
         self.task_type = task_type
@@ -107,12 +110,12 @@ class ETLTask(Base, LoggingMixin):
         self.period_weekday = period_weekday
         self.period_hour = period_hour
         self.tbls_ignored_errors = tbls_ignored_errors
-        self.python_file_path = python_file_path
+        self.python_module_name = python_module_name
         self.dependencies = dependencies
         self._log = logging.getLogger("airflow.etltask")
 
     def update(self, task_type, conn_id, sys_id, src_path, dst_path, flag_to_download, time_to_download, period_type,
-               period_weekday, period_hour, tbls_ignored_errors, python_file_path, dependencies):
+               period_weekday, period_hour, tbls_ignored_errors, python_module_name, dependencies):
         self.task_type = task_type
         self.conn_id = conn_id
         self.sys_id = sys_id
@@ -124,7 +127,7 @@ class ETLTask(Base, LoggingMixin):
         self.period_weekday = period_weekday
         self.period_hour = period_hour
         self.tbls_ignored_errors = tbls_ignored_errors
-        self.python_file_path = python_file_path
+        self.python_module_name = python_module_name
         self.dependencies = dependencies
 
     @property
@@ -138,6 +141,10 @@ class ETLTask(Base, LoggingMixin):
         self._dependencies = ','.join(dependencies_list) if dependencies_list else ''
 
     def get_ignored_tbls(self):
+        """
+        获取执行时忽略异常的所有表
+        :return: List
+        """
         if not self.tbls_ignored_errors:
             return ''
         return [i.strip() for i in self.tbls_ignored_errors.split(',')]
@@ -155,24 +162,49 @@ class ETLTask(Base, LoggingMixin):
         ).first()
         return conn
 
-    def execute(self):
+    def execute(self, etl_date):
+        """
+        根据任务的类型调用不同的etl程序
+        :param etl_date: etl 日期
+        :return:
+        """
         if self.task_type == ETLTaskType.DownloadTask.value:
-            self._exec_download()
+            result = self._exec_download(etl_date)
         elif self.task_type == ETLTaskType.LoadDDSTask.value:
-            self._exec_load_dds()
+            result = self._exec_load_dds(etl_date)
         elif self.task_type == ETLTaskType.UDMTask.value:
-            self._exec_udm()
+            result = self._exec_udm(etl_date)
         else:
-            self._exec_report()
+            result = self._exec_report(etl_date)
+        return result
 
-    def _exec_download(self):
-        pass
+    def _exec_download(self, etl_date):
+        print('下载任务开始执行')
+        # conn = self.get_connection()
+        # zjrcb_ftp_loader.run_ods(system=self.sys_id, src_path=self.src_path, dst_path=self.dst_path,
+        #                          check_mode=self.flag_to_download, tbls_ignored_errors=self.tbls_ignored_errors,
+        #                          ftp_host=conn.host, ftp_port=conn.port, ftp_username=conn.login,
+        #                          ftp_password=conn.get_password(), etl_date=etl_date)
+        result = {'succesd': ['tbl_name', 'tbl_name2', 'tbl_name3', 'tbl_name4'],
+                  'failed': ['tbl_name5', 'tbl_name6', 'tbl_name7', 'tbl_name8']
+                  }
+        if set(result['failed']).issubset(self.tbls_ignored_errors):
+            return result
+        else:
+            raise Exception('tables %s load ods failed' % result['failed'])
 
-    def _exec_load_dds(self):
-        pass
+    def _exec_load_dds(self, etl_date):
+        print('DDS加载任务开始执行')
+        # control.load_dds_sys(self.sys_id, etl_date)
+        return '_exec_load_dds result'
 
-    def _exec_udm(self):
-        pass
+    def _exec_udm(self, etl_date):
+        print('UDM加载任务开始执行')
+        # module_name = 'etl.udm.' + os.path.splitext(self.python_module_name)[0]
+        # udm = importlib.import_module(module_name)
+        # udm.run(etl_date)
+        return '_exec_udm result'
 
-    def _exec_report(self):
+    def _exec_report(self, etl_date):
         pass
+        return '_exec_report result'

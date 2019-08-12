@@ -235,6 +235,7 @@ class BaseOperator(LoggingMixin):
         self,
         task_id,  # type: str
         owner=configuration.conf.get('operators', 'DEFAULT_OWNER'),  # type: str
+        etl_task_type=None,  # type: int
         email=None,  # type: Optional[str]
         email_on_retry=True,  # type: bool
         email_on_failure=True,  # type: bool
@@ -285,6 +286,7 @@ class BaseOperator(LoggingMixin):
         validate_key(task_id)
         self.task_id = task_id
         self.owner = owner
+        self.etl_task_type = etl_task_type
         self.email = email
         self.email_on_retry = email_on_retry
         self.email_on_failure = email_on_failure
@@ -404,6 +406,7 @@ class BaseOperator(LoggingMixin):
             'on_retry_callback',
             'do_xcom_push',
         }
+
 
     def __eq__(self, other):
         if (type(self) == type(other) and

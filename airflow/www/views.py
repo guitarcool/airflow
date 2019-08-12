@@ -1303,7 +1303,7 @@ class Airflow(AirflowViewMixin, BaseView):
             ETLTask.task_id == task_id
         ).delete()
         session.commit()
-
+        self.refresh()
         return wwwutils.json_response({
             'success': '1'
         })
@@ -1332,7 +1332,7 @@ class Airflow(AirflowViewMixin, BaseView):
             period_weekday = request.form['period_day']
             period_hour = request.form['period_hour']
             tbls_ignored_errors = request.form['tbls_ignored_errors']
-            python_file_path = request.form['python_file_path']
+            python_module_name = request.form['python_module_name']
             dependencies = request.form.getlist('dependencies[]')
             etl_task = session.query(ETLTask).filter(
                 ETLTask.dag_id == dag_id,
@@ -1346,9 +1346,11 @@ class Airflow(AirflowViewMixin, BaseView):
             else:
                 etl_task = ETLTask(task_id, dag_id, task_type, conn_id, sys_id, src_path, dst_path,
                                    flag_to_download, time_to_download, period_type, period_weekday,
-                                   period_hour, tbls_ignored_errors, python_file_path, dependencies)
+                                   period_hour, tbls_ignored_errors, python_module_name, dependencies)
                 session.add(etl_task)
                 session.commit()
+
+            self.refresh()
         except Exception as e:
             print(e)
             print(sys.exc_info())
@@ -1376,15 +1378,20 @@ class Airflow(AirflowViewMixin, BaseView):
             period_weekday = request.form['period_day']
             period_hour = request.form['period_hour']
             tbls_ignored_errors = request.form['tbls_ignored_errors']
-            python_file_path = request.form['python_file_path']
-            dependencies = request.form['dependencies']
+            python_module_name = request.form['python_module_name']
+            dependencies = request.form.getlist('dependencies[]')
+            print('----------------')
+            print(task_type)
+            print(dependencies)
             etl_task = session.query(ETLTask).filter(
                 ETLTask.dag_id == dag_id,
                 ETLTask.task_id == task_id,
             ).first()
             etl_task.update(task_type, conn_id, sys_id, src_path, dst_path, flag_to_download, time_to_download,
-                            period_type, period_weekday, period_hour, tbls_ignored_errors, python_file_path, dependencies)
+                            period_type, period_weekday, period_hour, tbls_ignored_errors, python_module_name, dependencies)
             session.commit()
+
+            self.refresh()
         except Exception as e:
             print(e)
             print(sys.exc_info())
@@ -1462,7 +1469,7 @@ class Airflow(AirflowViewMixin, BaseView):
         etl_task_id = request.form['etl_task_id']
         rerun_start_date = request.form['rerun_start_date']
         rerun_end_date = request.form['rerun_end_date']
-        rerun_downstreams = request.form.getlist['rerun_downstreams[]']
+        rerun_downstreams = request.form.getlist('rerun_downstreams[]')
         rerun_task = session.query(ReRunTask).filter(
             ReRunTask.dag_id == dag_id,
             ReRunTask.id == task_id,
@@ -2392,7 +2399,9 @@ class Airflow(AirflowViewMixin, BaseView):
             item['start_date'] = ti.start_date.strftime('%Y-%m-%dT%H:%M:%S') if ti.start_date else ''
             item['end_date'] = ti.end_date.strftime('%Y-%m-%dT%H:%M:%S') if ti.end_date else ''
             item['task_id'] = ti.task_id
+            item['result'] = ti.get_result()
             task = copy.copy(dag.get_task(ti.task_id))
+            item['etl_task_type'] = task.etl_task_type
             for attr_name in attr_renderer:
                 if hasattr(task, attr_name):
                     source = getattr(task, attr_name)

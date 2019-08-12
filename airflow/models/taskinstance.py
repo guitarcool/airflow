@@ -1396,6 +1396,9 @@ class TaskInstance(Base, LoggingMixin):
         else:
             return pull_fn(task_id=task_ids)
 
+    def get_result(self):
+        return self.xcom_pull(task_ids=self.task_id, dag_id=self.dag_id, key=XCOM_RETURN_KEY)
+
     @provide_session
     def get_num_running_task_instances(self, session):
         TI = TaskInstance

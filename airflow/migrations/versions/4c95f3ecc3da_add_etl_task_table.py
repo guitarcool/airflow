@@ -50,7 +50,7 @@ def upgrade():
                     sa.Column('period_weekday', sa.Integer, nullable=True),
                     sa.Column('period_hour', sa.Integer, nullable=True),
                     sa.Column('tbls_ignored_errors', sa.String(length=1000), nullable=True),
-                    sa.Column('python_file_path', sa.String(length=100), nullable=True),
+                    sa.Column('python_module_name', sa.String(length=100), nullable=True),
                     sa.Column('dependencies', sa.String(length=1000), nullable=True),
                     sa.PrimaryKeyConstraint('task_id', 'dag_id'))
 

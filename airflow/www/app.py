@@ -33,6 +33,7 @@ import airflow
 from airflow import configuration as conf
 from airflow import models, LoggingMixin
 from airflow.models.connection import Connection
+from airflow.models.downloadconfig import DownloadConfig
 from airflow.settings import Session
 
 from airflow.www.blueprints import routes
@@ -129,6 +130,8 @@ def create_app(config=None, session=None, testing=False):
             models.User, Session, name=lazy_gettext("Users"), category=lazy_gettext("Admin")))
         av(vs.ConnectionModelView(
             Connection, Session, name=lazy_gettext("Connections"), category=lazy_gettext("Admin")))
+        av(vs.DownLoadConfigView(
+            DownloadConfig, Session, name=lazy_gettext("DownLoadConfigs"), category=lazy_gettext("Admin")))
         av(vs.VariableView(
             models.Variable, Session, name=lazy_gettext("Variables"), category=lazy_gettext("Admin")))
         av(vs.XComView(

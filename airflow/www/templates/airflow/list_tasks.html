@@ -66,26 +66,28 @@
       <thead>
         <tr>
             <td>{{_('Task')}}</td>
+            <td>{{_('Task Type')}}</td>
             <td>{{_('Start Date')}}</td>
             <td>{{_('End Date')}}</td>
             <td>{{_('Tasks Duration')}}</td>
             <td>{{_('Number of Retries')}}</td>
-            <td>{{_('Result')}}</td>
+            <td>{{_('Status')}}</td>
             <td>{{_('Log')}}</td>
-            <td>{{_('Code')}}</td>
+            <td>{{_('Result')}}</td>
         </tr>
       </thead>
       <tbody>
         {% for item in task_instances %}
             <tr>
                 <td onclick="call_modal('{{item.task_id}}', '{{item.execution_date}}', '{{item.try_number}}')"><a >{{item.task_id}}</a></td>
+                <td>{{item.etl_task_type}}</td>
                 <td>{{item.start_date}}</td>
                 <td>{{item.end_date}}</td>
                 <td>{{item.duration}}</td>
                 <td>{{item.try_number}}</td>
                 <td>{{item.state}}</td>
                 <td><a href="{{ url_for("airflow.log", dag_id=dag.dag_id, task_id=item.task_id, execution_date=item.execution_date) }}">{{_("Detail")}}</a></td>
-                <td>{{item.code|safe}}</td>
+                <td>{{item.result}}</td>
             </tr>
         {% endfor %}
       </tbody>
@@ -134,4 +136,3 @@
     }
   </script>
   {% endblock %}
-  

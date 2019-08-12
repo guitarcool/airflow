@@ -22,6 +22,9 @@
 
 {% block head_css %}
 {{ super() }}
+
+<link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='dagre.css') }}">
+<link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='graph.css') }}">
 <link href="https://cdn.bootcss.com/bootstrap-multiselect/0.9.15/css/bootstrap-multiselect.css" rel="stylesheet">
 <link href="{{ admin_static.url(filename='vendor/bootstrap-daterangepicker/daterangepicker-bs2.css') }}"
   rel="stylesheet">
@@ -57,6 +60,9 @@
   input[name="task_type"][value="1"]:checked~.rerun-date{
     display: block;
   }
+  #svg_container{
+    margin-top: 20px;
+  }
 </style>
 {% endblock %}
 
@@ -67,7 +73,7 @@
     <span class="glyphicon glyphicon-exclamation-sign" aria-hidden="true"></span>
     <span class="content"></span>
   </div>
-  <div id="task_edit_alert_error" style="display: none; margin-top: 10px;" class="alert alert-error" role="alert">
+  <div id="task_edit_alert_error" style="display: none; margin-top: 10px;" class="alert alert-danger" role="alert">
     <span class="glyphicon glyphicon-exclamation-sign" aria-hidden="true"></span>
     <span class="content"></span>
   </div>
@@ -110,6 +116,15 @@
     <select class="form-control dependencies-select" multiple="multiple" name="rerun_downstreams">
       
     </select>
+    <div id="svg_container">
+      <svg width="{{ width }}" height="{{ height }}">
+        <g id='dig' transform="translate(20,20)"></g>
+        <filter id="blur-effect-1">
+          <feGaussianBlur stdDeviation="3"></feGaussianBlur>
+        </filter>
+      </svg>
+      <!-- <img id="loading" alt="spinner" src="{{ url_for('static', filename='loading.gif') }}"> -->
+    </div>
   </div>
   <div class="form-group row">
     <div class="btn btn-submit btn-primary">提交</div>
@@ -207,7 +222,7 @@
         method: "POST",
         url: postUrl,
         data: sendData,
-        traditional: true,
+        // traditional: true,
         success: function (response_data) {
           if(response_data && !!~~response_data.success) {
             _requestSuccessHandler();
@@ -226,6 +241,49 @@
       console.log("input error.")
     }
   });
+</script>
+<script src="{{ url_for('static', filename='d3.v3.min.js') }}"></script>
+<script src="{{ url_for('static', filename='dagre-d3.js') }}"></script>
+<script>
+  var nodes = [];
+  var edges = [];
+  var arrange = "LR";
+  function createNode(name){
+    return {
+      id: name,
+      value: {
+        label: name,
+        labelStyle: 'fill:#000',
+        style: 'fill:#f0ede4;',
+      }
+    }
+  }
+  function createEdge(source, target){
+    return {
+      u: source,
+      v: target,
+    }
+  }
+  $('.dependencies-select').change(refreshGraph);
+  $('select[name="etl_task_id"]').change(refreshGraph);
+  $(document).ready(refreshGraph);
+  function refreshGraph() {
+    var f = document.forms["task_edit"];
+    var source = f.etl_task_id.value;
+    var targets = $('.dependencies-select option:selected').map(function(a, item){return item.value;}).toArray();
+
+    nodes = [];
+    edges = [];
+    nodes.push(createNode(source));
+    targets.forEach(function(target){
+      nodes.push(createNode(target));
+      edges.push(createEdge(source, target));
+    })
+    var layout = dagreD3.layout().rankDir(arrange).nodeSep(15).rankSep(15);
+    var renderer = new dagreD3.Renderer();
+    var g = dagreD3.json.decode(nodes, edges);
+    renderer.layout(layout).run(g, d3.select("#dig"));
+  }
 </script>
 {{ super() }}
 {% endblock %}

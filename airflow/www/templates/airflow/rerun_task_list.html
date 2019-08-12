@@ -56,7 +56,7 @@
           <tr>
               <td><a href="{{url_for('airflow.graph', dag_id=item.rerun_dag_id, root=root)}}">{{item.task_id}}</a></td>
               <!-- <td>{{item.task_id}}</td> -->
-              <td>{{item.dst_tbl}}</td>
+              <td>{{item.etl_task_id}}</td>
               <td>{{item.rerun_start_date}}</td>
               <td>{{item.rerun_end_date}}</td>
               <td>
@@ -73,6 +73,10 @@
                   <a class="glyphicon glyphicon-play" title="执行" 
                    href="{{ url_for("airflow.run_task", dag_id=dag.dag_id, task_id=item.task_id, origin=url_for("airflow.rerun_tasks_list", dag_id=dag.dag_id))}}"
                    onclick="return task_run_btn_handler(this, '{{item.task_id}}')"></a>
+                  <a href="{{url_for('airflow.graph', dag_id=item.rerun_dag_id, root=root)}}">
+                        <span class="glyphicon glyphicon-edit" title="编辑"
+                        data-task_id="{{item.task_id}}"></span>
+                  </a>
                   <span class="glyphicon glyphicon-trash" title="删除" 
                   data-task_id="{{item.task_id}}" onclick="task_delete_btn_handler(event)"></span>
               </td>

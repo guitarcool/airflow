@@ -25,6 +25,9 @@
 <link href="https://cdn.bootcss.com/bootstrap-multiselect/0.9.15/css/bootstrap-multiselect.css" rel="stylesheet">
 <link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-datepicker/1.9.0/css/bootstrap-datepicker3.standalone.css"
   rel="stylesheet">
+<link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='dagre.css') }}">
+<link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='graph.css') }}">
+
 <style>
   #task_edit {
     width: 80%;
@@ -309,6 +312,14 @@
       <option value="{{id}}">{{id}}</option>
       {% endfor %}
     </select>
+    <div id="svg_container">
+      <svg width="{{ width }}" height="{{ height }}">
+        <g id='dig' transform="translate(20,20)"></g>
+        <filter id="blur-effect-1">
+          <feGaussianBlur stdDeviation="3"></feGaussianBlur>
+        </filter>
+      </svg>
+    </div>
   </div>
   <div class="form-group row">
     <div class="btn btn-submit btn-primary">提交</div>
@@ -404,6 +415,49 @@
     }
   }
   toggleExecutetionTokenTime();
+</script>
+<script src="{{ url_for('static', filename='d3.v3.min.js') }}"></script>
+<script src="{{ url_for('static', filename='dagre-d3.js') }}"></script>
+<script>
+  var nodes = [];
+  var edges = [];
+  var arrange = "LR";
+  function createNode(name){
+    return {
+      id: name,
+      value: {
+        label: name,
+        labelStyle: 'fill:#000',
+        style: 'fill:#f0ede4;',
+      }
+    }
+  }
+  function createEdge(source, target){
+    return {
+      u: source,
+      v: target,
+    }
+  }
+  $('.dependencies-select').change(refreshGraph);
+  $('input[name="task_id"]').change(refreshGraph);
+  $(document).ready(refreshGraph);
+  function refreshGraph() {
+    var f = document.forms["task_edit"];
+    var target = f.task_id.value;
+    var sources = $('.dependencies-select option:selected').map(function(a, item){return item.value;}).toArray();
+
+    nodes = [];
+    edges = [];
+    nodes.push(createNode(target));
+    sources.forEach(function(source){
+      nodes.push(createNode(source));
+      edges.push(createEdge(source, target));
+    })
+    var layout = dagreD3.layout().rankDir(arrange).nodeSep(15).rankSep(15);
+    var renderer = new dagreD3.Renderer();
+    var g = dagreD3.json.decode(nodes, edges);
+    renderer.layout(layout).run(g, d3.select("#dig"));
+  }
 </script>
 {{ super() }}
 {% endblock %}

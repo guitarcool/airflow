@@ -1,7 +1,7 @@
-import datetime
+
 import os
 from enum import Enum
-
+from datetime import datetime
 import pytz
 from jinja2 import Environment, PackageLoader
 from pendulum import pendulum
@@ -47,13 +47,16 @@ class ReRunTask(Base, LoggingMixin):
         self.rerun_start_date = rerun_start_date
         self.rerun_end_date = rerun_end_date
         self.rerun_downstreams = rerun_downstreams
-        self.rerun_dag_id = RERUN_DAG_PREFIX + self.task_id
 
     def update(self, etl_task_id, rerun_start_date, rerun_end_date, rerun_downstreams):
         self.etl_task_id = etl_task_id
         self.rerun_start_date = rerun_start_date
         self.rerun_end_date = rerun_end_date
         self.rerun_downstreams = rerun_downstreams
+
+    @property
+    def rerun_dag_id(self):
+        return RERUN_DAG_PREFIX + self.task_id
 
     @property
     def rerun_dag_file_path(self):
@@ -68,7 +71,7 @@ class ReRunTask(Base, LoggingMixin):
 
     @rerun_downstreams.setter
     def rerun_downstreams(self, downstream_list):
-        self._rerun_downstreams = ','.jion(downstream_list) if downstream_list else ''
+        self._rerun_downstreams = ','.join(downstream_list) if downstream_list else ''
 
     def create_or_update_rerun_dag(self):
         """
@@ -78,7 +81,8 @@ class ReRunTask(Base, LoggingMixin):
 
         env = Environment(loader=PackageLoader(RERUN_TEMPLATE_PACKAGE))
         template = env.get_template(RERUN_TEMPLATE_FILE_NAME)
-        rerun_task_ids = [self.etl_task_id].extend(self.downstreams)
+        rerun_task_ids = [self.etl_task_id]
+        rerun_task_ids.extend(self.rerun_downstreams)
         content = template.render(dag_id=self.rerun_dag_id, base_dag_id=self.dag_id,
                                   start_date=self.rerun_start_date, end_date=self.rerun_end_date,
                                   rerun_task_ids=rerun_task_ids.__str__())
@@ -94,15 +98,29 @@ class ReRunTask(Base, LoggingMixin):
     @property
     @provide_session
     def rerun_status(self, session=None):
-        execution_date = datetime.strptime(self.rerun_end_date, '%Y-%m-%d').astimezone(pytz.utc)
-        dagrun = (
+        start_date = datetime.strptime(self.rerun_start_date, '%Y-%m-%d')
+        end_date = datetime.strptime(self.rerun_end_date, '%Y-%m-%d')
+        days = (end_date - start_date).days + 1
+        dagruns = (
             session.query(DagRun).filter(
-                DagRun.dag_id == self.dag_id,
-                DagRun.execution_date == execution_date).first())
-        if dagrun:
-            return dagrun.get_state()
+                DagRun.dag_id == self.rerun_dag_id
+            )).all()
+
+        success_dagruns = []
+        failed_dagruns =[]
+        for dagrun in dagruns:
+            if dagrun.get_state() == 'success':
+                success_dagruns.append(dagrun)
+            if dagrun.get_state() == 'failed':
+                failed_dagruns.append(dagrun)
+        if success_dagruns.__len__() == days:
+            return '执行成功'
+        elif failed_dagruns:
+            return '执行失败'
+        elif dagruns:
+            return '正在执行'
         else:
-            return None
+            return '未执行'
 
     # @provide_session
     # def set_state(self, state, session=None, commit=True):
@@ -151,3 +169,4 @@ class ReRunTask(Base, LoggingMixin):
     #         "task_id={task_id}"
     #         "&dag_id={dag_id}"
     #     ).format(task_id=self.task_id, dag_id=self.dag_id)
+

@@ -138,11 +138,11 @@
   <div class="form-group row">
     <label class="col-form-label">任务类型</label>
     <br/>
-    {% for i in [[0,"下载任务"], [1,"dds加载任务"], [2,"UDM任务"], [3,"报表任务"]] %}
+    {% for i in [[0,"下载任务"], [1,"DDS加载任务"], [2,"UDM任务"], [3,"报表任务"]] %}
     <input type="radio" name="task_type" class="form-check-input" value="{{i[0]}}" 
-     {%-if not etlTask and i[0]==0 -%}checked{%- endif -%}
-     {%-if etlTask.task_type==i[0] -%}checked{%- endif -%}>
-    <label class="form-check-label">{{i[1]}}</label>
+     {%-if not etlTask and i[0]==0 or etlTask and etlTask.task_type==i[0] -%}checked{%- endif -%}
+    />
+     <label class="form-check-label">{{i[1]}}</label>
     {% endfor %}
   </div>
   <div class="switch-options">
@@ -158,7 +158,7 @@
       </div>
       <div class="form-group row">
         <label class="col-form-label">系统ID</label>
-        <input type="text" class="form-control" name="sys_id_0">
+        <input type="text" class="form-control" name="sys_id_0" value="{{ etlTask.sys_id }}">
       </div>
       <div class="form-group row">
         <label class="col-form-label">源地址</label>
@@ -173,8 +173,7 @@
         <select name="executetion_token" class="form-control" onchange="toggleExecutetionTokenTime()">
           {% for i in [[0,"标志文件"], [1,"文件大小不变"], [2,"固定时间之后"]] %}
             <option value="{{i[0]}}"
-            {%-if not etlTask and i[0]==0 -%}selected{%- endif -%}
-            {%-if etlTask.flag_to_download==i[0] -%}selected{%- endif -%}
+            {%-if not etlTask and i[0]==0 or etlTask and etlTask.flag_to_download==i[0] -%}selected{%- endif -%}
             >{{i[1]}}</option>
           {% endfor %}
         </select>
@@ -193,8 +192,8 @@
         <div class="">
           {% for i in [[0,"当天"], [1,"每天"], [2,"每周"]] %}
           <input type="radio" name="period_type" class="form-check-input" value="{{i[0]}}" 
-            {%-if not etlTask.period_type and i[0]==0 -%}checked{%- endif -%}
-            {%-if etlTask.period_type==i[0] -%}checked{%- endif -%}>
+            {%-if not etlTask and i[0]==0 or etlTask and etlTask.period_type==i[0] -%}checked{%- endif -%}
+          />
           <label class="form-check-label">{{i[1]}}</label>
           {% endfor %}
           <br/>
@@ -305,7 +304,7 @@
       period_day: f.period_day.value,
       period_hour: f.period_hour.value,
       tbls_ignored_errors: f.tbls_ignored_errors.value,
-      python_file_path: f['python_file_path_'+taskType] && f['python_file_path_'+taskType].value || '',
+      python_module_name: f['python_file_path_'+taskType] && f['python_file_path_'+taskType].value || '',
       dependencies: dependenciesData
     }
     if (!requestLock) {

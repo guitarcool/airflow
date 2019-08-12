@@ -132,7 +132,7 @@
     <input type="radio" name="task_type" class="form-check-input" value="0" checked>
     <label class="form-check-label">下载任务</label>
     <input type="radio" name="task_type" class="form-check-input" value="1">
-    <label class="form-check-label">dds加载任务</label>
+    <label class="form-check-label">DDS加载任务</label>
     <input type="radio" name="task_type" class="form-check-input" value="2">
     <label class="form-check-label">UDM任务</label>
     <input type="radio" name="task_type" class="form-check-input" value="3">
@@ -363,7 +363,7 @@
       period_day: f.period_day.value,
       period_hour: f.period_hour.value,
       tbls_ignored_errors: f.tbls_ignored_errors.value,
-      python_file_path: f['python_file_path_'+taskType] && f['python_file_path_'+taskType].value || '',
+      python_module_name: f['python_file_path_'+taskType] && f['python_file_path_'+taskType].value || '',
       dependencies: dependenciesData
     }
     if (!requestLock) {

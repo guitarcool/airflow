@@ -1380,9 +1380,6 @@ class Airflow(AirflowViewMixin, BaseView):
             tbls_ignored_errors = request.form['tbls_ignored_errors']
             python_module_name = request.form['python_module_name']
             dependencies = request.form.getlist('dependencies[]')
-            print('----------------')
-            print(task_type)
-            print(dependencies)
             etl_task = session.query(ETLTask).filter(
                 ETLTask.dag_id == dag_id,
                 ETLTask.task_id == task_id,
@@ -1459,7 +1456,7 @@ class Airflow(AirflowViewMixin, BaseView):
     @wwwutils.action_logging
     @provide_session
     def add_rerun_task(self, session=None):
-        dag_id = request.args.get('dag_id')
+        dag_id = request.form['dag_id']
         task_id = request.form['task_id']
         if not task_id:
             return wwwutils.json_response({
@@ -1469,10 +1466,10 @@ class Airflow(AirflowViewMixin, BaseView):
         etl_task_id = request.form['etl_task_id']
         rerun_start_date = request.form['rerun_start_date']
         rerun_end_date = request.form['rerun_end_date']
-        rerun_downstreams = request.form.getlist('rerun_downstreams[]')
+        rerun_downstreams = request.form.getlist('rerun_downstreams')
         rerun_task = session.query(ReRunTask).filter(
             ReRunTask.dag_id == dag_id,
-            ReRunTask.id == task_id,
+            ReRunTask.task_id == task_id,
         ).first()
         if rerun_task:
             return wwwutils.json_response({

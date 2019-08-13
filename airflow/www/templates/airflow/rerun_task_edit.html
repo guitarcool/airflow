@@ -152,24 +152,6 @@
 <script>
   var formType = 0; //0:add 1:edit
   var readonly = false;
-  var downStreamOptions={};
-  var selectedDownStreamOptions=[];
-
-  // initialize downstream options
-  {% if etlTask and etlTask.rerun_downstreams %}
-    selectedDownStreamOptions = '{{etlTask.rerun_downstreams|join(',')|safe}}'.split(',');
-  {% endif %}
-  {% for id in task_downstreams %}
-  downStreamOptions['{{id}}']='{{task_downstreams.get(id)|join(',')|safe}}'
-  {% endfor %}
-  var i;
-  for(i in downStreamOptions){
-    var str=downStreamOptions[i];
-    !!str?(downStreamOptions[i]=str.split(',').map(function(name) {
-      return {label: name, title: name, value: name, selected: selectedDownStreamOptions.indexOf(name)>0}
-    }))
-    :(downStreamOptions[i]=[]);
-  }
 
   {% if etlTask and not etlTask.rerun_status %}
   var readonly=true;
@@ -179,24 +161,14 @@
     if(!!f.task_id.value){
         formType = 1;
     }
-
-    $('.dependencies-select').multiselect({
-        enableFiltering: true
-    });
-    setDownStreamOptions();
   })
-  function setDownStreamOptions(){
-    var target = $('select[name="etl_task_id"]').get()[0];
-    var value = target.value;
-    var options = downStreamOptions[value] || [];
-    $('.dependencies-select').multiselect('dataprovider', options);
-    options.length>0 ? $('.dependencies-select').multiselect('enable') : $('.dependencies-select').multiselect('disable');
-  }
-  $('select[name="etl_task_id"]').change(setDownStreamOptions)
   var requestLock = false;
   $(".btn.btn-submit").click(function () {
     var f = document.forms["task_edit"];
-    var downstreamsData = $('.dependencies-select option:selected').map(function(a, item){return item.value;}).toArray();
+    var downstreamsData = $('.dependencies-select option:selected').map(function(a, item){return item.title;}).toArray();
+    downstreamsData=downstreamsData.filter(function(value, index){
+      return index==downstreamsData.indexOf(value);
+    })
     var sendData = {
       dag_id: "{{dag.dag_id}}",
       task_id: f.task_id.value,
@@ -245,45 +217,268 @@
 <script src="{{ url_for('static', filename='d3.v3.min.js') }}"></script>
 <script src="{{ url_for('static', filename='dagre-d3.js') }}"></script>
 <script>
-  var nodes = [];
-  var edges = [];
-  var arrange = "LR";
-  function createNode(name){
-    return {
-      id: name,
-      value: {
-        label: name,
-        labelStyle: 'fill:#000',
-        style: 'fill:#f0ede4;',
+  (function(){
+    var idCounter = 0;
+    function traverseDownstreamData(data, key, depth, parent){
+      if(typeof data === 'string') {
+        return [{
+          label: key,
+          id: idCounter++,
+          depth: depth,
+          parent: parent
+        }]
+      }
+      if(typeof data === 'object') {
+        var innerKey;
+        var children = [];
+        var id = idCounter++;
+        for(innerKey in data){
+          var items = traverseDownstreamData(data[innerKey], innerKey, depth+1, id);
+          children = children.concat(items);
+        }
+        return [{
+          label: key,
+          id: id,
+          depth: depth,
+          parent: parent
+        }].concat(children)
       }
     }
-  }
-  function createEdge(source, target){
-    return {
-      u: source,
-      v: target,
-    }
-  }
-  $('.dependencies-select').change(refreshGraph);
-  $('select[name="etl_task_id"]').change(refreshGraph);
-  $(document).ready(refreshGraph);
-  function refreshGraph() {
-    var f = document.forms["task_edit"];
-    var source = f.etl_task_id.value;
-    var targets = $('.dependencies-select option:selected').map(function(a, item){return item.value;}).toArray();
 
-    nodes = [];
-    edges = [];
-    nodes.push(createNode(source));
-    targets.forEach(function(target){
-      nodes.push(createNode(target));
-      edges.push(createEdge(source, target));
+    function indent(num){
+      var str = '';
+      var i;
+      for(i=0; i<num; i++){
+        str+='　';
+      }
+      return str;
+    }
+
+    var downStreamOptions={};
+    var selectedDownStreamOptions=[];
+    var labelSet = [];
+    var downstreamsOptionData = {{task_downstreams|tojson|safe}}
+
+    // initialize downstream options
+    {% if etlTask and etlTask.rerun_downstreams %}
+      selectedDownStreamOptions = '{{etlTask.rerun_downstreams|join(',')|safe}}'.split(',');
+    {% endif %}
+    downStreamOptions = traverseDownstreamData(downstreamsOptionData, 'root', 0, -1);
+    var i;
+    var str=downStreamOptions[i];
+    downStreamOptions=downStreamOptions.map(function(item) {
+      var name = item.label;
+      return {
+        label: name, 
+        title: name, 
+        value: item.id, 
+        id: item.id,
+        parent: item.parent,
+        depth: item.depth,
+        // selected: selectedDownStreamOptions.indexOf(name)>0,
+        attributes: {
+          id: item.id
+        }
+      }
     })
-    var layout = dagreD3.layout().rankDir(arrange).nodeSep(15).rankSep(15);
-    var renderer = new dagreD3.Renderer();
-    var g = dagreD3.json.decode(nodes, edges);
-    renderer.layout(layout).run(g, d3.select("#dig"));
-  }
+
+    function getChildrenOptionsById(options, rootId){
+      var results=[];
+      var i;
+      for(i=0; i<options.length; i++){
+        var item=options[i];
+        if(item.parent == rootId){
+          results.push(item);
+          results = results.concat(getChildrenOptionsById(options, item.id));
+        }
+      }
+      return results;
+    }
+
+    function getOptionsByAttr(options, attrName, value){
+      var i;
+      var results = [];
+      for(i=0; i<options.length; i++){
+        var item = options[i];
+        if(item[attrName]==value){
+          results.push(item);
+        }
+      }
+      return results.length>0 ? results : [];
+    }
+    var options;
+    function setDownStreamOptions(){
+      var target = $('select[name="etl_task_id"]').get()[0];
+      var value = target.value;
+      // var options = downStreamOptions[value] || [];
+      var sourceOptions = getOptionsByAttr(downStreamOptions, 'title', value);
+      var i;
+      var sourceOption;
+      var tempOptions;
+      options = [];
+      for(i=0; i<sourceOptions.length; i++){
+        sourceOption = sourceOptions[i];
+        tempOptions = getChildrenOptionsById(downStreamOptions, sourceOption.id);
+        tempOptions.forEach(function(option){
+          option.label = indent(option.depth-1-sourceOption.depth) + option.label;
+        })
+        options = options.concat(tempOptions);
+      }
+      $('.dependencies-select').multiselect('dataprovider', options);
+      options.length>0 ? $('.dependencies-select').multiselect('enable') : $('.dependencies-select').multiselect('disable');
+    }
+
+    function findIndexById(innerId){
+      var result;
+      var i;
+      var option;
+      for(i=0; i<options.length; i++){
+        option = options[i];
+        if(option.id===innerId){
+          return i;
+        }
+      }
+      return -1;
+    }
+    function selectBefore(id){
+      var sourceOption = getOptionsByAttr(options, 'id', id)[0];
+      sourceOption.selected=true;
+      var parentIndex = findIndexById(sourceOption.parent);
+      for(; parentIndex>-1; parentIndex=findIndexById(options[parentIndex].parent)){
+        var option=options[parentIndex];
+        option.selected = true;
+      }
+      $('.dependencies-select').multiselect('dataprovider', options);
+    }
+
+    function deselectAfter(id){
+      var sourceOption = getOptionsByAttr(options, 'id', id)[0];
+      sourceOption.selected=false;
+      var childrenOptions = getOptionsByAttr(options, 'parent', id);
+      for(;childrenOptions.length>0;){
+        var childOption = childrenOptions[0];
+        childOption.selected=false;
+        childrenOptions.shift();
+        childrenOptions = childrenOptions.concat(getOptionsByAttr(options, 'parent', childOption.id));
+      }
+      $('.dependencies-select').multiselect('dataprovider', options);
+    }
+
+    $('select[name="etl_task_id"]').change(setDownStreamOptions)
+    $(document).ready(function(){
+      $('.dependencies-select').multiselect({
+          enableFiltering: true,
+          onChange: function(options, checked){
+            if(checked){
+              selectBefore(options[0].dataset['id']);
+            } else {
+              deselectAfter(options[0].dataset['id']);
+            }
+            refreshGraph();
+          },
+          buttonText: function(options, select) {
+            if (options.length === 0) {
+                return '请选择';
+            }
+            else if (options.length > 3) {
+                return options.length + '项已选择';
+            }
+            else {
+                var labels = [];
+                options.each(function() {
+                    if ($(this).attr('title') !== undefined) {
+                        labels.push($(this).attr('title'));
+                    }
+                    else {
+                        labels.push($(this).html());
+                    }
+                });
+                labels = labels.filter(function(value, index){
+                  return index==labels.indexOf(value);
+                });
+                return labels.join(', ') + '';
+            }
+          },
+      });
+      setDownStreamOptions();
+    })
+    
+    var nodes = [];
+    var edges = [];
+    var arrange = "LR";
+    function createNode(name){
+      return {
+        id: name,
+        value: {
+          label: name,
+          labelStyle: 'fill:#000',
+          style: 'fill:#f0ede4;',
+        }
+      }
+    }
+    function createEdge(source, target){
+      return {
+        u: source,
+        v: target,
+        value: {
+          style: 'stroke: #000;'
+        }
+      }
+    }
+    $('.dependencies-select').change(refreshGraph);
+    $('select[name="etl_task_id"]').change(refreshGraph);
+    $(document).ready(refreshGraph);
+    
+    function refreshGraph() {
+      var f = document.forms["task_edit"];
+      var source = f.etl_task_id.value;
+      var selected = $('.dependencies-select option:selected').map(function(a, item){return item.title;}).toArray();
+      nodes = [];
+      edges = [];
+      var labelSet = [source];
+      var i;
+      var option;
+      for(i=0; i<options.length; i++){
+        option = options[i];
+        if(labelSet.indexOf(option.title)<0){
+          labelSet.push(option.title);
+        }
+      }
+      var node;
+      for(i=0; i<labelSet.length; i++){
+        node = createNode(labelSet[i])
+        if(node.id==source || selected.indexOf(node.id)>-1){
+          node.value.style = 'stroke:#009900;'
+        }
+        nodes.push(node);
+      }
+      function hasDuplicatedEdge(item){
+        var i;
+        var edge;
+        for(i=0; i<edges.length; i++){
+          edge=edges[i];
+          if(edge.u==item.u && edge.v==item.v){
+            return true;
+          }          
+        }
+        return false;
+      }
+      options.forEach(function(option){
+        var parentOption = getOptionsByAttr(options, 'id', option.parent)[0];
+        var edge;
+        edge = !!parentOption ? 
+         createEdge(parentOption.title, option.title)
+        :createEdge(source, option.title);
+        if(!hasDuplicatedEdge(edge)) {
+          edges.push(edge);
+        }
+      })
+      var layout = dagreD3.layout().rankDir(arrange).nodeSep(15).rankSep(15);
+      var renderer = new dagreD3.Renderer();
+      var g = dagreD3.json.decode(nodes, edges);
+      renderer.layout(layout).run(g, d3.select("#dig"));
+    }
+  })()
 </script>
 {{ super() }}
 {% endblock %}

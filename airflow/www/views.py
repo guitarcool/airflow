@@ -1447,7 +1447,7 @@ class Airflow(AirflowViewMixin, BaseView):
             'airflow/rerun_task_add.html',
             root=root,
             dag=dag,  # 通过dag.task_ids 获取重跑任务名列表
-            tasks_downstreams=tasks_downstreams,  # 每个任务所有的后置依赖项 Type: Dict[str:List]
+            tasks_downstreams=tasks_downstreams,  # 每个任务所有的后置依赖项 Type: Dict[str:Dict]
             title=title,
         )
 
@@ -1517,7 +1517,7 @@ class Airflow(AirflowViewMixin, BaseView):
             dag=dag,
             title=title,
             rerunTask=rerun_task,
-            task_downstreams=task_downstreams,  # 每个任务所有的后置依赖项 Type: Dict[str:List]
+            task_downstreams=task_downstreams,  # 每个任务所有的后置依赖项 Type: Dict[str:Dict]
             )
 
     @expose('/update_rerun_task', methods=['POST'])

@@ -109,7 +109,7 @@
             // confirm
             $.ajax({
                 method: "GET",
-                url: '{{ url_for("airflow.delete_task") }}',
+                url: '{{ url_for("airflow.delete_rerun_task") }}',
                 data: {
                     dag_id: "{{dag.dag_id}}",
                     task_id: task_id,

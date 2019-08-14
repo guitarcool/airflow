@@ -9,9 +9,9 @@ from sqlalchemy import (
     Column, Integer, String, Boolean, PickleType, Index, UniqueConstraint, func, DateTime
 )
 
-from airflow import LoggingMixin, settings
+from airflow import LoggingMixin, settings, models
 from airflow.api.common.experimental import delete_dag
-from airflow.models import Base, ID_LEN, DagRun
+from airflow.models import Base, ID_LEN, DagRun, DagBag, DagModel
 from airflow.utils.db import provide_session
 
 RERUN_DAG_PREFIX = 'rerun__'
@@ -78,7 +78,7 @@ class ReRunTask(Base, LoggingMixin):
         根据rerun_dag.j2模版在AIRFLOW_HOME目录下生成用于重跑的dag文件
         :return:
         """
-
+        # 创建DAG python文件
         env = Environment(loader=PackageLoader(RERUN_TEMPLATE_PACKAGE))
         template = env.get_template(RERUN_TEMPLATE_FILE_NAME)
         rerun_task_ids = [self.etl_task_id]
@@ -89,6 +89,11 @@ class ReRunTask(Base, LoggingMixin):
         with open(self.rerun_dag_file_path, 'w') as fp:
             fp.write(content)
 
+        # 扫描dags文件夹，将扫描到的重跑dag存入数据库，使得创建的用于重跑的dag可以立即访问
+        dagbag = DagBag(settings.DAGS_FOLDER)
+        dag = dagbag.get_dag(self.rerun_dag_id)
+        dag.sync_to_db()
+
     def delete_rerun_dag(self):
         # 1.删除生成的dag文件
         self.log.info('删除%s文件' % self.rerun_dag_file_path)
@@ -97,15 +102,17 @@ class ReRunTask(Base, LoggingMixin):
         delete_dag.delete_dag(self.rerun_dag_id)
 
     @property
-    @provide_session
-    def rerun_status(self, session=None):
+    def rerun_status(self):
+        status = '未执行'
+        # 如调度开关打开，则属于执行状态
+        orm_dag = DagModel.get_dagmodel(self.rerun_dag_id)
+        if not orm_dag.is_paused:
+            status = '正在执行'
+
         start_date = datetime.strptime(self.rerun_start_date, '%Y-%m-%d')
         end_date = datetime.strptime(self.rerun_end_date, '%Y-%m-%d')
         days = (end_date - start_date).days + 1
-        dagruns = (
-            session.query(DagRun).filter(
-                DagRun.dag_id == self.rerun_dag_id
-            )).all()
+        dagruns = DagRun.find(dag_id=self.rerun_dag_id)
 
         success_dagruns = []
         failed_dagruns =[]
@@ -114,14 +121,16 @@ class ReRunTask(Base, LoggingMixin):
                 success_dagruns.append(dagrun)
             if dagrun.get_state() == 'failed':
                 failed_dagruns.append(dagrun)
+        # 如dag运行成功的实例数与重跑天数一致，则为执行成功状态
         if success_dagruns.__len__() == days:
-            return '执行成功'
-        elif failed_dagruns:
-            return '执行失败'
-        elif dagruns:
-            return '正在执行'
-        else:
-            return '未执行'
+            status = '执行成功'
+        # 存在失败的dag运行成功的实例，则为执行失败状态
+        if failed_dagruns:
+            status = '执行失败'
+        return status
+
+    def run(self):
+        DagModel.get_dagmodel(self.rerun_dag_id).set_is_paused(is_paused=False)
 
     # @provide_session
     # def set_state(self, state, session=None, commit=True):

@@ -1441,13 +1441,13 @@ class Airflow(AirflowViewMixin, BaseView):
                 include_downstream=False,
                 include_upstream=True)
 
-        tasks_downstreams = dag.get_tasks_downstreams()  # Dict key:task_id value:downstreams
+        task_downstreams = dag.get_tasks_downstreams()  # Dict key:task_id value:downstreams
         title = "Re-run Task ADD"
         return self.render(
             'airflow/rerun_task_add.html',
             root=root,
             dag=dag,  # 通过dag.task_ids 获取重跑任务名列表
-            tasks_downstreams=tasks_downstreams,  # 每个任务所有的后置依赖项 Type: Dict[str:Dict]
+            task_downstreams=task_downstreams,  # 每个任务所有的后置依赖项 Type: Dict[str:Dict]
             title=title,
         )
 
@@ -1466,7 +1466,7 @@ class Airflow(AirflowViewMixin, BaseView):
         etl_task_id = request.form['etl_task_id']
         rerun_start_date = request.form['rerun_start_date']
         rerun_end_date = request.form['rerun_end_date']
-        rerun_downstreams = request.form.getlist('rerun_downstreams')
+        rerun_downstreams = request.form.getlist('rerun_downstreams[]')
         rerun_task = session.query(ReRunTask).filter(
             ReRunTask.dag_id == dag_id,
             ReRunTask.task_id == task_id,
@@ -2164,6 +2164,9 @@ class Airflow(AirflowViewMixin, BaseView):
     def graph(self, session=None):
         dag_id = request.args.get('dag_id')
         blur = conf.getboolean('webserver', 'demo_mode')
+        if dag_id.startswith('rerun__'):
+            # 调用collect_dags扫描dags文件夹，使得创建的用于重跑的dag可以立即访问
+            dagbag.collect_dags(only_if_updated=False)
         dag = dagbag.get_dag(dag_id)
         if dag_id not in dagbag.dags:
             flash('DAG "{0}" seems to be missing.'.format(dag_id), "error")
@@ -2423,7 +2426,7 @@ class Airflow(AirflowViewMixin, BaseView):
             num_runs=num_runs,
             tasks=tasks,
             show_external_logs=bool(external_logs),
-            task_instances=task_instances
+            task_instances=sorted(task_instances, key=lambda t: t['etl_task_type'])
             )
 
     @expose('/duration')

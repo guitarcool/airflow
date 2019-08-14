@@ -80,7 +80,13 @@
         {% for item in task_instances %}
             <tr>
                 <td onclick="call_modal('{{item.task_id}}', '{{item.execution_date}}', '{{item.try_number}}')"><a >{{item.task_id}}</a></td>
-                <td>{{item.etl_task_type}}</td>
+                <td>
+                  {% for i in [[0,"下载任务"], [1,"DDS加载任务"], [2,"UDM任务"], [3,"报表任务"]] %}
+                    {% if item.etl_task_type==i[0] %}
+                      {{i[1]}}
+                    {% endif %}
+                  {% endfor %}
+                </td>
                 <td>{{item.start_date}}</td>
                 <td>{{item.end_date}}</td>
                 <td>{{item.duration}}</td>

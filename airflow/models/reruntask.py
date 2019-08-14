@@ -75,7 +75,7 @@ class ReRunTask(Base, LoggingMixin):
 
     def create_or_update_rerun_dag(self):
         """
-        根据rerun_dag.j2模版在AIRFLOW_HOME目录下生成dag文件
+        根据rerun_dag.j2模版在AIRFLOW_HOME目录下生成用于重跑的dag文件
         :return:
         """
 
@@ -91,6 +91,7 @@ class ReRunTask(Base, LoggingMixin):
 
     def delete_rerun_dag(self):
         # 1.删除生成的dag文件
+        self.log.info('删除%s文件' % self.rerun_dag_file_path)
         os.remove(self.rerun_dag_file_path)
         # 2.调用dag删除接口
         delete_dag.delete_dag(self.rerun_dag_id)

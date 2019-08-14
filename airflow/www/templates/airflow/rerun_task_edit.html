@@ -66,7 +66,26 @@
 </style>
 {% endblock %}
 
-{% block body %}
+{% block navlinks %}
+<ul class="nav nav-tabs">
+    <li class="">
+        <a href="{{ url_for("airflow.rerun_tasks_list", dag_id=dag.dag_id)}}">重跑任务{% if count %} ({{ count }}){% endif %}</a>
+    </li>
+    {% if rerunTask %}
+    <li class="">
+        <a href="javascript:void(0)" onclick="window.location.href='{{ get_url('airflow.rerun_task_edit', dag_id=dag.dag_id) }}'" title="{{ _('Create New Record') }}">{{ _('Create') }}</a>
+    </li>
+    <li class="active">
+        <a href="javascript:void(0)" title="{{ _('Create New Record') }}">{{ _('Edit') }}</a>
+    </li>
+    {% else %}
+    <li class="active">
+        <a href="javascript:void(0)" title="{{ _('Create New Record') }}">{{ _('Create') }}</a>
+    </li>
+    {% endif %}
+</ul>
+{% endblock %}
+{% block editbody %}
 {{ super() }}
 <form method="get" id="task_edit" class="">
   <div id="task_edit_alert_success" style="display: none; margin-top: 10px;" class="alert alert-success" role="alert">
@@ -82,7 +101,7 @@
   <div class="form-group row">
     <label class="col-form-label">任务名</label>
     <input type="text" class="form-control" name="task_id" 
-     value="{% if rerunTask %} {{ request.args.get('task_id') }}{% endif %}"
+     value="{% if rerunTask %}{{ request.args.get('task_id') }}{% endif %}"
      {% if request.args.get('task_id') %}readonly{% endif %}
     required>
   </div>
@@ -181,11 +200,11 @@
     if (!requestLock) {
       requestLock = true;
       function _requestSuccessHandler(){
-        $('#task_edit_alert_success .content').text('添加成功');
+        $('#task_edit_alert_success .content').text(formType==0?'添加成功':'修改成功');
         $('#task_edit_alert_success').fadeIn(100).delay(3000).fadeOut(100);
       }
       function _requestFailHandler(message){
-        $('#task_edit_alert_error .content').text(message||'添加失败');
+        $('#task_edit_alert_error .content').text(message||formType==0?'添加失败':'修改失败');
         $('#task_edit_alert_error').fadeIn(100).delay(3000).fadeOut(100);
       }
 
@@ -236,12 +255,13 @@
           var items = traverseDownstreamData(data[innerKey], innerKey, depth+1, id);
           children = children.concat(items);
         }
-        return [{
+        return depth>0?[{
           label: key,
           id: id,
           depth: depth,
           parent: parent
         }].concat(children)
+        : children;
       }
     }
 
@@ -260,8 +280,8 @@
     var downstreamsOptionData = {{task_downstreams|tojson|safe}}
 
     // initialize downstream options
-    {% if etlTask and etlTask.rerun_downstreams %}
-      selectedDownStreamOptions = '{{etlTask.rerun_downstreams|join(',')|safe}}'.split(',');
+    {% if rerunTask and rerunTask.rerun_downstreams %}
+    selectedDownStreamOptions = '{{rerunTask.rerun_downstreams|join(',')|safe}}'.split(',');
     {% endif %}
     downStreamOptions = traverseDownstreamData(downstreamsOptionData, 'root', 0, -1);
     var i;
@@ -275,12 +295,41 @@
         id: item.id,
         parent: item.parent,
         depth: item.depth,
-        // selected: selectedDownStreamOptions.indexOf(name)>0,
         attributes: {
           id: item.id
         }
       }
     })
+    // TODO:
+    // default selected
+    downStreamOptions.forEach(function(option){
+        var source = $('select[name="etl_task_id"]')[0].value;
+        var selected = selectedDownStreamOptions.indexOf(option.title)>-1;
+        if(!selected){
+          return;
+        }
+        var parentArr = downStreamOptions.filter(function(p){
+          return p.id == option.parent;
+        });
+        var parentNode;
+        for(;parentArr.length>0;){
+          parentNode = parentArr[0];
+          if(parentNode.title!=source && selectedDownStreamOptions.indexOf(parentNode.title)<0){
+            selected = false;
+            parentArr = [];
+          } else if(parentNode.title==source) {
+            parentArr = [];
+          }
+          else {
+            parentArr = downStreamOptions.filter(function(p){
+              return p.id == parentNode.parent;
+            });
+          }
+        }
+        option.selected=selected;
+      }
+    )
+    console.log(downStreamOptions);
 
     function getChildrenOptionsById(options, rootId){
       var results=[];
@@ -364,6 +413,7 @@
       $('.dependencies-select').multiselect('dataprovider', options);
     }
 
+    // init multiselect
     $('select[name="etl_task_id"]').change(setDownStreamOptions)
     $(document).ready(function(){
       $('.dependencies-select').multiselect({

@@ -108,7 +108,6 @@
   }
 </style>
 {% endblock %}
-{% block body %}
 {% block navlinks %}
 <ul class="nav nav-tabs">
     <li class="">
@@ -118,10 +117,11 @@
         <a href="{{ get_url('airflow.newtask', dag_id=dag.dag_id) }}" title="{{ _('Create New Record') }}">{{ _('Create') }}</a>
     </li>
     <li class="active">
-        <a href="javascript::void 0;">{{ _('Edit') }}</a>
+        <a href="javascript:void(0);">{{ _('Edit') }}</a>
     </li>
 </ul>
 {% endblock %}
+{% block editbody %}
 {{ super() }}
 <form method="get" id="task_edit" class="">
   <div id="task_edit_alert_success" style="display: none; margin-top: 10px;" class="alert alert-success" role="alert">

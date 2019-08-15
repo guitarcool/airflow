@@ -25,9 +25,10 @@
 
 <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='dagre.css') }}">
 <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='graph.css') }}">
-<link href="https://cdn.bootcss.com/bootstrap-multiselect/0.9.15/css/bootstrap-multiselect.css" rel="stylesheet">
+<!-- <link href="https://cdn.bootcss.com/bootstrap-multiselect/0.9.15/css/bootstrap-multiselect.css" rel="stylesheet"> -->
 <link href="{{ admin_static.url(filename='vendor/bootstrap-daterangepicker/daterangepicker-bs2.css') }}"
   rel="stylesheet">
+<link rel="stylesheet" href="{{ url_for('static', filename='vue-treeselect.min.css') }}">
 <style>
   #task_edit {
     width: 80%;
@@ -132,9 +133,23 @@
   <div class="form-group row">
     <label class="col-form-label">后置依赖项</label>
     <br/>
-    <select class="form-control dependencies-select" multiple="multiple" name="rerun_downstreams">
-      
-    </select>
+    <!-- <select class="form-control dependencies-select" multiple="multiple" name="rerun_downstreams"> -->
+    <!-- </select> -->
+    <div class="dependencies-select">
+        <treeselect v-model="value" 
+         :multiple="true" 
+         :options="options" 
+         :flat="true"
+         :auto-select-ancestors="true"
+         :auto-deselect-descendants="true"
+         :searchable="false"
+         :sort-value-by="'INDEX'"
+         :value-format="'object'"
+         @input="onInput"
+        >
+          <div slot="value-label" slot-scope="{ node }">{{'{{'}} node.label {{'}}'}}</div>
+        </treeselect>
+    </div>
     <div id="svg_container">
       <svg width="{{ width }}" height="{{ height }}">
         <g id='dig' transform="translate(20,20)"></g>
@@ -168,7 +183,303 @@
   $('.date-picker').datepicker('setDate', new Date())
   {% endif %}
 </script>
+<script src="{{ url_for('static', filename='d3.v3.min.js') }}"></script>
+<script src="{{ url_for('static', filename='dagre-d3.js') }}"></script>
+<script src="{{ url_for('static', filename='vue.v2.6.10.min.js') }}"></script>
+<script src="{{ url_for('static', filename='vue-treeselect.min.js') }}"></script>
 <script>
+  (function(){
+    var idCounter = 0;
+    var formatIdCounter = 0;
+
+    /**
+     * @typedef DownStreamOption
+     * @type object
+     * @property {number} id
+     * @property {string} label
+     * @property {number} depth
+     * @property {number} parentId
+     * @property {DownStreamOption[]|undefined} children
+     */
+
+    /**
+     * @param {object} data
+     * @param {number} key
+     * @param {number} depth
+     * @param {number} parentId
+     * @returns {DownStreamOption[]}
+     */
+    function formatDownStreamOptionData(data, key, depth, parentId){
+      if(typeof data === 'string') {
+        return undefined;
+      }
+      if(typeof data === 'object') {
+        var id;
+        var innerKey;
+        var children = [];
+        for(innerKey in data){
+          id = formatIdCounter++;
+          var items = formatDownStreamOptionData(data[innerKey], innerKey, depth+1, id);
+          children.push({
+            id: id,
+            label: innerKey,
+            depth: depth,
+            children: items,
+            parentId: parentId
+          });
+        }
+        return children;
+      }
+    }
+
+
+    /**
+     * @param {DownStreamOption} data
+     * @param {number} key
+     * @param {number} depth
+     * @param {number} parentId
+     * @returns {DownStreamOption[]}
+     */
+    function flatDownStreamOptionData(data){
+      if(!data){
+        return data;
+      }
+      if(!(data instanceof Array) && !!!data.children) {
+        // leaf
+        return [data];
+      } else if(data instanceof Array) {
+        // Array
+        var innerKey;
+        var children = data;
+        var i;
+        var result=[];
+        for(i=0; i<children.length; i++){
+          var child = children[i];
+          var items = flatDownStreamOptionData(child);
+          result = result.concat(items);
+        }
+        return result;
+      } else {
+        // branch
+        var innerKey;
+        var children = data.children;
+        var i;
+        var result=[data];
+        for(i=0; i<children.length; i++){
+          var child = children[i];
+          var items = flatDownStreamOptionData(child);
+          result = result.concat(items);
+        }
+        return result;
+      }
+    }
+
+    var flatDownStreamOptions=[];
+    var labelSet = [];
+    var downstreamsOptionData = [];
+    var downStreamOptions = [];
+    var selectedLabelArr = [];
+    var selectedIdArr=[];
+    // initialize downstream options
+    {% if task_downstreams %}
+    downstreamsOptionData = {{task_downstreams|tojson|safe}};
+    {% endif %}
+    downstreamsOptionData = {"also_run_this": {"run_this_last": ""}, "runme_0": {"run_after_loop": {"run_this_last": ""}}, "runme_1": {"run_after_loop": {"run_this_last": ""}}, 
+    "runme_2": {"run_after_loop": {"run_this_last": ""},
+    "runme_1": {"run_after_loop": {"run_this_last": ""}}}};
+    
+    {% if rerunTask and rerunTask.rerun_downstreams %}
+    selectedLabelArr = '{{rerunTask.rerun_downstreams|join(',')|safe}}'.split(',');
+    {% endif %}
+    downStreamOptions=formatDownStreamOptionData(downstreamsOptionData, 'root', 0, -1)
+    flatDownStreamOptions = flatDownStreamOptionData(downStreamOptions);
+
+    // default selected
+    flatDownStreamOptions.forEach(function(option){
+        var source = $('select[name="etl_task_id"]')[0].value;
+        var selected = selectedLabelArr.indexOf(option.label)>-1;
+        if(!selected){
+          return;
+        }
+        var parentArr = flatDownStreamOptions.filter(function(p){
+          return p.id == option.parentId;
+        });
+        var parentNode;
+        for(;parentArr.length>0;){
+          parentNode = parentArr[0];
+          if(parentNode.label!=source && selectedLabelArr.indexOf(parentNode.label)<0){
+            selected = false;
+            parentArr = [];
+          } else if(parentNode.label==source) {
+            parentArr = [];
+          }
+          else {
+            parentArr = flatDownStreamOptions.filter(function(p){
+              return p.id == parentNode.parentId;
+            });
+          }
+        }
+        option.selected=selected;
+        selected && selectedLabelArr.push(option.label) && selectedIdArr.push(option.id);
+      }
+    )
+
+    function getChildrenOptionsById(options, rootId){
+      var results=[];
+      var i;
+      for(i=0; i<options.length; i++){
+        var item=options[i];
+        if(item.parentId == rootId){
+          results.push(item);
+          results = results.concat(getChildrenOptionsById(options, item.id));
+        }
+      }
+      return results;
+    }
+
+    function getOptionsByAttr(options, attrName, value){
+      var i;
+      var results = [];
+      for(i=0; i<options.length; i++){
+        var item = options[i];
+        if(item[attrName]==value){
+          results.push(item);
+        }
+      }
+      return results.length>0 ? results : [];
+    }
+
+    var multiSelectApp;
+    function initMultiSelectApp(){
+      // register the component
+      Vue.component('treeselect', VueTreeselect.Treeselect)
+
+      multiSelectApp = new Vue({
+          el: document.querySelector('.dependencies-select'),
+          data: {
+            // define the default value
+            value: null,
+            // define options
+            options: downStreamOptions,
+            onInput: function(value, instanceId){
+              selectedLabelArr = value.map(function(downStreamOption) {
+                return downStreamOption.label
+              })
+              refreshGraph();
+            }
+          },
+        })
+    }
+
+    var flatOptions;
+    function setDownStreamOptions(){
+      var target = $('select[name="etl_task_id"]').get()[0];
+      var value = target.value;
+      // var flatOptions = flatDownStreamOptions[value] || [];
+      var sourceOptions = getOptionsByAttr(flatDownStreamOptions, 'label', value);
+      var i;
+      var sourceOption;
+      var tempOptions;
+      flatOptions = [];
+      var options = [];
+      for(i=0; i<sourceOptions.length; i++){
+        sourceOption = sourceOptions[i];
+        tempOptions = flatDownStreamOptionData(sourceOption.children)
+        flatOptions = tempOptions && flatOptions.concat(tempOptions) || flatOptions;
+        options = !!sourceOption.children ? options.concat(sourceOption.children) : options;
+      }
+
+      multiSelectApp.options = options;
+      multiSelectApp.value = flatOptions.filter(function(option){
+        return selectedIdArr.indexOf(option.id)>-1;
+      });
+    }
+    
+    var nodes = [];
+    var edges = [];
+    var arrange = "LR";
+    function createNode(name){
+      return {
+        id: name,
+        value: {
+          label: name,
+          labelStyle: 'fill:#000',
+          style: 'fill:#f0ede4;',
+        }
+      }
+    }
+    function createEdge(source, target){
+      return {
+        u: source,
+        v: target,
+        value: {
+          style: 'stroke: #000;'
+        }
+      }
+    }
+    
+    function refreshGraph() {
+      var f = document.forms["task_edit"];
+      var source = f.etl_task_id.value;
+      var selected = selectedLabelArr;
+      nodes = [];
+      edges = [];
+      var labelSet = [source];
+      var i;
+      var option;
+      for(i=0; i<flatOptions.length; i++){
+        option = flatOptions[i];
+        if(labelSet.indexOf(option.label)<0){
+          labelSet.push(option.label);
+        }
+      }
+      var node;
+      for(i=0; i<labelSet.length; i++){
+        node = createNode(labelSet[i])
+        if(node.id==source || selected.indexOf(node.id)>-1){
+          node.value.style = 'stroke:#009900;'
+        }
+        nodes.push(node);
+      }
+      function hasDuplicatedEdge(item){
+        var i;
+        var edge;
+        for(i=0; i<edges.length; i++){
+          edge=edges[i];
+          if(edge.u==item.u && edge.v==item.v){
+            return true;
+          }          
+        }
+        return false;
+      }
+      flatOptions.forEach(function(option){
+        var parentOption = getOptionsByAttr(flatOptions, 'id', option.parentId)[0];
+        var edge;
+        edge = !!parentOption ? 
+         createEdge(parentOption.label, option.label)
+        :createEdge(source, option.label);
+        if(!hasDuplicatedEdge(edge)) {
+          edges.push(edge);
+        }
+      })
+      var layout = dagreD3.layout().rankDir(arrange).nodeSep(15).rankSep(15);
+      var renderer = new dagreD3.Renderer();
+      var g = dagreD3.json.decode(nodes, edges);
+      renderer.layout(layout).run(g, d3.select("#dig"));
+    }
+
+    $('select[name="etl_task_id"]').change(function(){
+      selectedLabelArr = [];
+      setDownStreamOptions();
+      refreshGraph();
+    });
+    $(document).ready(function(){
+      initMultiSelectApp();
+      setDownStreamOptions();
+      refreshGraph();
+    });
+
+
   var formType = 0; //0:add 1:edit
   var readonly = false;
 
@@ -184,7 +495,7 @@
   var requestLock = false;
   $(".btn.btn-submit").click(function () {
     var f = document.forms["task_edit"];
-    var downstreamsData = $('.dependencies-select option:selected').map(function(a, item){return item.title;}).toArray();
+    var downstreamsData = selectedLabelArr;
     downstreamsData=downstreamsData.filter(function(value, index){
       return index==downstreamsData.indexOf(value);
     })
@@ -232,302 +543,7 @@
       console.log("input error.")
     }
   });
-</script>
-<script src="{{ url_for('static', filename='d3.v3.min.js') }}"></script>
-<script src="{{ url_for('static', filename='dagre-d3.js') }}"></script>
-<script>
-  (function(){
-    var idCounter = 0;
-    function traverseDownstreamData(data, key, depth, parent){
-      if(typeof data === 'string') {
-        return [{
-          label: key,
-          id: idCounter++,
-          depth: depth,
-          parent: parent
-        }]
-      }
-      if(typeof data === 'object') {
-        var innerKey;
-        var children = [];
-        var id = idCounter++;
-        for(innerKey in data){
-          var items = traverseDownstreamData(data[innerKey], innerKey, depth+1, id);
-          children = children.concat(items);
-        }
-        return depth>0?[{
-          label: key,
-          id: id,
-          depth: depth,
-          parent: parent
-        }].concat(children)
-        : children;
-      }
-    }
 
-    function indent(num){
-      var str = '';
-      var i;
-      for(i=0; i<num; i++){
-        str+='　';
-      }
-      return str;
-    }
-
-    var downStreamOptions={};
-    var selectedDownStreamOptions=[];
-    var labelSet = [];
-    var downstreamsOptionData = {{task_downstreams|tojson|safe}}
-
-    // initialize downstream options
-    {% if rerunTask and rerunTask.rerun_downstreams %}
-    selectedDownStreamOptions = '{{rerunTask.rerun_downstreams|join(',')|safe}}'.split(',');
-    {% endif %}
-    downStreamOptions = traverseDownstreamData(downstreamsOptionData, 'root', 0, -1);
-    var i;
-    var str=downStreamOptions[i];
-    downStreamOptions=downStreamOptions.map(function(item) {
-      var name = item.label;
-      return {
-        label: name, 
-        title: name, 
-        value: item.id, 
-        id: item.id,
-        parent: item.parent,
-        depth: item.depth,
-        attributes: {
-          id: item.id
-        }
-      }
-    })
-    // TODO:
-    // default selected
-    downStreamOptions.forEach(function(option){
-        var source = $('select[name="etl_task_id"]')[0].value;
-        var selected = selectedDownStreamOptions.indexOf(option.title)>-1;
-        if(!selected){
-          return;
-        }
-        var parentArr = downStreamOptions.filter(function(p){
-          return p.id == option.parent;
-        });
-        var parentNode;
-        for(;parentArr.length>0;){
-          parentNode = parentArr[0];
-          if(parentNode.title!=source && selectedDownStreamOptions.indexOf(parentNode.title)<0){
-            selected = false;
-            parentArr = [];
-          } else if(parentNode.title==source) {
-            parentArr = [];
-          }
-          else {
-            parentArr = downStreamOptions.filter(function(p){
-              return p.id == parentNode.parent;
-            });
-          }
-        }
-        option.selected=selected;
-      }
-    )
-    console.log(downStreamOptions);
-
-    function getChildrenOptionsById(options, rootId){
-      var results=[];
-      var i;
-      for(i=0; i<options.length; i++){
-        var item=options[i];
-        if(item.parent == rootId){
-          results.push(item);
-          results = results.concat(getChildrenOptionsById(options, item.id));
-        }
-      }
-      return results;
-    }
-
-    function getOptionsByAttr(options, attrName, value){
-      var i;
-      var results = [];
-      for(i=0; i<options.length; i++){
-        var item = options[i];
-        if(item[attrName]==value){
-          results.push(item);
-        }
-      }
-      return results.length>0 ? results : [];
-    }
-    var options;
-    function setDownStreamOptions(){
-      var target = $('select[name="etl_task_id"]').get()[0];
-      var value = target.value;
-      // var options = downStreamOptions[value] || [];
-      var sourceOptions = getOptionsByAttr(downStreamOptions, 'title', value);
-      var i;
-      var sourceOption;
-      var tempOptions;
-      options = [];
-      for(i=0; i<sourceOptions.length; i++){
-        sourceOption = sourceOptions[i];
-        tempOptions = getChildrenOptionsById(downStreamOptions, sourceOption.id);
-        tempOptions.forEach(function(option){
-          option.label = indent(option.depth-1-sourceOption.depth) + option.label;
-        })
-        options = options.concat(tempOptions);
-      }
-      $('.dependencies-select').multiselect('dataprovider', options);
-      options.length>0 ? $('.dependencies-select').multiselect('enable') : $('.dependencies-select').multiselect('disable');
-    }
-
-    function findIndexById(innerId){
-      var result;
-      var i;
-      var option;
-      for(i=0; i<options.length; i++){
-        option = options[i];
-        if(option.id===innerId){
-          return i;
-        }
-      }
-      return -1;
-    }
-    function selectBefore(id){
-      var sourceOption = getOptionsByAttr(options, 'id', id)[0];
-      sourceOption.selected=true;
-      var parentIndex = findIndexById(sourceOption.parent);
-      for(; parentIndex>-1; parentIndex=findIndexById(options[parentIndex].parent)){
-        var option=options[parentIndex];
-        option.selected = true;
-      }
-      $('.dependencies-select').multiselect('dataprovider', options);
-    }
-
-    function deselectAfter(id){
-      var sourceOption = getOptionsByAttr(options, 'id', id)[0];
-      sourceOption.selected=false;
-      var childrenOptions = getOptionsByAttr(options, 'parent', id);
-      for(;childrenOptions.length>0;){
-        var childOption = childrenOptions[0];
-        childOption.selected=false;
-        childrenOptions.shift();
-        childrenOptions = childrenOptions.concat(getOptionsByAttr(options, 'parent', childOption.id));
-      }
-      $('.dependencies-select').multiselect('dataprovider', options);
-    }
-
-    // init multiselect
-    $('select[name="etl_task_id"]').change(setDownStreamOptions)
-    $(document).ready(function(){
-      $('.dependencies-select').multiselect({
-          enableFiltering: true,
-          onChange: function(options, checked){
-            if(checked){
-              selectBefore(options[0].dataset['id']);
-            } else {
-              deselectAfter(options[0].dataset['id']);
-            }
-            refreshGraph();
-          },
-          buttonText: function(options, select) {
-            if (options.length === 0) {
-                return '请选择';
-            }
-            else if (options.length > 3) {
-                return options.length + '项已选择';
-            }
-            else {
-                var labels = [];
-                options.each(function() {
-                    if ($(this).attr('title') !== undefined) {
-                        labels.push($(this).attr('title'));
-                    }
-                    else {
-                        labels.push($(this).html());
-                    }
-                });
-                labels = labels.filter(function(value, index){
-                  return index==labels.indexOf(value);
-                });
-                return labels.join(', ') + '';
-            }
-          },
-      });
-      setDownStreamOptions();
-    })
-    
-    var nodes = [];
-    var edges = [];
-    var arrange = "LR";
-    function createNode(name){
-      return {
-        id: name,
-        value: {
-          label: name,
-          labelStyle: 'fill:#000',
-          style: 'fill:#f0ede4;',
-        }
-      }
-    }
-    function createEdge(source, target){
-      return {
-        u: source,
-        v: target,
-        value: {
-          style: 'stroke: #000;'
-        }
-      }
-    }
-    $('.dependencies-select').change(refreshGraph);
-    $('select[name="etl_task_id"]').change(refreshGraph);
-    $(document).ready(refreshGraph);
-    
-    function refreshGraph() {
-      var f = document.forms["task_edit"];
-      var source = f.etl_task_id.value;
-      var selected = $('.dependencies-select option:selected').map(function(a, item){return item.title;}).toArray();
-      nodes = [];
-      edges = [];
-      var labelSet = [source];
-      var i;
-      var option;
-      for(i=0; i<options.length; i++){
-        option = options[i];
-        if(labelSet.indexOf(option.title)<0){
-          labelSet.push(option.title);
-        }
-      }
-      var node;
-      for(i=0; i<labelSet.length; i++){
-        node = createNode(labelSet[i])
-        if(node.id==source || selected.indexOf(node.id)>-1){
-          node.value.style = 'stroke:#009900;'
-        }
-        nodes.push(node);
-      }
-      function hasDuplicatedEdge(item){
-        var i;
-        var edge;
-        for(i=0; i<edges.length; i++){
-          edge=edges[i];
-          if(edge.u==item.u && edge.v==item.v){
-            return true;
-          }          
-        }
-        return false;
-      }
-      options.forEach(function(option){
-        var parentOption = getOptionsByAttr(options, 'id', option.parent)[0];
-        var edge;
-        edge = !!parentOption ? 
-         createEdge(parentOption.title, option.title)
-        :createEdge(source, option.title);
-        if(!hasDuplicatedEdge(edge)) {
-          edges.push(edge);
-        }
-      })
-      var layout = dagreD3.layout().rankDir(arrange).nodeSep(15).rankSep(15);
-      var renderer = new dagreD3.Renderer();
-      var g = dagreD3.json.decode(nodes, edges);
-      renderer.layout(layout).run(g, d3.select("#dig"));
-    }
   })()
 </script>
 {{ super() }}

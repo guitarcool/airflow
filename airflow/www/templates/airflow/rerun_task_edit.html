@@ -284,9 +284,6 @@
     {% if task_downstreams %}
     downstreamsOptionData = {{task_downstreams|tojson|safe}};
     {% endif %}
-    downstreamsOptionData = {"also_run_this": {"run_this_last": ""}, "runme_0": {"run_after_loop": {"run_this_last": ""}}, "runme_1": {"run_after_loop": {"run_this_last": ""}}, 
-    "runme_2": {"run_after_loop": {"run_this_last": ""},
-    "runme_1": {"run_after_loop": {"run_this_last": ""}}}};
     
     {% if rerunTask and rerunTask.rerun_downstreams %}
     selectedLabelArr = '{{rerunTask.rerun_downstreams|join(',')|safe}}'.split(',');

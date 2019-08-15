@@ -1553,12 +1553,13 @@ class Airflow(AirflowViewMixin, BaseView):
     def delete_rerun_task(self, session=None):
         dag_id = request.args.get('dag_id')
         task_id = request.args.get('task_id')
-        rerun_task = session.query(ReRunTask).filter(
+        db_query = session.query(ReRunTask).filter(
             ReRunTask.dag_id == dag_id,
             ReRunTask.task_id == task_id
         )
+        rerun_task = db_query.first()
         rerun_task.delete_rerun_dag()
-        rerun_task.delete()
+        db_query.delete()
         session.commit()
         return wwwutils.json_response({
             'success': '1'
@@ -1575,17 +1576,15 @@ class Airflow(AirflowViewMixin, BaseView):
         if dag_id not in dagbag.dags:
             flash('DAG "{0}" seems to be missing.'.format(dag_id), "error")
             return redirect('/admin/')
-        etl_task = session.query(ETLTask).filter(
-            ETLTask.dag_id == dag_id,
-            ETLTask.task_id == task_id,
+        rerun_task = session.query(ReRunTask).filter(
+            ReRunTask.dag_id == dag_id,
+            ReRunTask.task_id == task_id,
         ).first()
-        if not etl_task:
+        if not rerun_task:
             flash('任务{0}不存在'.format(task_id), "error")
             return redirect(origin or '/admin/')
-        elif etl_task.rerun_state == ReRunTask.Running.value:
-            flash('任务{0}正在执行'.format(task_id), "error")
-            return redirect(origin or '/admin/')
-        etl_task.exec()
+
+        rerun_task.run()
         flash('任务{0}开始执行'.format(task_id), "success")
         return redirect(origin or '/admin/')
 
@@ -2164,9 +2163,6 @@ class Airflow(AirflowViewMixin, BaseView):
     def graph(self, session=None):
         dag_id = request.args.get('dag_id')
         blur = conf.getboolean('webserver', 'demo_mode')
-        if dag_id.startswith('rerun__'):
-            # 调用collect_dags扫描dags文件夹，使得创建的用于重跑的dag可以立即访问
-            dagbag.collect_dags(only_if_updated=False)
         dag = dagbag.get_dag(dag_id)
         if dag_id not in dagbag.dags:
             flash('DAG "{0}" seems to be missing.'.format(dag_id), "error")

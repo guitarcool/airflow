@@ -24,7 +24,12 @@
   {{ lib.form_css() }}
   {{ super() }}
   <link href="{{ url_for("static", filename="bootstrap-toggle.min.css") }}" rel="stylesheet" type="text/css">
-{% endblock %}
+  <style>
+    .size-large {
+      font-size: 1.25em;
+    }
+  </style>
+  {% endblock %}
 
 {% block body %}
   <div>
@@ -47,6 +52,7 @@
   </div>
   <div class="clearfix"></div>
   <div>
+    {% if dag.rerun_type %}
     <ul class="nav nav-pills">
       {% if dag.parent_dag %}
           <li class="never_active"><a href="{{ url_for('airflow.' + dag.get_default_view(), dag_id=dag.parent_dag.dag_id) }}">
@@ -54,25 +60,96 @@
               {{_('Back to')}} {{ dag.parent_dag.dag_id }}</a>
           </li>
       {% endif %}
-      <li><a href="{{ url_for("airflow.graph", dag_id=dag.dag_id, root=root, execution_date=execution_date) }}">
+      <li class="size-large"><a href="{{ url_for("airflow.graph", dag_id=dag.dag_id, root=root, execution_date=execution_date) }}">
           <span class="glyphicon glyphicon-certificate" aria-hidden="true"></span>
           {{_('Graph View')}}</a></li>
-      <li><a href="{{ url_for("airflow.tree", dag_id=dag.dag_id, num_runs=num_runs, root=root) }}">
+      <li class="size-large"><a href="{{ url_for("airflow.tree", dag_id=dag.dag_id, num_runs=num_runs, root=root) }}">
           <span class="glyphicon glyphicon-tree-deciduous" aria-hidden="true"></span>
           {{_('Tree View')}}
       </a></li>
-      <li><a href="{{ url_for("airflow.tasklist", dag_id=dag.dag_id, num_runs=num_runs, root=root) }}">
+      <li class="size-large"><a href="{{ url_for("airflow.tasklist", dag_id=dag.dag_id, num_runs=num_runs, root=root) }}">
           <span class="glyphicon glyphicon-list-alt" aria-hidden="true"></span>
           {{_('List View')}}
       </a></li>
-      <li><a href="{{ url_for("airflow.taskeditlist", dag_id=dag.dag_id, num_runs=num_runs, root=root) }}">
+      <li class="size-large"><a href="{{ url_for("airflow.rerun_tasks_list", dag_id=dag.base_dag_id, num_runs=num_runs, root=root) }}">
+          <span class="glyphicon glyphicon-eject" aria-hidden="true"></span>
+          返回主DAG
+      </a></li>
+      <li style="clear:left;"/></li>
+      <li><a href="{{ url_for("airflow.duration", dag_id=dag.dag_id, days=30, root=root) }}">
+          <span class="glyphicon glyphicon-stats" aria-hidden="true"></span>
+          {{_('Task Duration')}}
+      </a></li>
+      <li><a href="{{ url_for("airflow.tries", dag_id=dag.dag_id, days=30, root=root) }}">
+          <span class="glyphicon glyphicon-duplicate" aria-hidden="true"></span>
+          {{_('Task Tries')}}
+      </a></li>
+      <li>
+        <a href="{{ url_for("airflow.landing_times", dag_id=dag.dag_id, days=30, root=root) }}">
+          <span class="glyphicon glyphicon-plane" aria-hidden="true"></span>
+          {{_('Landing Times')}}
+        </a>
+      </li>
+      <li>
+        <a href="{{ url_for("airflow.gantt", dag_id=dag.dag_id, root=root) }}">
+          <span class="glyphicon glyphicon-align-left" aria-hidden="true"></span>
+          <i class="icon-align-left"></i>
+          {{_('Gantt')}}
+        </a>
+      </li>
+      <li>
+      <a href="{{ url_for("airflow.dag_details", dag_id=dag.dag_id) }}">
+          <span class="glyphicon glyphicon-list" aria-hidden="true"></span>
+          {{_('Details')}}
+        </a>
+      </li>
+      <li>
+        <a href="{{ url_for("airflow.code", dag_id=dag.dag_id, root=root) }}">
+          <span class="glyphicon glyphicon-file" aria-hidden="true"></span>
+          {{_('Code')}}
+        </a>
+      </li>
+      <!-- <li>
+        <a href="{{ url_for("airflow.data_source", dag_id=dag.dag_id, root=root) }}">
+          <span class="glyphicon glyphicon-hdd" aria-hidden="true"></span>
+          {{_('Data Source')}}
+        </a>
+      </li> -->
+      <li>
+        <a href="{{ url_for("airflow.refresh", dag_id=dag.dag_id) }}" title="Refresh" onclick="postAsForm(this.href); return false">
+          <span class="glyphicon glyphicon-refresh" aria-hidden="true"></span>
+          {{_('Refresh')}}
+        </a>
+      </li>
+    </ul>
+    {% else %}
+    <ul class="nav nav-pills">
+      {% if dag.parent_dag %}
+          <li class="never_active"><a href="{{ url_for('airflow.' + dag.get_default_view(), dag_id=dag.parent_dag.dag_id) }}">
+              <span class="glyphicon glyphicon-arrow-left" aria-hidden="true"></span>
+              {{_('Back to')}} {{ dag.parent_dag.dag_id }}</a>
+          </li>
+      {% endif %}
+      <li class="size-large"><a href="{{ url_for("airflow.graph", dag_id=dag.dag_id, root=root, execution_date=execution_date) }}">
+          <span class="glyphicon glyphicon-certificate" aria-hidden="true"></span>
+          {{_('Graph View')}}</a></li>
+      <li class="size-large"><a href="{{ url_for("airflow.tree", dag_id=dag.dag_id, num_runs=num_runs, root=root) }}">
+          <span class="glyphicon glyphicon-tree-deciduous" aria-hidden="true"></span>
+          {{_('Tree View')}}
+      </a></li>
+      <li class="size-large"><a href="{{ url_for("airflow.tasklist", dag_id=dag.dag_id, num_runs=num_runs, root=root) }}">
+          <span class="glyphicon glyphicon-list-alt" aria-hidden="true"></span>
+          {{_('List View')}}
+      </a></li>
+      <li class="size-large"><a href="{{ url_for("airflow.taskeditlist", dag_id=dag.dag_id, num_runs=num_runs, root=root) }}">
           <span class="glyphicon glyphicon-edit" aria-hidden="true"></span>
           {{_('Add Task')}}
       </a></li>
-      <li><a href="{{ url_for("airflow.rerun_tasks_list", dag_id=dag.dag_id, num_runs=num_runs, root=root) }}">
+      <li class="size-large"><a href="{{ url_for("airflow.rerun_tasks_list", dag_id=dag.dag_id, num_runs=num_runs, root=root) }}">
           <span class="glyphicon glyphicon-list-alt" aria-hidden="true"></span>
           重跑任务
       </a></li>
+      <li style="clear:left;"/></li>
       <li><a href="{{ url_for("airflow.duration", dag_id=dag.dag_id, days=30, root=root) }}">
           <span class="glyphicon glyphicon-stats" aria-hidden="true"></span>
           {{_('Task Duration')}}
@@ -139,6 +216,7 @@
         </a>
       </li>
     </ul>
+    {% endif %}
   </div>
   <hr>
   <!-- Modal -->

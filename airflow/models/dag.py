@@ -203,7 +203,9 @@ class DAG(BaseDag, LoggingMixin):
         on_failure_callback=None,  # type: Optional[Callable]
         doc_md=None,  # type: Optional[str]
         params=None,  # type: Optional[Dict]
-        access_control=None  # type: Optional[Dict]
+        access_control=None,  # type: Optional[Dict]
+        rerun_type=None,  # type: int
+        base_dag_id=None
     ):
         self.user_defined_macros = user_defined_macros
         self.user_defined_filters = user_defined_filters
@@ -290,6 +292,10 @@ class DAG(BaseDag, LoggingMixin):
 
         self._old_context_manager_dags = []  # type: Iterable[DAG]
         self._access_control = access_control
+        # 重跑任务创建的DAG rerun_type为1
+        self.rerun_type = rerun_type
+        # 重跑任务创建的DAG 对应的主DAG id
+        self.base_dag_id = base_dag_id
 
         self._comps = {
             'dag_id',

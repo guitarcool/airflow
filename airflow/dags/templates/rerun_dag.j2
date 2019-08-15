@@ -29,6 +29,8 @@ main_dag = DAG(
     default_args=dag_args,
     max_active_runs=1,
     schedule_interval='00 00 * * *',
+    rerun_type=1,
+    base_dag_id=BASE_DAG_ID
 )
 
 

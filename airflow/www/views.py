@@ -2922,6 +2922,9 @@ class HomeView(AirflowViewMixin, AdminIndexView):
                 ~DM.is_subdag, DM.is_active
             )
 
+        # 隐藏用于重跑的DAG
+        query = query.filter(~DM.dag_id.like('%rerun__%'))
+
         # optionally filter out "paused" dags
         if hide_paused:
             query = query.filter(~DM.is_paused)

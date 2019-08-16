@@ -32,7 +32,8 @@
     $("#clock").clock({
         "dateFormat":"Y-m-d ",
         "timeFormat":"H:i:s %UTC%",
-        "timestamp":UTCseconds
+        "timestamp":UTCseconds,
+        "langSet":'zh'
     }).click(function(){
         alert('{{ hostname }}');
     });
@@ -141,6 +142,11 @@ function convertSecsToHumanReadable(seconds) {
                    {% else %}
                       title="{{ current_user.username }}"
                    {% endif %}>
+              <span style="float:left;margin-top: -6px;margin-left: 4px;font-size: .8em;line-height: 1.2em;color: #eee;">
+                数据仓库
+                <br/>
+                监控管理平台
+              </span>
           </a>
       </div>
       <!-- navbar content -->

@@ -64,6 +64,9 @@
   #svg_container{
     margin-top: 20px;
   }
+  .dependencies-select .vue-treeselect__multi-value-item.vue-treeselect__multi-value-item-new{
+    display: none;
+  }
 </style>
 {% endblock %}
 
@@ -136,18 +139,24 @@
     <!-- <select class="form-control dependencies-select" multiple="multiple" name="rerun_downstreams"> -->
     <!-- </select> -->
     <div class="dependencies-select">
-        <treeselect v-model="value" 
+        <treeselect 
+         :value="value" 
          :multiple="true" 
-         :options="options" 
+         :options="optionsWithAll" 
          :flat="true"
          :auto-select-ancestors="true"
          :auto-deselect-descendants="true"
          :searchable="false"
          :sort-value-by="'INDEX'"
          :value-format="'object'"
+         :placeholder="'请选择'"
+         :no-options-text="'当前没有可用选项'"
          @input="onInput"
+         @select="onSelect"
+         @deselect="onDeselect"
+         ref="select"
         >
-          <div slot="value-label" slot-scope="{ node }">{{'{{'}} node.label {{'}}'}}</div>
+          <div slot="value-label" slot-scope="{ node }" v-if="node.id>=0">{{'{{'}} node.label {{'}}'}}</div>
         </treeselect>
     </div>
     <div id="svg_container">
@@ -358,17 +367,93 @@
             value: null,
             // define options
             options: downStreamOptions,
+            optionAll: {
+              id: -1,
+              label: '全选',
+              isNew: true,
+            },
+            valueLock: false,
+            selectAllAction: false,
+            deselectAllAction: false,
+          },
+          methods: {
+            selectAll:function(){
+              this.value = [this.optionAll].concat(flatOptions);
+            },
+            deselectAll: function(){
+              this.value = [];
+            },
             onInput: function(value, instanceId){
-              selectedLabelArr = value.map(function(downStreamOption) {
+              if(value.length<shownFlatOptions.length+1 && this.hasSelectedOptionAll && !this.selectAllAction && !this.deselectAllAction) {
+                this.value = value = value
+                .filter(function(downStreamOption){
+                  return downStreamOption.id>-1;
+                })
+              } 
+              else if(!this.hasSelectedOptionAll && this.selectAllAction) {
+                this.selectAll();
+                this.selectAllAction = false;
+              } 
+              else if(this.deselectAllAction) {
+                this.deselectAll();
+                this.deselectAllAction = false;
+              }
+              else if(!this.hasSelectedOptionAll && value.length===shownFlatOptions.length && !this.selectAllAction && !this.deselectAllAction) {
+                this.selectAll();
+                this.selectAllAction = false;
+              }
+              var filteredValues = value
+              .filter(function(downStreamOption){
+                return downStreamOption.id>-1;
+              })
+              selectedLabelArr = filteredValues.map(function(downStreamOption) {
                 return downStreamOption.label
               })
+              selectedIdArr = filteredValues.map(function(downStreamOption) {
+                return downStreamOption.id
+              })
               refreshGraph();
+            },
+            onSelect: function(node){
+              if(node.id==-1) {  // 全选id
+                this.selectAllAction = true;
+              } 
+
+            },
+            onDeselect: function(node){
+              if(node.id==-1) {  // 全选id
+                this.deselectAllAction = true;
+              }
             }
+          },
+          computed: {
+            optionsWithAll: function(){
+              return this.options && this.options.length>0 ? 
+               [this.optionAll].concat(this.options)
+              :[];
+            },
+            hasSelectedOptionAll: function(){ 
+              return this.value
+              .map(function(downStreamOption) {
+                return downStreamOption.id
+              })
+              .indexOf(this.optionAll.id) > -1;
+            }
+          },
+          watch: {
+            value: function(newVal, oldVal){
+              console.log(newVal);
+              console.log(oldVal);
+            },
           },
         })
     }
-
+    window.outerSelect = function(){
+      multiSelectApp.value = flatOptions;
+    }
     var flatOptions;
+    var shownOptions;
+    var shownFlatOptions;
     function setDownStreamOptions(){
       var target = $('select[name="etl_task_id"]').get()[0];
       var value = target.value;
@@ -378,15 +463,15 @@
       var sourceOption;
       var tempOptions;
       flatOptions = [];
-      var options = [];
+      var shownOptions = [];
       for(i=0; i<sourceOptions.length; i++){
         sourceOption = sourceOptions[i];
         tempOptions = flatDownStreamOptionData(sourceOption.children)
         flatOptions = tempOptions && flatOptions.concat(tempOptions) || flatOptions;
-        options = !!sourceOption.children ? options.concat(sourceOption.children) : options;
+        shownOptions = !!sourceOption.children ? shownOptions.concat(sourceOption.children) : shownOptions;
       }
-
-      multiSelectApp.options = options;
+      shownFlatOptions = flatDownStreamOptionData(shownOptions);
+      multiSelectApp.options = shownOptions;
       multiSelectApp.value = flatOptions.filter(function(option){
         return selectedIdArr.indexOf(option.id)>-1;
       });
@@ -467,6 +552,7 @@
 
     $('select[name="etl_task_id"]').change(function(){
       selectedLabelArr = [];
+      selectedIdArr = [];
       setDownStreamOptions();
       refreshGraph();
     });
@@ -495,7 +581,7 @@
     var downstreamsData = selectedLabelArr;
     downstreamsData=downstreamsData.filter(function(value, index){
       return index==downstreamsData.indexOf(value);
-    })
+    }) || [];
     var sendData = {
       dag_id: "{{dag.dag_id}}",
       task_id: f.task_id.value,

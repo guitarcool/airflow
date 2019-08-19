@@ -20,8 +20,8 @@
 {% block body %}
   {% if admin_view.verbose_name %}
   <h2>
-    {{ admin_view.verbose_name|title }}
-    <small>[create]</small>
+    {{ _(admin_view.verbose_name|title|trim) }}
+    <small>[{{_('create')}}]</small>
   </h2>
   <hr/>
   {% endif %}

@@ -2707,7 +2707,7 @@ class Airflow(AirflowViewMixin, BaseView):
             session.merge(orm_dag)
         session.commit()
 
-        flash("DAG [{}] is now fresh as a daisy".format(dag_id))
+        flash(lazy_gettext("DAG [{}] is now fresh as a daisy").format(dag_id))
         return redirect(request.referrer)
 
     @expose('/refresh_all', methods=['POST'])

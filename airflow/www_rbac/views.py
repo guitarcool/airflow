@@ -1714,7 +1714,7 @@ class Airflow(AirflowBaseView):
         appbuilder.sm.sync_perm_for_dag(dag_id)
 
         dagbag.get_dag(dag_id)
-        flash("DAG [{}] is now fresh as a daisy".format(dag_id))
+        flash(lazy_gettext("DAG [{}] is now fresh as a daisy").format(dag_id))
         return redirect(request.referrer)
 
     @expose('/refresh_all', methods=['POST'])

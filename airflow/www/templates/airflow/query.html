@@ -28,12 +28,12 @@
 {% endblock %}
 
 {% block body %}
-  <h2>Ad Hoc Query</h2>
+  <h2>{{_('Ad Hoc Query')}}</h2>
   <form method="post" id="query_form">
     <div class="form-inline">
         <input name="_csrf_token" type="hidden" value="{{ csrf_token() }}">
         {{ form.conn_id }}
-        <input type="submit" class="btn btn-default" value="Run!" id="submit_without_csv">
+        <input type="submit" class="btn btn-default" value="{{_('Run')}}!" id="submit_without_csv">
         <input type="submit" class="btn btn-default" value=".csv" id="submit_with_csv">
         <span id="results"></span><br>
         <div id='ace_container'>

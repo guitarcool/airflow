@@ -15,7 +15,7 @@
   limitations under the License.
 
 #}
-{% extends 'appbuilder/general/model/list.html' %}
+{% extends "airflow/list.html" %}
 
 {% block content %}
   <form class="form-inline" action="{{ url_for('VariableModelView.varimport') }}" method=post enctype=multipart/form-data style="margin-top: 50px;">

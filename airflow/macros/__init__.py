@@ -80,7 +80,7 @@ def datetime_diff_for_humans(dt, since=None):
     :rtype: str
     """
     import pendulum
-
+    pendulum.set_locale('zh')
     return pendulum.instance(dt).diff_for_humans(since)
 
 

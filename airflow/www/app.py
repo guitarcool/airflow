@@ -112,29 +112,29 @@ def create_app(config=None, session=None, testing=False):
         av(vs.KnownEventView(
             models.KnownEvent,
             Session, name=lazy_gettext("Known Events"), category=lazy_gettext("Data Profiling")))
-        av(vs.SlaMissModelView(
-            models.SlaMiss,
-            Session, name=lazy_gettext("SLA Misses"), category=lazy_gettext("Browse")))
+        # av(vs.SlaMissModelView(
+        #     models.SlaMiss,
+        #     Session, name=lazy_gettext("SLA Misses"), category=lazy_gettext("Browse")))
         av(vs.TaskInstanceModelView(models.TaskInstance,
             Session, name=lazy_gettext("Task Instances"), category=lazy_gettext("Browse")))
         av(vs.LogModelView(
             models.Log, Session, name=lazy_gettext("Logs"), category=lazy_gettext("Browse")))
-        av(vs.JobModelView(
-            jobs.BaseJob, Session, name=lazy_gettext("Jobs"), category=lazy_gettext("Browse")))
-        av(vs.PoolModelView(
-            models.Pool, Session, name=lazy_gettext("Pools"), category=lazy_gettext("Admin")))
+        # av(vs.JobModelView(
+        #     jobs.BaseJob, Session, name=lazy_gettext("Jobs"), category=lazy_gettext("Browse")))
+        # av(vs.PoolModelView(
+        #     models.Pool, Session, name=lazy_gettext("Pools"), category=lazy_gettext("Admin")))
         av(vs.ConfigurationView(
             name=lazy_gettext('Configuration'), category=lazy_gettext("Admin")))
         av(vs.UserModelView(
             models.User, Session, name=lazy_gettext("Users"), category=lazy_gettext("Admin")))
         av(vs.ConnectionModelView(
             Connection, Session, name=lazy_gettext("Connections"), category=lazy_gettext("Admin")))
-        av(vs.DownLoadConfigView(
-            DownloadConfig, Session, name=lazy_gettext("DownLoadConfigs"), category=lazy_gettext("Admin")))
+        # av(vs.DownLoadConfigView(
+        #     DownloadConfig, Session, name=lazy_gettext("DownLoadConfigs"), category=lazy_gettext("Admin")))
         av(vs.VariableView(
             models.Variable, Session, name=lazy_gettext("Variables"), category=lazy_gettext("Admin")))
-        av(vs.XComView(
-            models.XCom, Session, name=lazy_gettext("XComs"), category=lazy_gettext("Admin")))
+        # av(vs.XComView(
+        #     models.XCom, Session, name=lazy_gettext("XComs"), category=lazy_gettext("Admin")))
 
         admin.add_link(base.MenuLink(
             category=lazy_gettext('Docs'), name=lazy_gettext('Documentation'),

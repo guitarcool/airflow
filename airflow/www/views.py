@@ -324,6 +324,7 @@ def get_chart_height(dag):
     """
     return 600 + len(dag.tasks) * 10
 
+
 def get_date_time_num_runs_dag_runs_form_data(request, session, dag):
     dttm = request.args.get('execution_date')
     if dttm:
@@ -2425,6 +2426,87 @@ class Airflow(AirflowViewMixin, BaseView):
             task_instances=sorted(task_instances, key=lambda t: t['etl_task_type'])
             )
 
+    @expose('/task_list')
+    @login_required
+    @wwwutils.gzipped
+    @wwwutils.action_logging
+    @provide_session
+    def task_list(self, session=None):
+        sort_attr = request.args.get('sort', 'etl_task_type')  # 排序字段名
+        desc = request.args.get('desc')  # 排序规则
+        start_date = request.args.get('start_date')  # 开始日期
+        end_date = request.args.get('end_date')  # 结束日期
+        task_id = request.args.get('task_id')  # 任务id
+        state = request.args.get('state')  # 任务状态
+        current_page = request.args.get('page', '0')  # 当前页
+        dag_id = request.args.get('dag_id')
+
+        dag = dagbag.get_dag(dag_id)
+        if dag_id not in dagbag.dags:
+            flash('DAG "{0}" seems to be missing.'.format(dag_id), "error")
+            return redirect('/admin/')
+
+        root = request.args.get('root')
+        if root:
+            dag = dag.sub_dag(
+                task_regex=root,
+                include_downstream=False,
+                include_upstream=True)
+
+        external_logs = conf.get('elasticsearch', 'frontend')
+        tis_per_page = PAGE_SIZE
+
+        if start_date:
+            start_date = pendulum.parse(start_date)
+        if end_date:
+            end_date = pendulum.parse(end_date)
+
+        task_instances = []
+        for ti in dag.get_task_instances(start_date, end_date, state, task_id=task_id, page=current_page,
+                                         page_size=tis_per_page, session=session):
+            item = alchemy_to_dict(ti)
+            item['execute_date'] = ti.start_date.strftime('%Y-%m-%d') if ti.execution_date else ''
+            item['start_date'] = ti.start_date.strftime('%Y-%m-%dT%H:%M:%S') if ti.start_date else ''
+            item['end_date'] = ti.end_date.strftime('%Y-%m-%dT%H:%M:%S') if ti.end_date else ''
+            item['task_id'] = ti.task_id
+            item['result'] = ti.get_result()
+            task = copy.copy(dag.get_task(ti.task_id))
+            item['etl_task_type'] = task.etl_task_type
+            for attr_name in attr_renderer:
+                if hasattr(task, attr_name):
+                    source = getattr(task, attr_name)
+                    item['code'] = attr_renderer[attr_name](source)
+            task_instances.append(item)
+
+        tasks = {
+            t.task_id: {
+                'dag_id': t.dag_id,
+                'task_type': t.task_type,
+            }
+            for t in dag.tasks}
+
+        num_of_all_tis = len(task_instances)
+        num_of_pages = int(math.ceil(num_of_all_tis/float(tis_per_page)))
+        start = current_page * tis_per_page
+        end = start + tis_per_page
+        all_status = ['成功', '失败']
+        return self.render(
+            'airflow/list_tasks.html',
+            operators=sorted({op.__class__ for op in dag.tasks}, key=lambda x: x.__name__),
+            root=root,
+            dag=dag,
+            tasks=tasks,
+            show_external_logs=bool(external_logs),
+            task_instances=sorted(task_instances, key=lambda t: t[sort_attr], reverse=bool(desc)),
+            current_page=current_page,
+            page_size=tis_per_page,
+            num_of_pages=num_of_pages,
+            num_dag_from=min(start + 1, num_of_all_tis),
+            num_dag_to=min(end, num_of_all_tis),
+            num_of_all_tis=num_of_all_tis,
+            all_status=all_status
+        )
+
     @expose('/duration')
     @login_required
     @wwwutils.action_logging
@@ -3782,7 +3864,7 @@ class ConnectionModelView(wwwutils.SuperUserMixin, AirflowModelView):
         'extra__grpc__scopes',
     )
     verbose_name = lazy_gettext("Connection")
-    verbose_name_plural = "Connections"
+    verbose_name_plural = lazy_gettext("Connections")
     column_default_sort = ('conn_id', False)
     column_list = ('conn_id', 'conn_type', 'host', 'port', 'is_encrypted', 'is_extra_encrypted',)
     form_overrides = dict(_password=PasswordField, _extra=TextAreaField)
@@ -3980,3 +4062,6 @@ class DagModelView(wwwutils.SuperUserMixin, ModelView):
             .get_count_query()\
             .filter(models.DagModel.is_active)\
             .filter(~models.DagModel.is_subdag)
+
+
+

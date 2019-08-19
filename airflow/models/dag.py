@@ -783,7 +783,7 @@ class DAG(BaseDag, LoggingMixin):
 
     @provide_session
     def get_task_instances(
-            self, start_date=None, end_date=None, state=None, session=None):
+            self, start_date=None, end_date=None, state=None, task_id=None, page=None, page_size=None, session=None):
         if not start_date:
             start_date = (timezone.utcnow() - timedelta(30)).date()
             start_date = timezone.make_aware(
@@ -797,6 +797,13 @@ class DAG(BaseDag, LoggingMixin):
         )
         if state:
             tis = tis.filter(TaskInstance.state == state)
+        if task_id:
+            tis = tis.filter(TaskInstance.task_id.like('%%%s%') % task_id)
+
+        if page and page_size:
+            start = page * page_size
+            tis.offset(start).limit(page_size)
+
         tis = tis.order_by(TaskInstance.execution_date).all()
         return tis
 

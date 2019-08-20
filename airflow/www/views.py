@@ -86,7 +86,8 @@ from airflow.utils.timezone import datetime
 from airflow._vendor import nvd3
 from airflow.www import utils as wwwutils
 from airflow.www.forms import (DateTimeForm, DateTimeWithNumRunsForm,
-                               DateTimeWithNumRunsWithDagRunsForm)
+                               DateTimeWithNumRunsWithDagRunsForm,
+                               DateTimeWithTaskIdWithStateForm)
 from airflow.www.validators import GreaterEqualThan
 
 QUERY_LIMIT = 100000
@@ -2433,13 +2434,14 @@ class Airflow(AirflowViewMixin, BaseView):
     @provide_session
     def task_list(self, session=None):
         sort_attr = request.args.get('sort', 'etl_task_type')  # 排序字段名
-        desc = request.args.get('desc')  # 排序规则
-        start_date = request.args.get('start_date')  # 开始日期
-        end_date = request.args.get('end_date')  # 结束日期
-        task_id = request.args.get('task_id')  # 任务id
-        state = request.args.get('state')  # 任务状态
-        current_page = request.args.get('page', '0')  # 当前页
+        desc = request.args.get('desc', None)  # 排序规则
+        start_date = request.args.get('start_date', None)  # 开始日期
+        end_date = request.args.get('end_date', None)  # 结束日期
+        task_id = request.args.get('task_id', None)  # 任务id
+        state = request.args.get('state', None)  # 任务状态
+        current_page = int(request.args.get('page', '0'))  # 当前页
         dag_id = request.args.get('dag_id')
+        arg_search_query = request.args.get('search', None)
 
         dag = dagbag.get_dag(dag_id)
         if dag_id not in dagbag.dags:
@@ -2455,7 +2457,7 @@ class Airflow(AirflowViewMixin, BaseView):
 
         external_logs = conf.get('elasticsearch', 'frontend')
         tis_per_page = PAGE_SIZE
-
+        
         if start_date:
             start_date = pendulum.parse(start_date)
         if end_date:
@@ -2490,11 +2492,17 @@ class Airflow(AirflowViewMixin, BaseView):
         start = current_page * tis_per_page
         end = start + tis_per_page
         all_status = ['成功', '失败']
+
+        dt_nr_dr_data = get_date_time_num_runs_dag_runs_form_data(request, session, dag)
+        form = DateTimeWithTaskIdWithStateForm(data=dt_nr_dr_data)
+        form.start_date.choices = dt_nr_dr_data['dr_choices']
+
         return self.render(
             'airflow/list_tasks.html',
             operators=sorted({op.__class__ for op in dag.tasks}, key=lambda x: x.__name__),
             root=root,
             dag=dag,
+            form=form,
             tasks=tasks,
             show_external_logs=bool(external_logs),
             task_instances=sorted(task_instances, key=lambda t: t[sort_attr], reverse=bool(desc)),
@@ -2504,7 +2512,10 @@ class Airflow(AirflowViewMixin, BaseView):
             num_dag_from=min(start + 1, num_of_all_tis),
             num_dag_to=min(end, num_of_all_tis),
             num_of_all_tis=num_of_all_tis,
-            all_status=all_status
+            all_status=all_status,
+            paging=wwwutils.generate_pages(current_page, num_of_pages,
+                                           search=arg_search_query,
+                                           showPaused=True),
         )
 
     @expose('/duration')

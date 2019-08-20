@@ -24,7 +24,7 @@ from __future__ import unicode_literals
 
 from airflow.utils import timezone
 from flask_admin.form import DateTimePickerWidget
-from wtforms import DateTimeField, SelectField
+from wtforms import Field, DateTimeField, SelectField, StringField
 from flask_wtf import FlaskForm
 
 
@@ -51,3 +51,20 @@ class DateTimeWithNumRunsForm(FlaskForm):
 class DateTimeWithNumRunsWithDagRunsForm(DateTimeWithNumRunsForm):
     # Date time and number of runs and dag runs form for graph and gantt view
     execution_date = SelectField("DAG run")
+
+class DateTimeWithTaskIdWithStateForm(FlaskForm):
+    start_date = DateTimeField(
+        "Anchor date", widget=DateTimePickerWidget(), default=timezone.utcnow())
+    end_date = DateTimeField(
+        "Anchor date", widget=DateTimePickerWidget(), default=timezone.utcnow())
+    state = SelectField("state", default="no_status", choices=(
+        ('success', '成功'),
+        ('failed', '失败'),
+        ('running', '运行中'),
+        ('queued', '排队中'),
+        ('no_status', '无状态'),
+    ))
+    execution_date = SelectField("DAG run")
+    task_id =  StringField(label='task_id')
+    def setStateChoices(choices):
+        state = SelectField("state", default=choices[0][0], choices=choices)

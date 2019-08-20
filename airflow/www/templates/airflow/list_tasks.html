@@ -33,9 +33,14 @@
     .filter-form {
       width: 100%;
     }
-    .filter-form > .form-control{
+    .filter-form > div{
       display: inline-block;
-      width: 20%;
+      display: inline-flex;
+      width: 23%;
+    }
+    .filter-form .form-control{
+      flex-shrink: 1;
+      display: inline-block;
     }
   </style>
   {% endblock %}
@@ -52,10 +57,10 @@
   </button> -->
   <form method="get" class="filter-form">
     {{ state_token }}
-    {{_('Base date')}}: {{ form.base_date(class_="form-control") }}
-    {{_('Number of runs')}}: {{ form.num_runs(class_="form-control") }}
-    {{_('Run')}}:
-    {{ form.execution_date(class_="form-control") | safe }}
+    <div>开始日期: {{ form.start_date(class_="form-control") }}</div>
+    <div>结束日期: {{ form.end_date(class_="form-control") }}</div>
+    <div>任务: {{ form.task_id(class_="form-control") }}</div>
+    <div>状态:{{ form.state(class_="form-control") | safe }}</div>
     <input type="hidden" name="root" value="{{ root }}">
     <input type="hidden" value="{{ dag.dag_id }}" name="dag_id">
     <input name="_csrf_token" type="hidden" value="{{ csrf_token() }}">
@@ -91,7 +96,7 @@
                 <td>{{item.end_date}}</td>
                 <td>{{item.duration}}</td>
                 <td>{{item.try_number}}</td>
-                <td>{{item.state}}</td>
+                <td>{{states_dict.get(item.state)}}</td>
                 <td><a href="{{ url_for("airflow.log", dag_id=dag.dag_id, task_id=item.task_id, execution_date=item.execution_date) }}">{{_("Detail")}}</a></td>
                 <td>{{item.result}}</td>
             </tr>
@@ -122,6 +127,14 @@
             {{_('Close')}}
           </button>
         </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="row">
+    <div class="col-sm-12" style="text-align:left;">
+      <div class="dataTables_info" id="dags_paginate">
+        {{paging}}
       </div>
     </div>
   </div>

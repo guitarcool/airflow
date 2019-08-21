@@ -87,7 +87,8 @@ from airflow._vendor import nvd3
 from airflow.www import utils as wwwutils
 from airflow.www.forms import (DateTimeForm, DateTimeWithNumRunsForm,
                                DateTimeWithNumRunsWithDagRunsForm,
-                               DateTimeWithTaskIdWithStateForm)
+                               DispatchDateFormWithDagRunsForm, DatePeriodForm, DatePeriodWithTaskIdWithStateForm)
+
 from airflow.www.validators import GreaterEqualThan
 
 QUERY_LIMIT = 100000
@@ -168,6 +169,14 @@ def task_instance_link(v, c, m, p):
 
 def state_token(state):
     color = State.color(state)
+    return Markup(
+        '<span class="label" style="background-color:{color};">'
+        '{state}</span>').format(**locals())
+
+
+def zh_state_token(state):
+    color = State.color(state)
+    state = lazy_gettext(state) if state else state
     return Markup(
         '<span class="label" style="background-color:{color};">'
         '{state}</span>').format(**locals())
@@ -372,6 +381,51 @@ def get_date_time_num_runs_dag_runs_form_data(request, session, dag):
         'dttm': dttm,
         'base_date': base_date,
         'num_runs': num_runs,
+        'execution_date': dttm.isoformat(),
+        'dr_choices': dr_choices,
+        'dr_state': dr_state,
+    }
+
+
+def get_date_dag_runs_form_data(request, session, dag):
+    dttm = request.args.get('execution_date')
+    if dttm:
+        dttm = pendulum.parse(dttm)
+    else:
+        dttm = dag.latest_execution_date or timezone.utcnow()
+
+    dispatch_date = request.args.get('dispatch_date')
+    dispatch_date = pendulum.parse(dispatch_date).date() if dispatch_date else dttm.date()
+    default_dag_run = conf.getint('webserver', 'default_dag_run_display_number')
+    num_runs = request.args.get('num_runs')
+    num_runs = int(num_runs) if num_runs else default_dag_run
+
+    DR = models.DagRun
+    drs = (
+        session.query(DR)
+        .filter(
+            DR.dag_id == dag.dag_id,
+            sqla.func.DATE(DR.execution_date) == dispatch_date)
+        .order_by(desc(DR.execution_date))
+        .limit(num_runs)
+        .all()
+    )
+    dr_choices = []
+    dr_state = None
+    for dr in drs:
+        dr_choices.append((dr.execution_date.isoformat(), dr.run_id))
+        if dttm == dr.execution_date:
+            dr_state = dr.state
+
+    # Happens if date was changed and the selected dag run is not in result
+    if not dr_state and drs:
+        dr = drs[0]
+        dttm = dr.execution_date
+        dr_state = dr.state
+
+    return {
+        'dttm': dttm,
+        'dispatch_date': dispatch_date,
         'execution_date': dttm.isoformat(),
         'dr_choices': dr_choices,
         'dr_state': dr_state,
@@ -2038,7 +2092,6 @@ class Airflow(AirflowViewMixin, BaseView):
     @wwwutils.action_logging
     @provide_session
     def tree(self, session=None):
-        default_dag_run = conf.getint('webserver', 'default_dag_run_display_number')
         dag_id = request.args.get('dag_id')
         blur = conf.getboolean('webserver', 'demo_mode')
         dag = dagbag.get_dag(dag_id)
@@ -2053,21 +2106,23 @@ class Airflow(AirflowViewMixin, BaseView):
                 include_downstream=False,
                 include_upstream=True)
 
-        base_date = request.args.get('base_date')
-        num_runs = request.args.get('num_runs')
-        num_runs = int(num_runs) if num_runs else default_dag_run
+        start_date = request.args.get('start_date')
+        end_date = request.args.get('end_date')
+        num_runs = 365
 
-        if base_date:
-            base_date = timezone.parse(base_date)
-        else:
-            base_date = dag.latest_execution_date or timezone.utcnow()
+        start_date = timezone.parse(start_date, timezone=timezone.utc) if start_date \
+            else dag.latest_execution_date - timedelta(30) or timezone.utcnow()
+
+        end_date = timezone.parse(end_date, timezone=timezone.utc) + timedelta(1) - timedelta(seconds=1) if end_date \
+            else dag.latest_execution_date or timezone.utcnow()
 
         DR = models.DagRun
         dag_runs = (
             session.query(DR)
             .filter(
                 DR.dag_id == dag.dag_id,
-                DR.execution_date <= base_date)
+                DR.execution_date >= start_date,
+                DR.execution_date <= end_date)
             .order_by(DR.execution_date.desc())
             .limit(num_runs)
             .all()
@@ -2080,7 +2135,7 @@ class Airflow(AirflowViewMixin, BaseView):
         min_date = min(dates) if dates else None
 
         tis = dag.get_task_instances(
-            start_date=min_date, end_date=base_date, session=session)
+            start_date=min_date, end_date=max_date, session=session)
         task_instances = {}
         for ti in tis:
             tid = alchemy_to_dict(ti)
@@ -2146,8 +2201,7 @@ class Airflow(AirflowViewMixin, BaseView):
 
         session.commit()
 
-        form = DateTimeWithNumRunsForm(data={'base_date': max_date,
-                                             'num_runs': num_runs})
+        form = DatePeriodForm(data={'start_date': start_date.date(), 'end_date': end_date.date()})
         external_logs = conf.get('elasticsearch', 'frontend')
         return self.render(
             'airflow/tree.html',
@@ -2204,11 +2258,11 @@ class Airflow(AirflowViewMixin, BaseView):
         for t in dag.roots:
             get_upstream(t)
 
-        dt_nr_dr_data = get_date_time_num_runs_dag_runs_form_data(request, session, dag)
+        dt_nr_dr_data = get_date_dag_runs_form_data(request, session, dag)
         dt_nr_dr_data['arrange'] = arrange
         dttm = dt_nr_dr_data['dttm']
 
-        class GraphForm(DateTimeWithNumRunsWithDagRunsForm):
+        class GraphForm(DispatchDateFormWithDagRunsForm):
             arrange = SelectField("Layout", choices=(
                 ('LR', lazy_gettext("Left->Right")),
                 ('RL', lazy_gettext("Right->Left")),
@@ -2241,7 +2295,7 @@ class Airflow(AirflowViewMixin, BaseView):
             width=request.args.get('width', "100%"),
             height=request.args.get('height', "800"),
             execution_date=dttm.isoformat(),
-            state_token=state_token(dt_nr_dr_data['dr_state']),
+            state_token=zh_state_token(dt_nr_dr_data['dr_state']),
             doc_md=doc_md,
             arrange=arrange,
             operators=sorted({op.__class__ for op in dag.tasks}, key=lambda x: x.__name__),
@@ -2433,8 +2487,8 @@ class Airflow(AirflowViewMixin, BaseView):
     @wwwutils.action_logging
     @provide_session
     def task_list(self, session=None):
-        sort_attr = request.args.get('sort', 'etl_task_type')  # 排序字段名
-        desc = request.args.get('desc', None)  # 排序规则
+        sort_attr = request.args.get('sort', 'start_date')  # 排序字段名
+        desc = request.args.get('desc', True)  # 排序规则
         start_date = request.args.get('start_date', None)  # 开始日期
         end_date = request.args.get('end_date', None)  # 结束日期
         task_id = request.args.get('task_id', None)  # 任务id
@@ -2457,20 +2511,22 @@ class Airflow(AirflowViewMixin, BaseView):
 
         external_logs = conf.get('elasticsearch', 'frontend')
         tis_per_page = PAGE_SIZE
-        
-        if start_date:
-            start_date = pendulum.parse(start_date)
-        if end_date:
-            end_date = pendulum.parse(end_date)
+
+        start_date = timezone.parse(start_date, timezone=timezone.utc) if start_date \
+            else dag.latest_execution_date or timezone.utcnow()
+
+        end_date = timezone.parse(end_date, timezone=timezone.utc) + timedelta(1) - timedelta(seconds=1) if end_date \
+            else dag.latest_execution_date or timezone.utcnow()
 
         task_instances = []
         for ti in dag.get_task_instances(start_date, end_date, state, task_id=task_id, page=current_page,
                                          page_size=tis_per_page, session=session):
             item = alchemy_to_dict(ti)
-            item['execute_date'] = ti.start_date.strftime('%Y-%m-%d') if ti.execution_date else ''
+            item['dispatch_date'] = ti.execution_date.strftime('%Y-%m-%d') if ti.execution_date else ''
             item['start_date'] = ti.start_date.strftime('%Y-%m-%dT%H:%M:%S') if ti.start_date else ''
             item['end_date'] = ti.end_date.strftime('%Y-%m-%dT%H:%M:%S') if ti.end_date else ''
             item['task_id'] = ti.task_id
+            item['state'] = zh_state_token(ti.state)
             item['result'] = ti.get_result()
             task = copy.copy(dag.get_task(ti.task_id))
             item['etl_task_type'] = task.etl_task_type
@@ -2491,11 +2547,14 @@ class Airflow(AirflowViewMixin, BaseView):
         num_of_pages = int(math.ceil(num_of_all_tis/float(tis_per_page)))
         start = current_page * tis_per_page
         end = start + tis_per_page
-        all_status = ['成功', '失败']
 
-        dt_nr_dr_data = get_date_time_num_runs_dag_runs_form_data(request, session, dag)
-        form = DateTimeWithTaskIdWithStateForm(data=dt_nr_dr_data)
-        form.start_date.choices = dt_nr_dr_data['dr_choices']
+        form_data = {
+            'start_date': start_date,
+            'end_date': end_date,
+            'state': state,
+            'task_id': task_id
+        }
+        form = DatePeriodWithTaskIdWithStateForm(data=form_data)
 
         return self.render(
             'airflow/list_tasks.html',
@@ -2512,7 +2571,6 @@ class Airflow(AirflowViewMixin, BaseView):
             num_dag_from=min(start + 1, num_of_all_tis),
             num_dag_to=min(end, num_of_all_tis),
             num_of_all_tis=num_of_all_tis,
-            all_status=all_status,
             paging=wwwutils.generate_pages(current_page, num_of_pages,
                                            search=arg_search_query,
                                            showPaused=True),

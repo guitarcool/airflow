@@ -61,7 +61,7 @@
     <div>结束日期: {{ form.end_date(class_="form-control") }}</div>
     <div>任务: {{ form.task_id(class_="form-control") }}</div>
     <div>状态:{{ form.state(class_="form-control") | safe }}</div>
-    <input type="hidden" name="root" value="{{ root }}">
+    <input type="hidden" name="root" value="{{ root if root else '' }}">
     <input type="hidden" value="{{ dag.dag_id }}" name="dag_id">
     <input name="_csrf_token" type="hidden" value="{{ csrf_token() }}">
     <input type="submit" value="Go" class="btn btn-default">
@@ -72,6 +72,7 @@
         <tr>
             <td>{{_('Task')}}</td>
             <td>{{_('Task Type')}}</td>
+            <td>{{_('Dispatch Date')}}</td>
             <td>{{_('Start Date')}}</td>
             <td>{{_('End Date')}}</td>
             <td>{{_('Tasks Duration')}}</td>
@@ -92,11 +93,12 @@
                     {% endif %}
                   {% endfor %}
                 </td>
+                <td>{{item.dispatch_date}}</td>
                 <td>{{item.start_date}}</td>
                 <td>{{item.end_date}}</td>
-                <td>{{item.duration}}</td>
+                <td>{{item.duration if item.duration else ''}}</td>
                 <td>{{item.try_number}}</td>
-                <td>{{states_dict.get(item.state)}}</td>
+                <td>{{item.state}}</td>
                 <td><a href="{{ url_for("airflow.log", dag_id=dag.dag_id, task_id=item.task_id, execution_date=item.execution_date) }}">{{_("Detail")}}</a></td>
                 <td>{{item.result}}</td>
             </tr>

@@ -796,9 +796,14 @@ class DAG(BaseDag, LoggingMixin):
             TaskInstance.task_id.in_([t.task_id for t in self.tasks]),
         )
         if state:
-            tis = tis.filter(TaskInstance.state == state)
+            if state == 'no_status':
+                tis = tis.filter(TaskInstance.state.is_(None))
+            else:
+                tis = tis.filter(TaskInstance.state == state)
+
         if task_id:
-            tis = tis.filter(TaskInstance.task_id.like('%%%s%') % task_id)
+            search = "%{}%".format(task_id)
+            tis = tis.filter(TaskInstance.task_id.like(search))
 
         if page and page_size:
             start = page * page_size

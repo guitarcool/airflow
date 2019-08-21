@@ -137,9 +137,7 @@
     <input type="radio" name="task_type" class="form-check-input" value="1">
     <label class="form-check-label">DDS加载任务</label>
     <input type="radio" name="task_type" class="form-check-input" value="2">
-    <label class="form-check-label">UDM任务</label>
-    <input type="radio" name="task_type" class="form-check-input" value="3">
-    <label class="form-check-label">报表任务</label>
+    <label class="form-check-label">应用任务</label>
     <div class="rerun-date input-daterange">
       <span>重跑日期:</span>
       <div class="col">
@@ -154,7 +152,7 @@
     </div>
   </div>
   <div class="switch-options">
-    <div class="switch-option type-0">
+    <div class="switch-option type-2">
       <div class="form-group row">
         <label class="col-form-label">数据源名称</label>
         <select name="data_source" class="form-control">
@@ -280,10 +278,6 @@
           <option value="1">忽略</option>
         </select>
       </div> -->
-      <div class="form-group row">
-        <label class="col-form-label">出错忽略的表</label>
-        <input type="text" class="form-control" name="tbls_ignored_errors">
-      </div>
     </div>
     <div class="switch-option type-1">
       <div class="form-group row">
@@ -291,16 +285,24 @@
         <input type="text" name="sys_id_1" class="form-control"/>
       </div>
     </div>
-    <div class="switch-option type-2">
+    <div class="switch-option type-4">
       <div class="form-group row">
         <label class="col-form-label">python脚本</label>
         <input type="text" class="form-control" name="python_file_path_2"></input>      
+      </div>
+      <div class="form-group row">
+        <label class="col-form-label">依赖表</label>
+        <input type="text" class="form-control" name="dependent_tables_2"></input>
       </div>
     </div>
     <div class="switch-option type-3">
       <div class="form-group row">
         <label class="col-form-label">python脚本</label>
         <input type="text" class="form-control" name="python_file_path_3"></input>      
+      </div>
+      <div class="form-group row">
+        <label class="col-form-label">依赖表</label>
+        <input type="text" class="form-control" name="dependent_tables_3"></input>
       </div>
     </div>
   </div>
@@ -373,9 +375,10 @@
       period_type: f.period_type.value,
       period_day: f.period_day.value,
       period_hour: f.period_hour.value,
-      tbls_ignored_errors: f.tbls_ignored_errors.value,
+      // tbls_ignored_errors: f.tbls_ignored_errors.value,
       python_module_name: f['python_file_path_'+taskType] && f['python_file_path_'+taskType].value || '',
-      dependencies: dependenciesData
+      dependencies: dependenciesData,
+      dependent_tables: f['dependent_tables_'+taskType] && f['dependent_tables_'+taskType].value || ''
     }
     if (!requestLock) {
       requestLock = true;

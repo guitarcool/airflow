@@ -52,7 +52,7 @@
           <tr>
               <td><a href="{{url_for('airflow.taskedit', dag_id=dag.dag_id, task_id=item.task_id)}}">{{item.task_id}}</a></td>
               <td>
-                {% for i in [[0,"下载任务"], [1,"DDS加载任务"], [2,"UDM任务"], [3,"报表任务"]] %}
+                {% for i in [[2,"应用任务"], [1,"DDS加载任务"], [3,"报表任务"]] %}
                 {% if item.task_type==i[0] %}
                   {{i[1]}}
                 {% endif %}

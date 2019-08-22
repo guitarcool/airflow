@@ -41,8 +41,7 @@ def add_date(date_str):
 class ETLTaskType(Enum):
     DownloadTask = 0
     LoadDDSTask = 1
-    UDMTask = 2
-    ReportTask = 3
+    ApplicationTask = 2
 
 
 class FlagToDownload(Enum):
@@ -86,7 +85,7 @@ class ETLTask(Base, LoggingMixin):
     period_type = Column(Integer())
     period_weekday = Column(Integer())
     period_hour = Column(Integer())
-    tbls_ignored_errors = Column(String(1000))
+    dependent_tables = Column(String(1000))
     python_module_name = Column(String(100))
     _dependencies = Column('dependencies', String(1000))
 
@@ -96,8 +95,8 @@ class ETLTask(Base, LoggingMixin):
 
     def __init__(self, task_id, dag_id, task_type, conn_id, sys_id, src_path, dst_path, flag_to_download,
                  time_to_download,
-                 period_type, period_weekday, period_hour, tbls_ignored_errors, python_module_name, dependencies):
-        self.task_id = task_id
+                 period_type, period_weekday, period_hour, dependent_tables, python_module_name, dependencies):
+        self.task_id = task_id.strip()
         self.dag_id = dag_id
         self.task_type = task_type
         self.conn_id = conn_id
@@ -109,13 +108,13 @@ class ETLTask(Base, LoggingMixin):
         self.period_type = period_type
         self.period_weekday = period_weekday
         self.period_hour = period_hour
-        self.tbls_ignored_errors = tbls_ignored_errors
+        self.dependent_tables = dependent_tables
         self.python_module_name = python_module_name
         self.dependencies = dependencies
         self._log = logging.getLogger("airflow.etltask")
 
     def update(self, task_type, conn_id, sys_id, src_path, dst_path, flag_to_download, time_to_download, period_type,
-               period_weekday, period_hour, tbls_ignored_errors, python_module_name, dependencies):
+               period_weekday, period_hour, dependent_tables, python_module_name, dependencies):
         self.task_type = task_type
         self.conn_id = conn_id
         self.sys_id = sys_id
@@ -126,7 +125,7 @@ class ETLTask(Base, LoggingMixin):
         self.period_type = period_type
         self.period_weekday = period_weekday
         self.period_hour = period_hour
-        self.tbls_ignored_errors = tbls_ignored_errors
+        self.dependent_tables = dependent_tables
         self.python_module_name = python_module_name
         self.dependencies = dependencies
 

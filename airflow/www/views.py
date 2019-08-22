@@ -1387,7 +1387,7 @@ class Airflow(AirflowViewMixin, BaseView):
             period_type = request.form['period_type']
             period_weekday = request.form['period_day']
             period_hour = request.form['period_hour']
-            tbls_ignored_errors = request.form['tbls_ignored_errors']
+            dependent_tables = request.form['dependent_tables']
             python_module_name = request.form['python_module_name']
             dependencies = request.form.getlist('dependencies[]')
             etl_task = session.query(ETLTask).filter(
@@ -1402,7 +1402,7 @@ class Airflow(AirflowViewMixin, BaseView):
             else:
                 etl_task = ETLTask(task_id, dag_id, task_type, conn_id, sys_id, src_path, dst_path,
                                    flag_to_download, time_to_download, period_type, period_weekday,
-                                   period_hour, tbls_ignored_errors, python_module_name, dependencies)
+                                   period_hour, dependent_tables, python_module_name, dependencies)
                 session.add(etl_task)
                 session.commit()
 
@@ -1433,7 +1433,7 @@ class Airflow(AirflowViewMixin, BaseView):
             period_type = request.form['period_type']
             period_weekday = request.form['period_day']
             period_hour = request.form['period_hour']
-            tbls_ignored_errors = request.form['tbls_ignored_errors']
+            dependent_tables = request.form['dependent_tables']
             python_module_name = request.form['python_module_name']
             dependencies = request.form.getlist('dependencies[]')
             etl_task = session.query(ETLTask).filter(
@@ -1441,7 +1441,7 @@ class Airflow(AirflowViewMixin, BaseView):
                 ETLTask.task_id == task_id,
             ).first()
             etl_task.update(task_type, conn_id, sys_id, src_path, dst_path, flag_to_download, time_to_download,
-                            period_type, period_weekday, period_hour, tbls_ignored_errors, python_module_name, dependencies)
+                            period_type, period_weekday, period_hour, dependent_tables, python_module_name, dependencies)
             session.commit()
 
             self.refresh()
@@ -2110,8 +2110,10 @@ class Airflow(AirflowViewMixin, BaseView):
         end_date = request.args.get('end_date')
         num_runs = 365
 
-        start_date = timezone.parse(start_date, timezone=timezone.utc) if start_date \
-            else dag.latest_execution_date - timedelta(30) or timezone.utcnow()
+        if start_date:
+            start_date = timezone.parse(start_date, timezone=timezone.utc)
+        else:
+            start_date = dag.latest_execution_date - timedelta(30) if dag.latest_execution_date else timezone.utcnow()
 
         end_date = timezone.parse(end_date, timezone=timezone.utc) + timedelta(1) - timedelta(seconds=1) if end_date \
             else dag.latest_execution_date or timezone.utcnow()

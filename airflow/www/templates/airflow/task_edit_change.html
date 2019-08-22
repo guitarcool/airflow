@@ -141,7 +141,7 @@
   <div class="form-group row">
     <label class="col-form-label">任务类型</label>
     <br/>
-    {% for i in [[0,"下载任务"], [1,"DDS加载任务"], [2,"UDM任务"], [3,"报表任务"]] %}
+    {% for i in [[0,"下载任务"], [1,"DDS加载任务"], [2,"应用任务"]] %}
     <input type="radio" name="task_type" class="form-check-input" value="{{i[0]}}" 
      {%-if not etlTask and i[0]==0 or etlTask and etlTask.task_type==i[0] -%}checked{%- endif -%}
     />
@@ -235,16 +235,6 @@
       <div class="form-group row">
         <label class="col-form-label">依赖表</label>
         <input type="text" class="form-control" name="dependent_tables_2" value="{{ etlTask.dependent_tables}}"></input>
-      </div>
-    </div>
-    <div class="switch-option type-3">
-      <div class="form-group row">
-        <label class="col-form-label">python脚本</label>
-        <input type="text" class="form-control" name="python_file_path_3" value="{{ etlTask.python_module_name}}"></input>
-      </div>
-      <div class="form-group row">
-        <label class="col-form-label">依赖表</label>
-        <input type="text" class="form-control" name="dependent_tables_3" value="{{ etlTask.dependent_tables}}"></input>
       </div>
     </div>
   </div>

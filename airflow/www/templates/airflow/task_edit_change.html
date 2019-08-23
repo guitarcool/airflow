@@ -141,7 +141,7 @@
   <div class="form-group row">
     <label class="col-form-label">任务类型</label>
     <br/>
-    {% for i in [[0,"下载任务"], [1,"DDS加载任务"], [2,"UDM任务"], [3,"报表任务"]] %}
+    {% for i in [[0,"下载任务"], [1,"DDS加载任务"], [2,"应用任务"]] %}
     <input type="radio" name="task_type" class="form-check-input" value="{{i[0]}}" 
      {%-if not etlTask and i[0]==0 or etlTask and etlTask.task_type==i[0] -%}checked{%- endif -%}
     />

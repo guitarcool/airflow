@@ -34,11 +34,10 @@ main_dag = DAG(
 def func(etl_task, **kwargs):
     etl_date = kwargs['ds']
     _log.info(etl_date)
-    return etl_task.execute(etl_date)
-
+    ti = kwargs['ti']
+    return etl_task.execute(etl_date, ti)
 
 etl_tasks = main_dag.etl_tasks()
-
 
 task_dict = {}  # type: Dict[str, ETLTask]
 
@@ -48,6 +47,7 @@ for etl_task in etl_tasks:
         etl_task_type=etl_task.task_type,
         python_callable=func,
         provide_context=True,
+        trigger_rule=etl_task.get_trigger_rule(),
         dag=main_dag)
 
     task_dict[etl_task.task_id] = task

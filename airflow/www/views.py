@@ -1280,14 +1280,17 @@ class Airflow(AirflowViewMixin, BaseView):
             ).first()
         title = "Task Edit"
         data_sources = session.query(Connection).order_by(Connection.conn_id).all()
-
+        deps_selects = ETLTask.get_deps_selects(dag_id)
+        dds_task_ids = ETLTask.get_dds_task_ids(dag_id)
         return self.render(
             'airflow/task_edit_change.html',
             root=root,
             dag=dag,
             title=title,
             dataSources=data_sources,
-            etlTask=etlTask
+            etlTask=etlTask,
+            dds_task_ids=dds_task_ids,
+            deps_selects=deps_selects
             )
 
     @expose('/taskeditlist')
@@ -1337,6 +1340,9 @@ class Airflow(AirflowViewMixin, BaseView):
                 include_downstream=False,
                 include_upstream=True)
         data_sources = session.query(Connection).order_by(Connection.conn_id).all()
+        # 不同类型任务的可选前置依赖项 deps_selects type: dict key=task_type(int) value=dependencies(list)
+        deps_selects = ETLTask.get_deps_selects(dag_id)
+        dds_task_ids = ETLTask.get_dds_task_ids(dag_id)
         title = "Task Edit"
 
         return self.render(
@@ -1344,7 +1350,9 @@ class Airflow(AirflowViewMixin, BaseView):
             root=root,
             dag=dag,
             title=title,
-            dataSources=data_sources
+            dataSources=data_sources,
+            deps_selects=deps_selects,
+            dds_task_ids=dds_task_ids
             )
 
     @expose('/delete_task')
@@ -2418,70 +2426,6 @@ class Airflow(AirflowViewMixin, BaseView):
             nodes=nodes,
             edges=edges,
             show_external_logs=bool(external_logs))
-
-    @expose('/tasklist')
-    @login_required
-    @wwwutils.gzipped
-    @wwwutils.action_logging
-    @provide_session
-    def tasklist(self, session=None):
-        default_dag_run = conf.getint('webserver', 'default_dag_run_display_number')
-        dag_id = request.args.get('dag_id')
-        dag = dagbag.get_dag(dag_id)
-        if dag_id not in dagbag.dags:
-            flash('DAG "{0}" seems to be missing.'.format(dag_id), "error")
-            return redirect('/admin/')
-
-        root = request.args.get('root')
-        if root:
-            dag = dag.sub_dag(
-                task_regex=root,
-                include_downstream=False,
-                include_upstream=True)
-
-        num_runs = request.args.get('num_runs')
-        num_runs = int(num_runs) if num_runs else default_dag_run
-
-        dt_nr_dr_data = get_date_time_num_runs_dag_runs_form_data(request, session, dag)
-        dttm = dt_nr_dr_data['dttm']
-        form = DateTimeWithNumRunsWithDagRunsForm(data=dt_nr_dr_data)
-        form.execution_date.choices = dt_nr_dr_data['dr_choices']
-
-        task_instances = []
-        for ti in dag.get_task_instances(dttm, dttm, session=session):
-            item = alchemy_to_dict(ti)
-            item['start_date'] = ti.start_date.strftime('%Y-%m-%dT%H:%M:%S') if ti.start_date else ''
-            item['end_date'] = ti.end_date.strftime('%Y-%m-%dT%H:%M:%S') if ti.end_date else ''
-            item['task_id'] = ti.task_id
-            item['result'] = ti.get_result()
-            task = copy.copy(dag.get_task(ti.task_id))
-            item['etl_task_type'] = task.etl_task_type
-            for attr_name in attr_renderer:
-                if hasattr(task, attr_name):
-                    source = getattr(task, attr_name)
-                    item['code'] = attr_renderer[attr_name](source)
-            task_instances.append(item)
-        
-        tasks = {
-            t.task_id: {
-                'dag_id': t.dag_id,
-                'task_type': t.task_type,
-            }
-            for t in dag.tasks}
-
-        session.commit()
-        external_logs = conf.get('elasticsearch', 'frontend')
-        return self.render(
-            'airflow/list_tasks.html',
-            operators=sorted({op.__class__ for op in dag.tasks}, key=lambda x: x.__name__),
-            root=root,
-            form=form,
-            dag=dag,
-            num_runs=num_runs,
-            tasks=tasks,
-            show_external_logs=bool(external_logs),
-            task_instances=sorted(task_instances, key=lambda t: t['etl_task_type'])
-            )
 
     @expose('/task_list')
     @login_required

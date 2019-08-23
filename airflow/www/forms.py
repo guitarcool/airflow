@@ -70,6 +70,7 @@ class DatePeriodWithTaskIdWithStateForm(DatePeriodForm):
         ('failed', '失败'),
         ('running', '运行中'),
         ('queued', '排队中'),
+        ('upstream_failed', '前置依赖失败'),
         ('no_status', '无状态'),
     ))
     task_id = StringField(label='task_id')

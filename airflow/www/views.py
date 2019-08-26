@@ -1154,7 +1154,7 @@ class Airflow(AirflowViewMixin, BaseView):
             models.TaskInstance.execution_date == dttm).first()
         result = ti.get_result() if ti else ''
 
-        states = ['success', 'failed', 'not_process'] if not state else [state]
+        states = ['success', 'failed', 'unprocessed'] if not state else [state]
         all_tbl_infos = []
         if type(result) == dict:
             for state in states:
@@ -1167,8 +1167,6 @@ class Airflow(AirflowViewMixin, BaseView):
         start = current_page * tbl_infos_per_page
         end = start + tbl_infos_per_page
         tbl_infos = sorted(all_tbl_infos, key=lambda t: t[0], reverse=False)
-        print('-----tbl_infos-----')
-        print(tbl_infos)
         tbl_infos = tbl_infos[start:end]
 
         form_data = {
@@ -1192,16 +1190,13 @@ class Airflow(AirflowViewMixin, BaseView):
             num_ti_to=min(end, num_of_all_tbl_infos),
             num_of_all_tis=num_of_all_tbl_infos,
             paging=wwwutils.generate_pages(current_page, num_of_pages,
+                                           dag_id=dag_id,
+                                           task_id=task_id,
+                                           execution_date=execution_date,
                                            table_name=tbl_name_search,
                                            state=state,
-                                           execution_date=execution_date
                                            )
         )
-
-
-
-
-
 
     @expose('/etl_log')
     @login_required

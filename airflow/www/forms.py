@@ -87,11 +87,11 @@ class DispatchDateFormWithDagRunsForm(FlaskForm):
 
 
 class TableNameWithStateForm(DateTimeForm):
-    state = SelectField("State", default='all', choices=(
-        ('all', '全部'),
+    state = SelectField("State", default='', choices=(
+        ('', '全部'),
         ('success', '成功'),
         ('failed', '失败'),
-        ('not_process', '未执行'),
+        ('unprocessed', '未执行'),
     ))
     table_name = StringField(label='Table name')
 

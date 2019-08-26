@@ -46,6 +46,7 @@ class State(object):
     UP_FOR_RESCHEDULE = "up_for_reschedule"
     UPSTREAM_FAILED = "upstream_failed"
     SKIPPED = "skipped"
+    UNPROCESSED = 'unprocessed'
 
     task_states = (
         SUCCESS,
@@ -79,6 +80,7 @@ class State(object):
         REMOVED: 'lightgrey',
         SCHEDULED: 'tan',
         NONE: 'lightblue',
+        UNPROCESSED: 'orange',
     }
 
     @classmethod

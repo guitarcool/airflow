@@ -99,8 +99,12 @@
                 <td>{{item.duration if item.duration else ''}}</td>
                 <td>{{item.try_number}}</td>
                 <td>{{item.state}}</td>
-                <td><a href="{{ url_for("airflow.log", dag_id=dag.dag_id, task_id=item.task_id, execution_date=item.execution_date) }}">{{_("Detail")}}</a></td>
-                <td>{{item.result}}</td>
+                <td>
+                  <a href="{{ url_for("airflow.log", dag_id=dag.dag_id, task_id=item.task_id, execution_date=item.execution_date) }}">
+                    <span class="glyphicon glyphicon-book" aria-hidden="true"></span>
+                  </a>
+                </td>
+                <td><a href="{{ url_for("airflow.table_result", dag_id=dag.dag_id, task_id=item.task_id, execution_date=item.execution_date) }}">{{_("Detail")}}</a></td>
             </tr>
         {% endfor %}
       </tbody>
@@ -132,7 +136,6 @@
       </div>
     </div>
   </div>
-
   <div class="row">
     <div class="col-sm-12" style="text-align:left;">
       <div class="dataTables_info" id="dags_paginate">

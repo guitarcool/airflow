@@ -805,11 +805,13 @@ class DAG(BaseDag, LoggingMixin):
             search = "%{}%".format(task_id)
             tis = tis.filter(TaskInstance.task_id.like(search))
 
-        if page and page_size:
-            start = page * page_size
-            tis.offset(start).limit(page_size)
+        tis = tis.order_by(TaskInstance.execution_date)
 
-        tis = tis.order_by(TaskInstance.execution_date).all()
+        if page is not None and page_size is not None:
+            start = page * page_size
+            tis = tis.offset(start).limit(page_size)
+
+        tis = tis.all()
         return tis
 
     @property

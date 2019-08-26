@@ -45,9 +45,13 @@
     <li><a href="{{ url_for("airflow.task", dag_id=dag.dag_id, task_id=task_id, execution_date=execution_date) }}">
         <span class="glyphicon glyphicon-certificate" aria-hidden="true"></span>
       {{_('Task Instance Details')}}</a></li>
+    <!--
     <li><a href="{{ url_for("airflow.rendered", dag_id=dag.dag_id, task_id=task_id, execution_date=execution_date) }}">
         <span class="glyphicon glyphicon-certificate" aria-hidden="true"></span>
-      {{_('Rendered Template')}}</a></li>
+      {{_('Rendered Template')}}</a></li> -->
+    <li><a href="{{ url_for("airflow.table_result", dag_id=dag.dag_id, task_id=task_id, execution_date=execution_date) }}">
+        <span class="glyphicon glyphicon-certificate" aria-hidden="true"></span>
+      {{_('Table Result')}}</a></li>
     <li><a href="{{ url_for("airflow.log", dag_id=dag.dag_id, task_id=task_id, execution_date=execution_date) }}">
         <span class="glyphicon glyphicon-certificate" aria-hidden="true"></span>
       {{_('Log')}}</a></li>

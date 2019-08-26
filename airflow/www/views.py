@@ -87,7 +87,8 @@ from airflow._vendor import nvd3
 from airflow.www import utils as wwwutils
 from airflow.www.forms import (DateTimeForm, DateTimeWithNumRunsForm,
                                DateTimeWithNumRunsWithDagRunsForm,
-                               DispatchDateFormWithDagRunsForm, DatePeriodForm, DatePeriodWithTaskIdWithStateForm)
+                               DispatchDateFormWithDagRunsForm, DatePeriodForm, DatePeriodWithTaskIdWithStateForm,
+                               TableNameWithStateForm)
 
 from airflow.www.validators import GreaterEqualThan
 
@@ -1131,6 +1132,76 @@ class Airflow(AirflowViewMixin, BaseView):
             dag_id=dag.dag_id, task_id=task_id,
             execution_date=execution_date, form=form,
             root=root)
+
+    @expose('/table_result')
+    @login_required
+    @wwwutils.action_logging
+    @provide_session
+    def table_result(self, session=None):
+        dag_id = request.args.get('dag_id')
+        task_id = request.args.get('task_id')
+        execution_date = request.args.get('execution_date')
+        state = request.args.get('state', '')  # 表状态
+        tbl_name_search = request.args.get('table_name', '')
+        current_page = int(request.args.get('page', '0'))  # 当前页
+        # arg_search_query = request.args.get('search', '')
+        root = request.args.get('root', '')
+        dag = dagbag.get_dag(dag_id)
+        dttm = pendulum.parse(execution_date)
+        ti = session.query(models.TaskInstance).filter(
+            models.TaskInstance.dag_id == dag_id,
+            models.TaskInstance.task_id == task_id,
+            models.TaskInstance.execution_date == dttm).first()
+        result = ti.get_result() if ti else ''
+
+        states = ['success', 'failed', 'not_process'] if not state else [state]
+        all_tbl_infos = []
+        if type(result) == dict:
+            for state in states:
+                tbl_names = result.get(state, [])
+                all_tbl_infos = all_tbl_infos + [(name, zh_state_token(state)) for name in tbl_names if tbl_name_search in name]
+
+        num_of_all_tbl_infos = len(all_tbl_infos)
+        tbl_infos_per_page = PAGE_SIZE
+        num_of_pages = int(math.ceil(num_of_all_tbl_infos / float(tbl_infos_per_page)))
+        start = current_page * tbl_infos_per_page
+        end = start + tbl_infos_per_page
+        tbl_infos = sorted(all_tbl_infos, key=lambda t: t[0], reverse=False)
+        print('-----tbl_infos-----')
+        print(tbl_infos)
+        tbl_infos = tbl_infos[start:end]
+
+        form_data = {
+            'table_name': tbl_name_search,
+            'state': state,
+            'execution_date': dttm
+        }
+        form = TableNameWithStateForm(data=form_data)
+
+        return self.render(
+            'airflow/ti_table_result.html',
+            dag=dag, title=lazy_gettext("table result"),
+            dag_id=dag.dag_id, task_id=task_id,
+            execution_date=execution_date, form=form,
+            root=root,
+            tbl_infos=tbl_infos,
+            current_page=current_page,
+            page_size=tbl_infos_per_page,
+            num_of_pages=num_of_pages,
+            num_ti_from=min(start + 1, num_of_all_tbl_infos),
+            num_ti_to=min(end, num_of_all_tbl_infos),
+            num_of_all_tis=num_of_all_tbl_infos,
+            paging=wwwutils.generate_pages(current_page, num_of_pages,
+                                           table_name=tbl_name_search,
+                                           state=state,
+                                           execution_date=execution_date
+                                           )
+        )
+
+
+
+
+
 
     @expose('/etl_log')
     @login_required
@@ -2458,13 +2529,14 @@ class Airflow(AirflowViewMixin, BaseView):
         external_logs = conf.get('elasticsearch', 'frontend')
         tis_per_page = PAGE_SIZE
 
-        start_date = timezone.parse(start_date, timezone=timezone.utc) if start_date \
-            else dag.latest_execution_date or timezone.utcnow()
-
+        if not start_date and not end_date and dag.latest_execution_date:
+            start_date = end_date = dag.latest_execution_date.strftime('%Y-%m-%d')
+        start_date = timezone.parse(start_date, timezone=timezone.utc) if start_date else timezone.utcnow()
         end_date = timezone.parse(end_date, timezone=timezone.utc) + timedelta(1) - timedelta(seconds=1) if end_date \
-            else dag.latest_execution_date or timezone.utcnow()
+            else timezone.utcnow()
 
         task_instances = []
+
         for ti in dag.get_task_instances(start_date, end_date, state, task_id=task_id, page=current_page,
                                          page_size=tis_per_page, session=session):
             item = alchemy_to_dict(ti)
@@ -2489,7 +2561,7 @@ class Airflow(AirflowViewMixin, BaseView):
             }
             for t in dag.tasks}
 
-        num_of_all_tis = len(task_instances)
+        num_of_all_tis = len(dag.get_task_instances(start_date, end_date, state, task_id=task_id, session=session))
         num_of_pages = int(math.ceil(num_of_all_tis/float(tis_per_page)))
         start = current_page * tis_per_page
         end = start + tis_per_page
@@ -2510,16 +2582,21 @@ class Airflow(AirflowViewMixin, BaseView):
             form=form,
             tasks=tasks,
             show_external_logs=bool(external_logs),
-            task_instances=sorted(task_instances, key=lambda t: t[sort_attr], reverse=bool(desc)),
+            task_instances=task_instances,
             current_page=current_page,
             page_size=tis_per_page,
             num_of_pages=num_of_pages,
-            num_dag_from=min(start + 1, num_of_all_tis),
-            num_dag_to=min(end, num_of_all_tis),
+            num_ti_from=min(start + 1, num_of_all_tis),
+            num_ti_to=min(end, num_of_all_tis),
             num_of_all_tis=num_of_all_tis,
             paging=wwwutils.generate_pages(current_page, num_of_pages,
                                            search=arg_search_query,
-                                           showPaused=True),
+                                           dag_id=dag_id,
+                                           start_date=start_date.strftime('%Y-%m-%d'),
+                                           end_date=end_date.strftime('%Y-%m-%d'),
+                                           state=state,
+                                           task_id=task_id
+                                           ),
         )
 
     @expose('/duration')

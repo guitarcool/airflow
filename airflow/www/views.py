@@ -728,7 +728,7 @@ class Airflow(AirflowViewMixin, BaseView):
     def code(self, session=None):
         dag_id = request.args.get('dag_id')
         dm = models.DagModel
-        dag = session.query(dm).filter(dm.dag_id == dag_id).first()
+        dag = dagbag.get_dag(dag_id)
         try:
             with wwwutils.open_maybe_zipped(dag.fileloc, 'r') as f:
                 code = f.read()

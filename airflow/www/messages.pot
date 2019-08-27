@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PROJECT VERSION\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2019-08-19 15:00+0800\n"
+"POT-Creation-Date: 2019-08-27 15:32+0800\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -25,7 +25,7 @@ msgstr ""
 msgid "DAGs"
 msgstr ""
 
-#: app.py:109 templates/airflow/query.html:31 views.py:3046
+#: app.py:109 templates/airflow/query.html:31 views.py:3215
 msgid "Ad Hoc Query"
 msgstr ""
 
@@ -41,57 +41,36 @@ msgstr ""
 msgid "Known Events"
 msgstr ""
 
-#: app.py:117 translates.py:16
-msgid "SLA Misses"
-msgstr ""
-
-#: app.py:117 app.py:119 app.py:121 app.py:123 app.py:150 translates.py:11
-msgid "Browse"
-msgstr ""
-
 #: app.py:119 templates/airflow/dag.html:252 translates.py:14
 msgid "Task Instances"
+msgstr ""
+
+#: app.py:119 app.py:121 app.py:150 translates.py:11
+msgid "Browse"
 msgstr ""
 
 #: app.py:121 templates/airflow/dags.html:188 translates.py:20
 msgid "Logs"
 msgstr ""
 
-#: app.py:123 translates.py:18
-msgid "Jobs"
-msgstr ""
-
-#: app.py:125 translates.py:34
-msgid "Pools"
-msgstr ""
-
-#: app.py:125 app.py:127 app.py:129 app.py:131 app.py:133 app.py:135 app.py:137
-#: translates.py:29
-msgid "Admin"
-msgstr ""
-
 #: app.py:127
 msgid "Configuration"
+msgstr ""
+
+#: app.py:127 app.py:129 app.py:131 app.py:135 translates.py:29
+msgid "Admin"
 msgstr ""
 
 #: app.py:129
 msgid "Users"
 msgstr ""
 
-#: app.py:131 translates.py:32
+#: app.py:131 translates.py:32 views.py:3954
 msgid "Connections"
-msgstr ""
-
-#: app.py:133
-msgid "DownLoadConfigs"
 msgstr ""
 
 #: app.py:135 translates.py:36
 msgid "Variables"
-msgstr ""
-
-#: app.py:137 translates.py:38
-msgid "XComs"
 msgstr ""
 
 #: app.py:140 app.py:143 translates.py:22
@@ -154,8 +133,16 @@ msgstr ""
 msgid "TaskInstanceModelView"
 msgstr ""
 
+#: translates.py:16
+msgid "SLA Misses"
+msgstr ""
+
 #: translates.py:17
 msgid "SlaMissModelView"
+msgstr ""
+
+#: translates.py:18
+msgid "Jobs"
 msgstr ""
 
 #: translates.py:19
@@ -186,12 +173,20 @@ msgstr ""
 msgid "ConnectionModelView"
 msgstr ""
 
+#: translates.py:34
+msgid "Pools"
+msgstr ""
+
 #: translates.py:35
 msgid "PoolModelView"
 msgstr ""
 
 #: translates.py:37
 msgid "VariableModelView"
+msgstr ""
+
+#: translates.py:38
+msgid "XComs"
 msgstr ""
 
 #: translates.py:39
@@ -378,11 +373,11 @@ msgstr ""
 msgid "Event Type"
 msgstr ""
 
-#: templates/airflow/list_tasks.html:70 translates.py:98 translates.py:141
+#: templates/airflow/list_tasks.html:76 translates.py:98 translates.py:141
 msgid "Start Date"
 msgstr ""
 
-#: templates/airflow/list_tasks.html:71 translates.py:99 translates.py:142
+#: templates/airflow/list_tasks.html:77 translates.py:99 translates.py:142
 msgid "End Date"
 msgstr ""
 
@@ -419,7 +414,9 @@ msgstr ""
 msgid "Timestamp"
 msgstr ""
 
-#: translates.py:112 translates.py:139 translates.py:150
+#: templates/airflow/ti_table_result.html:28
+#: templates/airflow/ti_table_result.html:43 translates.py:112
+#: translates.py:139 translates.py:150
 msgid "State"
 msgstr ""
 
@@ -527,7 +524,7 @@ msgstr ""
 msgid "Sys Id"
 msgstr ""
 
-#: translates.py:169 views.py:3784
+#: translates.py:169 views.py:3953
 msgid "Connection"
 msgstr ""
 
@@ -580,115 +577,119 @@ msgstr ""
 msgid "Field must be greater than or equal to %(other_label)s."
 msgstr ""
 
-#: views.py:561
+#: views.py:618
 msgid "Airflow - Chart"
 msgstr ""
 
-#: views.py:856
+#: views.py:913
 msgid "Error rendering template: "
 msgstr ""
 
-#: views.py:1074 views.py:1100
+#: views.py:1131 views.py:1222
 msgid "Log by attempts"
 msgstr ""
 
-#: views.py:1139 views.py:1610
+#: views.py:1181
+msgid "table result"
+msgstr ""
+
+#: views.py:1261 views.py:1740
 msgid "Task [{}.{}] doesn't seem to exist at the moment"
 msgstr ""
 
-#: views.py:1670
+#: views.py:1800
 msgid "Only works with the Celery or Kubernetes executors, sorry"
 msgstr ""
 
-#: views.py:1686
+#: views.py:1816
 msgid "Could not queue task instance for execution, dependencies not met: {}"
 msgstr ""
 
-#: views.py:1699
+#: views.py:1829
 msgid "Sent {} to the message queue, it should start any moment now."
 msgstr ""
 
-#: views.py:1739
+#: views.py:1869
 msgid "Cannot find dag {}"
 msgstr ""
 
-#: views.py:1747
+#: views.py:1877
 msgid "This run_id {} already exists"
 msgstr ""
 
-#: views.py:1761
+#: views.py:1891
 msgid "Triggered {}, it should start any moment now."
 msgstr ""
 
-#: views.py:1775
+#: views.py:1905
 msgid "{0} task instances have been cleared"
 msgstr ""
 
-#: views.py:1786
+#: views.py:1916
 msgid "No task instances to clear"
 msgstr ""
 
-#: views.py:1961
+#: views.py:2091
 msgid "Cannot find DAG: {}"
 msgstr ""
 
-#: views.py:1965
+#: views.py:2095
 msgid "Cannot find task {} in DAG {}"
 msgstr ""
 
-#: views.py:1976
+#: views.py:2106
 msgid "Marked {} on {} task instances"
 msgstr ""
 
-#: views.py:2211 views.py:2321
+#: views.py:2343 views.py:2453
 msgid "Left->Right"
 msgstr ""
 
-#: views.py:2212 views.py:2322
+#: views.py:2344 views.py:2454
 msgid "Right->Left"
 msgstr ""
 
-#: views.py:2213 views.py:2323
+#: views.py:2345 views.py:2455
 msgid "Top->Bottom"
 msgstr ""
 
-#: views.py:2214 views.py:2324
+#: views.py:2346 views.py:2456
 msgid "Bottom->Top"
 msgstr ""
 
-#: views.py:2230 views.py:2340
+#: views.py:2362 views.py:2472
 msgid "No tasks found"
 msgstr ""
 
-#: views.py:2710
+#: views.py:2879
 msgid "DAG [{}] is now fresh as a daisy"
 msgstr ""
 
-#: views.py:2718
+#: views.py:2887
 msgid "All DAGs are now up to date"
 msgstr ""
 
-#: views.py:3507
+#: views.py:3676
 msgid "Are you sure you want to delete selected records?"
 msgstr ""
 
-#: views.py:3534
+#: views.py:3703
 msgid "{count} dag runs were set to running"
 msgstr ""
 
-#: views.py:3559
+#: views.py:3728
 msgid "{count} dag runs and {altered_ti_count} task instances were set to failed"
 msgstr ""
 
-#: views.py:3585
+#: views.py:3754
 msgid "{count} dag runs and {altered_ti_count} task instances were set to success"
 msgstr ""
 
-#: templates/airflow/dag.html:303 templates/airflow/dag.html:408 views.py:3686
+#: templates/airflow/dag.html:303 templates/airflow/dag.html:408 views.py:3855
 msgid "Clear"
 msgstr ""
 
-#: views.py:3687
+#: views.py:3856
 msgid ""
 "Are you sure you want to clear the state of the selected task instance(s)"
 " and set their dagruns to the running state?"
@@ -707,14 +708,12 @@ msgid "The DAGs list may not update, and new tasks will not be scheduled."
 msgstr ""
 
 #: templates/airflow/chart.html:38 templates/airflow/duration_chart.html:42
-#: templates/airflow/gantt.html:31 templates/airflow/graph.html:38
-#: templates/airflow/list_tasks.html:55 templates/airflow/tree.html:31
+#: templates/airflow/gantt.html:31
 msgid "Base date"
 msgstr ""
 
 #: templates/airflow/chart.html:39 templates/airflow/duration_chart.html:43
-#: templates/airflow/gantt.html:32 templates/airflow/graph.html:39
-#: templates/airflow/list_tasks.html:56 templates/airflow/tree.html:32
+#: templates/airflow/gantt.html:32
 msgid "Number of runs"
 msgstr ""
 
@@ -825,11 +824,11 @@ msgstr ""
 msgid "Delete"
 msgstr ""
 
-#: templates/airflow/dag.html:231 templates/airflow/list_tasks.html:111
+#: templates/airflow/dag.html:231 templates/airflow/list_tasks.html:122
 msgid "Filter on this task and upstream "
 msgstr ""
 
-#: templates/airflow/dag.html:234 templates/airflow/list_tasks.html:114
+#: templates/airflow/dag.html:234 templates/airflow/list_tasks.html:125
 msgid "on"
 msgstr ""
 
@@ -932,7 +931,7 @@ msgid "Mark Success"
 msgstr ""
 
 #: templates/airflow/dag.html:381 templates/airflow/dag.html:420
-#: templates/airflow/list_tasks.html:122
+#: templates/airflow/list_tasks.html:133
 msgid "Close"
 msgstr ""
 
@@ -1025,7 +1024,7 @@ msgstr ""
 msgid "Trigger Dag"
 msgstr ""
 
-#: templates/airflow/dags.html:152 templates/airflow/list_tasks.html:72
+#: templates/airflow/dags.html:152 templates/airflow/list_tasks.html:78
 msgid "Tasks Duration"
 msgstr ""
 
@@ -1070,9 +1069,12 @@ msgstr ""
 msgid "Jump to end"
 msgstr ""
 
-#: templates/airflow/gantt.html:33 templates/airflow/graph.html:40
-#: templates/airflow/list_tasks.html:57 templates/airflow/query.html:36
+#: templates/airflow/gantt.html:33 templates/airflow/query.html:36
 msgid "Run"
+msgstr ""
+
+#: templates/airflow/graph.html:38
+msgid "Dispatch date"
 msgstr ""
 
 #: templates/airflow/graph.html:42
@@ -1115,39 +1117,43 @@ msgstr ""
 msgid "success"
 msgstr ""
 
-#: templates/airflow/graph.html:77 templates/airflow/list_tasks.html:47
+#: templates/airflow/graph.html:77 templates/airflow/list_tasks.html:52
 #: templates/airflow/nvd3.html:80
 msgid "Oops."
 msgstr ""
 
-#: templates/airflow/list_tasks.html:68
+#: templates/airflow/list_tasks.html:73
 #: templates/airflow/rerun_task_list.html:45
 #: templates/airflow/task_edit_list.html:45
 #: templates/airflow/task_edit_list_rerun.html:45
 msgid "Task"
 msgstr ""
 
-#: templates/airflow/list_tasks.html:69
+#: templates/airflow/list_tasks.html:74
 msgid "Task Type"
 msgstr ""
 
-#: templates/airflow/list_tasks.html:73
+#: templates/airflow/list_tasks.html:75
+msgid "Dispatch Date"
+msgstr ""
+
+#: templates/airflow/list_tasks.html:79
 msgid "Number of Retries"
 msgstr ""
 
-#: templates/airflow/list_tasks.html:74
+#: templates/airflow/list_tasks.html:80
 msgid "Status"
 msgstr ""
 
-#: templates/airflow/list_tasks.html:75 templates/airflow/task_instance.html:53
+#: templates/airflow/list_tasks.html:81 templates/airflow/task_instance.html:57
 msgid "Log"
 msgstr ""
 
-#: templates/airflow/list_tasks.html:76
+#: templates/airflow/list_tasks.html:82
 msgid "Result"
 msgstr ""
 
-#: templates/airflow/list_tasks.html:95
+#: templates/airflow/list_tasks.html:107
 #: templates/airflow/task_edit_list_rerun.html:73
 msgid "Detail"
 msgstr ""
@@ -1198,12 +1204,21 @@ msgstr ""
 msgid "Task Instance"
 msgstr ""
 
-#: templates/airflow/task_instance.html:50
+#: templates/airflow/task_instance.html:51
 msgid "Rendered Template"
 msgstr ""
 
-#: templates/airflow/task_instance.html:56
+#: templates/airflow/task_instance.html:54
+msgid "Table Result"
+msgstr ""
+
+#: templates/airflow/task_instance.html:60
 msgid "XCom"
+msgstr ""
+
+#: templates/airflow/ti_table_result.html:27
+#: templates/airflow/ti_table_result.html:42
+msgid "Table name"
 msgstr ""
 
 #: templates/airflow/traceback.html:24
@@ -1212,6 +1227,14 @@ msgstr ""
 
 #: templates/airflow/traceback.html:27
 msgid "Node"
+msgstr ""
+
+#: templates/airflow/tree.html:31
+msgid "Start date"
+msgstr ""
+
+#: templates/airflow/tree.html:32
+msgid "End date"
 msgstr ""
 
 #: templates/airflow/variable_list.html:29

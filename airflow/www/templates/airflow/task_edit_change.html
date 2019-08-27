@@ -232,9 +232,9 @@
         <label class="col-form-label">python脚本</label>
         <input type="text" class="form-control" name="python_file_path_2" value="{{ etlTask.python_module_name}}"></input>
       </div>
-      <div class="form-group row">
+      <div class="form-group row dependent-tables-2">
         <label class="col-form-label">依赖表</label>
-        <input type="text" class="form-control" name="dependent_tables_2" value="{{ etlTask.dependent_tables}}"></input>
+        <input type="text" class="form-control" placeholder="以逗号作为分隔符" name="dependent_tables_2" value="{{ etlTask.dependent_tables}}"></input>
       </div>
     </div>
   </div>
@@ -242,11 +242,6 @@
     <label class="col-form-label">依赖项</label>
     <br/>
     <select class="form-control dependencies-select" multiple="multiple" placeholder="请选择">
-      {% for id in dag.task_ids %}
-      {% if id != request.args.get('task_id') %}
-      <option value="{{id}}" {% if etlTask and id in etlTask.dependencies %}selected{% endif %}>{{id}}</option>
-      {% endif %}
-      {% endfor %}
     </select>
     <div id="svg_container">
       <svg width="{{ width }}" height="{{ height }}">
@@ -277,11 +272,41 @@
   $('.date-picker[name="rerun_end_date"]').datepicker('setDate', "{{etlTask.rerun_end_date}}")
 </script>
 <script>
-  $(document).ready(function() {
-    switchOption();
-    $('.dependencies-select').multiselect({
-        enableFiltering: true
+  var deps_selects={{deps_selects|tojson|safe}} || {};
+  var deps_select_options={};
+  var selected_dependencies={{etlTask.dependencies|tojson|safe}} || [];
+  var dds_task_ids={{dds_task_ids|tojson|safe}} || [];
+  var key;
+  for(key in deps_selects) {
+    (function(){
+      var item = deps_selects[key];
+      var options = [];
+      var i;
+      var value;
+      options=item.map(function(value){
+        return {
+          label: value,
+          title: value,
+          value: value,
+          selected: selected_dependencies.indexOf(value)>-1,
+        };
+      })
+      deps_select_options[key] = options;
+    })()
+  }
+  function toggleDependencyTable(){
+    var sources = $('.dependencies-select option:selected').map(function(a, item){return item.value;}).toArray();
+    var show = sources.some(function(value){
+      return dds_task_ids.indexOf(value)>-1;
     });
+    show ? $('.dependent-tables-2').show() : $('.dependent-tables-2').hide();
+  }
+  $(document).ready(function() {
+    $('.dependencies-select').multiselect({
+        enableFiltering: true,
+        disableIfEmpty: true,
+    });
+    switchOption();
   })
   var requestLock = false;
   // switch form
@@ -289,6 +314,11 @@
     var f = document.forms["task_edit"];
     var task_type = f.task_type.value;
     $('.switch-options').attr('class', 'switch-options '+('show-'+task_type));
+    $('.dependencies-select').multiselect('dataprovider', deps_select_options[task_type]||[]);
+    refreshGraph();
+    if(2===~~task_type){
+      toggleDependencyTable();
+    }
   }
   $('input[name="task_type"').change(switchOption)
   $(".btn.btn-submit").click(function () {
@@ -382,6 +412,7 @@
     }
   }
   $('.dependencies-select').change(refreshGraph);
+  $('.dependencies-select').change(toggleDependencyTable);
   $('select[name="etl_task_id"]').change(refreshGraph);
   $(document).ready(refreshGraph);
   function refreshGraph() {

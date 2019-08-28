@@ -65,6 +65,11 @@
     display: none;
   }
 
+  input[name="period_type"][value="1"]:checked~.hour-select,
+  input[name="period_type"][value="2"]:checked~.hour-select {
+    display: none;
+  }
+
   input[name="period_type"][value="2"]:checked~.day-select {
     display: inline-block;
   }
@@ -109,6 +114,17 @@
   .switch-options.show-3 .switch-option.type-3 {
     display: block;
   }
+  .label-required{
+    position: relative;
+  }
+  .label-required::after {
+    content: '*';
+    color: red;
+    display: block;
+    position: absolute;
+    top: 0;
+    right: -.5em;
+  }
 </style>
 {% endblock %}
 
@@ -126,7 +142,7 @@
   <input name="_csrf_token" type="hidden" value="{{ csrf_token() }}">
   <input type="hidden" value="{{ dag.dag_id }}" name="dag_id">
   <div class="form-group row">
-    <label class="col-form-label">任务名</label>
+    <label class="col-form-label label-required">任务名</label>
     <input type="text" class="form-control" name="task_id" value="{{ task_id }}" required>
   </div>
   <div class="form-group row">
@@ -154,16 +170,16 @@
   <div class="switch-options">
     <div class="switch-option type-0">
       <div class="form-group row">
+        <label class="col-form-label label-required">系统ID</label>
+        <input type="text" class="form-control" name="sys_id_0" required>
+      </div>
+      <div class="form-group row">
         <label class="col-form-label">数据源名称</label>
         <select name="data_source" class="form-control">
           {% for source in dataSources %}
           <option value="{{source.id}}">{{source.conn_id}}</option>
           {% endfor %}
         </select>
-      </div>
-      <div class="form-group row">
-        <label class="col-form-label">系统ID</label>
-        <input type="text" class="form-control" name="sys_id_0" required>
       </div>
       <div class="form-group row">
         <label class="col-form-label">源地址</label>
@@ -281,13 +297,13 @@
     </div>
     <div class="switch-option type-1">
       <div class="form-group row">
-        <label class="col-form-label">系统ID</label>
+        <label class="col-form-label label-required">系统ID</label>
         <input type="text" name="sys_id_1" class="form-control"/>
       </div>
     </div>
     <div class="switch-option type-2">
       <div class="form-group row">
-        <label class="col-form-label">python脚本</label>
+        <label class="col-form-label label-required">python脚本</label>
         <input type="text" class="form-control" name="python_file_path_2"></input>      
       </div>
       <div class="form-group row dependent-tables-2">

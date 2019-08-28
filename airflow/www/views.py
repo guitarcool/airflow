@@ -1430,11 +1430,25 @@ class Airflow(AirflowViewMixin, BaseView):
     def delete_task(self, session=None):
         dag_id = request.args.get('dag_id')
         task_id = request.args.get('task_id')
+        dag = dagbag.get_dag(dag_id)
+
+        # 把该任务的后置依赖任务的配置移除该任务的信息
+        task = dag.get_task(task_id)
+        downstream_ids = list(task.downstream_task_ids)
+        downstream_tasks = session.query(ETLTask).filter(
+                                ETLTask.dag_id == dag_id,
+                                ETLTask.task_id.in_(downstream_ids)
+                             ).all()
+        for task in downstream_tasks:
+            task.dependencies = [d for d in task.dependencies if d != task_id]
+        session.commit()
+        # 删除该任务
         session.query(ETLTask).filter(
             ETLTask.dag_id == dag_id,
             ETLTask.task_id == task_id
         ).delete()
         session.commit()
+
         self.refresh()
         return wwwutils.json_response({
             'success': '1'

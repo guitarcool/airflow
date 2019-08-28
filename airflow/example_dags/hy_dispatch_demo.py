@@ -55,4 +55,5 @@ for etl_task in etl_tasks:
 for etl_task in etl_tasks:
     dependencies = etl_task.dependencies
     for dependency in dependencies:
-        task_dict[dependency] >> task_dict[etl_task.task_id]
+        if dependency in task_dict:
+            task_dict[dependency] >> task_dict[etl_task.task_id]

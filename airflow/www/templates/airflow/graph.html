@@ -25,6 +25,24 @@
 {{ super() }}
 <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='dagre.css') }}">
 <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='graph.css') }}">
+<style>
+    .form-inline{
+        display: flex;
+    }
+    .form-inline > form{
+        flex-grow: 1;
+        position: relative;
+    }
+    .form-inline #execution_date{
+        position: absolute;
+        right: 0;
+    }
+    @media screen and (max-width: 1023px) {
+        .form-inline #execution_date{
+            position: relative;
+        }
+    }
+</style>
 {% endblock %}
 
 {% block body %}
@@ -38,13 +56,13 @@
     {{_('Dispatch date')}}: {{ form.dispatch_date(class_="form-control") }}
 {#    {{_('Number of runs')}}: {{ form.num_runs(class_="form-control") }}#}
 {#    {{_('Run')}}:#}
-    {{ form.execution_date(class_="form-control") | safe }}
     {{_('Layout')}}:
     {{ form.arrange(class_="form-control") | safe }}
     <input type="hidden" name="root" value="{{ root }}">
     <input type="hidden" value="{{ dag.dag_id }}" name="dag_id">
     <input name="_csrf_token" type="hidden" value="{{ csrf_token() }}">
     <input type="submit" value="Go" class="btn btn-default">
+    {{ form.execution_date(class_="form-control") | safe }}
   </form>
   <div class="input-group" style="float: right;">
     <input type="text" id="searchbox" class="form-control" placeholder="{{_('Search for...')}}">
@@ -381,6 +399,13 @@
     );
 
 </script>
-
+<script>
+    function onExecutionDateChange(){
+        $('.form-inline form').submit();
+    }
+    $(document).ready(function(){
+        $('select#execution_date').change(onExecutionDateChange);
+    })
+</script>
 
 {% endblock %}

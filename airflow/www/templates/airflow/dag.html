@@ -242,15 +242,18 @@
               </button>
               <hr/>
           </div>
+          <button id="btn_task_edit" type="button" class="btn btn-primary">
+            {{_('Edit')}}
+          </button>
           <button id="btn_task" type="button" class="btn btn-primary">
             {{_('Task Instance Details')}}
           </button>
-          <button id="btn_rendered" type="button" class="btn btn-primary">
+          <!-- <button id="btn_rendered" type="button" class="btn btn-primary">
             {{_('Rendered')}}
           </button>
           <button id="btn_ti" type="button" class="btn btn-primary">
             {{_('Task Instances')}}
-          </button>
+          </button> -->
           <button id="btn_log" type="button" class="btn btn-primary">
             {{_('View Log')}}
           </button>
@@ -565,6 +568,13 @@ function updateQueryStringParameter(uri, key, value) {
         "&dag_id=" + encodeURIComponent(dag_id) +
         "&execution_date=" + encodeURIComponent(execution_date) +
         "&format=json";
+      window.location = url;
+    });
+
+    $("#btn_task_edit").click(function(){
+      url = "{{ url_for('airflow.taskedit') }}" +
+        "?task_id=" + encodeURIComponent(task_id) +
+        "&dag_id=" + encodeURIComponent(dag_id);
       window.location = url;
     });
 

@@ -1333,7 +1333,6 @@ class Airflow(AirflowViewMixin, BaseView):
             root=root,
             dag=dag, title=title)
 
-
     @expose('/taskeditchange')
     @login_required
     @wwwutils.action_logging
@@ -1349,8 +1348,8 @@ class Airflow(AirflowViewMixin, BaseView):
             ).first()
         title = "Task Edit"
         data_sources = session.query(Connection).order_by(Connection.conn_id).all()
-        deps_selects = ETLTask.get_deps_selects(dag_id)
         dds_task_ids = ETLTask.get_dds_task_ids(dag_id)
+        deps_selections = etlTask.get_deps_selections()  # list集合 当前任务可选的依赖项ID
         return self.render(
             'airflow/task_edit_change.html',
             root=root,
@@ -1359,7 +1358,7 @@ class Airflow(AirflowViewMixin, BaseView):
             dataSources=data_sources,
             etlTask=etlTask,
             dds_task_ids=dds_task_ids,
-            deps_selects=deps_selects
+            deps_selections=deps_selections
             )
 
     @expose('/taskeditlist')
@@ -1410,7 +1409,7 @@ class Airflow(AirflowViewMixin, BaseView):
                 include_upstream=True)
         data_sources = session.query(Connection).order_by(Connection.conn_id).all()
         # 不同类型任务的可选前置依赖项 deps_selects type: dict key=task_type(int) value=dependencies(list)
-        deps_selects = ETLTask.get_deps_selects(dag_id)
+        deps_selects = ETLTask.get_deps_selects_for_types(dag_id)
         dds_task_ids = ETLTask.get_dds_task_ids(dag_id)
         title = "Task Edit"
 
@@ -2206,9 +2205,12 @@ class Airflow(AirflowViewMixin, BaseView):
             .limit(num_runs)
             .all()
         )
-        dag_runs = {
-            dr.execution_date: alchemy_to_dict(dr) for dr in dag_runs}
+        dag_run_infos = {}
+        for dr in dag_runs:
+            dr.run_id = DagRun.formate_run_id(dr.run_id)
+            dag_run_infos[dr.execution_date] = alchemy_to_dict(dr)
 
+        dag_runs = dag_run_infos
         dates = sorted(list(dag_runs.keys()))
         max_date = max(dates) if dates else None
         min_date = min(dates) if dates else None

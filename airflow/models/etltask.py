@@ -28,13 +28,15 @@ from sqlalchemy import (
     Column, Integer, String, Boolean, PickleType, Index, UniqueConstraint, func, DateTime, or_,
     and_
 )
+
+from airflow import settings, models
 from airflow.models.base import Base, ID_LEN
 from airflow.models.xcom import XCOM_RETURN_KEY
 from airflow.utils.db import provide_session
 from airflow.utils.log.logging_mixin import LoggingMixin
 from airflow.models.connection import Connection
-from etl.ods import zjrcb_ftp_loader
-from etl.dds import control
+# from etl.ods import zjrcb_ftp_loader
+# from etl.dds import control
 
 from airflow.utils.trigger_rule import TriggerRule
 
@@ -148,9 +150,38 @@ class ETLTask(Base, LoggingMixin):
     def dependencies(self, dependencies_list):
         self._dependencies = ','.join(dependencies_list) if dependencies_list else ''
 
+    def get_deps_selections(self):
+        """
+        获取某个任务的可选前置依赖项
+        根据任务类型获取可选依赖并过滤任务的后置依赖项及任务本身，从而避免出现循环依赖的情况
+        :return:
+        """
+
+        deps_selects = ETLTask.get_deps_selects_for_types(self.dag_id)[self.task_type]
+        downstream_ids = self.get_downstream_task_ids()
+        return list(filter(lambda x: x not in downstream_ids and x != self.task_id, deps_selects))
+
+    def get_dag_task(self):
+        """
+        获取对应的DAG中定义的任务对象
+        :return:
+        """
+        dagbag = models.DagBag(settings.DAGS_FOLDER)
+        dag = dagbag.get_dag(self.dag_id)
+        task = dag.get_task(self.task_id)
+        return task
+
+    def get_downstream_task_ids(self):
+        """
+        获取任务的所有后置依赖项ID
+        :return:
+        """
+        dag_task = self.get_dag_task()
+        return dag_task.get_flat_relative_ids(upstream=False)
+
     def get_dependent_tbls_list(self):
         """
-        获取依赖的所有表
+        获取直接依赖的所有表
         :return: List
         """
         if not self.dependent_tables:
@@ -186,7 +217,7 @@ class ETLTask(Base, LoggingMixin):
             ).all()]
 
     @staticmethod
-    def get_deps_selects(dag_id):
+    def get_deps_selects_for_types(dag_id):
         deps_selects = {ETLTaskType.DownloadTask.value: [],
                         ETLTaskType.LoadDDSTask.value: ETLTask.get_download_task_ids(dag_id),
                         ETLTaskType.ApplicationTask.value: ETLTask.get_dds_task_ids(
@@ -198,8 +229,6 @@ class ETLTask(Base, LoggingMixin):
         是否依赖DDS加载任务
         :return: bool
         """
-        print('--------get_dds_task_ids-----------')
-        print(ETLTask.get_dds_task_ids(self.dag_id))
         return set(self.dependencies) & set(ETLTask.get_dds_task_ids(self.dag_id))
 
     def depent_on_dds_tbls(self):
@@ -212,12 +241,9 @@ class ETLTask(Base, LoggingMixin):
         否则 为TriggerRule.ALL_SUCCESS
         :return: trigger_rule
         """
-        print('----------task_id:%s----------' % self.task_id)
         if self.depent_on_dds_tbls():
-            print('ALL_DONE')
             return TriggerRule.ALL_DONE
         else:
-            print('ALL_SUCCESS')
             return TriggerRule.ALL_SUCCESS
 
     def execute(self, etl_date, ti):
@@ -242,8 +268,9 @@ class ETLTask(Base, LoggingMixin):
         #                          check_mode=self.flag_to_download, tbls_ignored_errors=self.tbls_ignored_errors,
         #                          ftp_host=conn.host, ftp_port=conn.port, ftp_username=conn.login,
         #                         ftp_password=conn.get_password(), etl_date=etl_date)
-        result = {'succeed': ['tbl_name', 'tbl_name2', 'tbl_name3', 'tbl_name4'],
-                  'failed': []
+        result = {'success': ['t',  't1', 't2', 't3', 't4', 't5', 't6', 't7','t8', 't9', 't10', 't11', 't12'],
+                  'failed': [],
+                  'unprocessed': ['tb1']
                   }
         if result['failed']:
             ti.xcom_push(key=XCOM_RETURN_KEY, value=result)
@@ -254,8 +281,9 @@ class ETLTask(Base, LoggingMixin):
     def _exec_load_dds(self, etl_date, ti):
         self._log.info('DDS加载任务开始执行')
         # result = control.load_dds_sys(self.sys_id, etl_date)
-        result = {'succeed': ['tbl_name', 'tbl_name2', 'tbl_name3', 'tbl_name4'],
-                  'failed': ['tbl_name5', 'tbl_name6', 'tbl_name7', 'tbl_name8']
+        result = {'success': ['t',  't1', 't2', 't3', 't4', 't5', 't6', 't7','t8', 't9', 't10', 't11', 't12'],
+                  'failed': ['tbl_name5', 'tbl_name6', 'tbl_name7', 'tbl_name8'],
+                  'unprocessed': ['tb1']
                   }
         if result['failed']:
             ti.xcom_push(key=XCOM_RETURN_KEY, value=result)

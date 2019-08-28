@@ -35,12 +35,47 @@
     }
     .filter-form > div{
       display: inline-block;
+      justify-content: center;
       display: inline-flex;
       width: 23%;
+      position: relative;
+    }
+    .filter-form > div > span{
+      display: inline-block;
+      flex-shrink: 0;
+      flex-grow: 0;
+      line-height: 34px;
+      text-align: center;
     }
     .filter-form .form-control{
       flex-shrink: 1;
+      flex-grow: 1;
       display: inline-block;
+      width: 60%;
+    }
+
+    .filter-form .tabs{
+      display: none;
+      overflow-y: scroll;
+      position: absolute;
+      max-height: 300%;
+      right: 0px;
+      top: 100%;
+      background: white;
+      border: 1px solid #cccccc;
+      border-top-color: transparent;
+    }
+    .filter-form .tabs .tab{
+      width: 100%;
+      height: 34px;
+      line-height: 34px;
+      border-bottom: 1px solid #dddddd;
+      padding-left: 5px;
+      cursor: default;
+    }
+    .filter-form .tabs .tab:hover{
+      background-color: #08f;
+      color: white;
     }
   </style>
   {% endblock %}
@@ -57,10 +92,16 @@
   </button> -->
   <form method="get" class="filter-form">
     {{ state_token }}
-    <div>开始日期: {{ form.start_date(class_="form-control") }}</div>
-    <div>结束日期: {{ form.end_date(class_="form-control") }}</div>
-    <div>任务: {{ form.task_id(class_="form-control") }}</div>
-    <div>状态:{{ form.state(class_="form-control") | safe }}</div>
+    <div><span style="width:40%;">开始日期: </span>{{ form.start_date(class_="form-control") }}</div>
+    <div>
+      <span style="width:40%;">结束日期: </span>
+      {{ form.end_date(class_="form-control") }}
+    </div>
+    <div>
+      <span style="width:20%;">任务: </span>
+      {{ form.task_id(class_="form-control") }}
+    </div>
+    <div><span style="width:20%;">状态:</span>{{ form.state(class_="form-control") | safe }}</div>
     <input type="hidden" name="root" value="{{ root if root else '' }}">
     <input type="hidden" value="{{ dag.dag_id }}" name="dag_id">
     <input name="_csrf_token" type="hidden" value="{{ csrf_token() }}">
@@ -151,12 +192,38 @@
   <script src="{{ url_for('static', filename='d3.v3.min.js') }}"></script>
   <script src="{{ url_for('static', filename='dagre-d3.js') }}"></script>
   <script>
+    var allTasks = {{ dag.task_ids|tojson|safe }};
 
-    var tasks = {{ tasks|tojson|safe }};
-    var task_instances = {{ task_instances|tojson|safe }};
+    $(document).ready(function(){
+      $('input#task_id').after('<div class="tabs"></div>');
+      $('.tabs').css('width', $('.tabs').parent().children('.form-control').outerWidth()+'px');
 
-    function call_log_modal(){
-      console.log('click')
+      $('input#task_id').focus(showVagueTaskIdSearch);
+      $('input#task_id').on('input', showVagueTaskIdSearch);
+      $('input#task_id').blur(function(){
+        setTimeout(hideVagueTaskIdSearch, 100)
+      });
+    })
+    function showVagueTaskIdSearch(){
+      var template = '<div class="tab">${ele}</div>';
+      var body = '';
+      var keyWord = $('input#task_id').val();
+      $(allTasks)
+      .filter(function(index, ele){
+        return !!keyWord && !!ele && ele.indexOf(keyWord)>-1
+      })
+      .each(function(index, ele){
+        body+=template.replace('${ele}', ele.replace(keyWord, '<strong>'+keyWord+'</strong>'))
+      });
+      $('.tabs').html(body);
+      $('.tabs .tab').click(function(event){
+        var target = event.target;
+        $('input#task_id').val(target.innerText);
+      })
+      $('.tabs').show();
+    }
+    function hideVagueTaskIdSearch(){
+      $('.tabs').hide();
     }
   </script>
   {% endblock %}

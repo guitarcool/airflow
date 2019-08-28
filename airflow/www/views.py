@@ -1476,7 +1476,7 @@ class Airflow(AirflowViewMixin, BaseView):
             time_to_download = request.form['time_to_download']
             period_type = request.form['period_type']
             period_weekday = request.form['period_day']
-            period_hour = request.form['period_hour']
+            # period_hour = request.form['period_hour']
             dependent_tables = request.form['dependent_tables']
             python_module_name = request.form['python_module_name']
             dependencies = request.form.getlist('dependencies[]')
@@ -1492,7 +1492,7 @@ class Airflow(AirflowViewMixin, BaseView):
             else:
                 etl_task = ETLTask(task_id, dag_id, task_type, conn_id, sys_id, src_path, dst_path,
                                    flag_to_download, time_to_download, period_type, period_weekday,
-                                   period_hour, dependent_tables, python_module_name, dependencies)
+                                   dependent_tables, python_module_name, dependencies)
                 session.add(etl_task)
                 session.commit()
 
@@ -1522,7 +1522,7 @@ class Airflow(AirflowViewMixin, BaseView):
             time_to_download = request.form['time_to_download']
             period_type = request.form['period_type']
             period_weekday = request.form['period_day']
-            period_hour = request.form['period_hour']
+            # period_hour = request.form['period_hour']
             dependent_tables = request.form['dependent_tables']
             python_module_name = request.form['python_module_name']
             dependencies = request.form.getlist('dependencies[]')
@@ -1531,7 +1531,7 @@ class Airflow(AirflowViewMixin, BaseView):
                 ETLTask.task_id == task_id,
             ).first()
             etl_task.update(task_type, conn_id, sys_id, src_path, dst_path, flag_to_download, time_to_download,
-                            period_type, period_weekday, period_hour, dependent_tables, python_module_name, dependencies)
+                            period_type, period_weekday, dependent_tables, python_module_name, dependencies)
             session.commit()
 
             self.refresh()

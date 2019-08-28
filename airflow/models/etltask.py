@@ -24,6 +24,7 @@ from datetime import timedelta
 from datetime import datetime
 from enum import Enum
 
+from airflow.utils import timezone
 from sqlalchemy import (
     Column, Integer, String, Boolean, PickleType, Index, UniqueConstraint, func, DateTime, or_,
     and_
@@ -102,8 +103,7 @@ class ETLTask(Base, LoggingMixin):
     )
 
     def __init__(self, task_id, dag_id, task_type, conn_id, sys_id, src_path, dst_path, flag_to_download,
-                 time_to_download,
-                 period_type, period_weekday, period_hour, dependent_tables, python_module_name, dependencies):
+                 time_to_download, period_type, period_weekday, dependent_tables, python_module_name, dependencies):
         self.task_id = task_id.strip()
         self.dag_id = dag_id
         self.task_type = task_type
@@ -115,13 +115,13 @@ class ETLTask(Base, LoggingMixin):
         self.time_to_download = time_to_download
         self.period_type = period_type
         self.period_weekday = period_weekday
-        self.period_hour = period_hour
+        # self.period_hour = period_hour
         self.dependent_tables = dependent_tables
         self.python_module_name = python_module_name
         self.dependencies = dependencies
 
     def update(self, task_type, conn_id, sys_id, src_path, dst_path, flag_to_download, time_to_download, period_type,
-               period_weekday, period_hour, dependent_tables, python_module_name, dependencies):
+               period_weekday, dependent_tables, python_module_name, dependencies):
         self.task_type = task_type
         self.conn_id = conn_id
         self.sys_id = sys_id
@@ -131,7 +131,7 @@ class ETLTask(Base, LoggingMixin):
         self.time_to_download = time_to_download
         self.period_type = period_type
         self.period_weekday = period_weekday
-        self.period_hour = period_hour
+        # self.period_hour = period_hour
         self.dependent_tables = dependent_tables
         self.python_module_name = python_module_name
         self.dependencies = dependencies
@@ -263,6 +263,9 @@ class ETLTask(Base, LoggingMixin):
 
     def _exec_download(self, etl_date, ti):
         self._log.info('下载任务开始执行')
+        if self.period_type == PeriodType.Weekly.value and timezone.now().weekday() + 1 != self.period_weekday:
+            self._log.info('未到执行周期，本次任务不执行')
+            return 'skiped'
         # conn = self.get_connection()
         # result = zjrcb_ftp_loader.run_ods(system=self.sys_id, src_path=self.src_path, dst_path=self.dst_path,
         #                          check_mode=self.flag_to_download, tbls_ignored_errors=self.tbls_ignored_errors,

@@ -2601,24 +2601,22 @@ class Airflow(AirflowViewMixin, BaseView):
     @wwwutils.action_logging
     @provide_session
     def duration(self, session=None):
-        default_dag_run = conf.getint('webserver', 'default_dag_run_display_number')
         dag_id = request.args.get('dag_id')
+        start_date = request.args.get('start_date')
+        end_date = request.args.get('end_date')
         dag = dagbag.get_dag(dag_id)
-        base_date = request.args.get('base_date')
-        num_runs = request.args.get('num_runs')
-        num_runs = int(num_runs) if num_runs else default_dag_run
 
         if dag is None:
             flash('DAG "{0}" seems to be missing.'.format(dag_id), "error")
             return redirect('/admin/')
 
-        if base_date:
-            base_date = timezone.parse(base_date)
+        if start_date:
+            start_date = timezone.parse(start_date)
         else:
-            base_date = dag.latest_execution_date or timezone.utcnow()
+            start_date = dag.latest_execution_date - timedelta(30) if dag.latest_execution_date else timezone.utcnow()
 
-        dates = dag.date_range(base_date, num=-abs(num_runs))
-        min_date = dates[0] if dates else datetime(2000, 1, 1)
+        end_date = timezone.parse(end_date) + timedelta(1) - timedelta(seconds=1) if end_date \
+            else dag.latest_execution_date or timezone.utcnow()
 
         root = request.args.get('root')
         if root:
@@ -2638,15 +2636,15 @@ class Airflow(AirflowViewMixin, BaseView):
         cum_y = defaultdict(list)
 
         tis = dag.get_task_instances(
-            start_date=min_date, end_date=base_date, session=session)
+            start_date=start_date, end_date=end_date, session=session)
         TF = models.TaskFail
         ti_fails = (
             session
             .query(TF)
             .filter(
                 TF.dag_id == dag.dag_id,
-                TF.execution_date >= min_date,
-                TF.execution_date <= base_date,
+                TF.execution_date >= start_date,
+                TF.execution_date <= end_date,
                 TF.task_id.in_([t.task_id for t in dag.tasks]))
             .all()
         )
@@ -2690,8 +2688,8 @@ class Airflow(AirflowViewMixin, BaseView):
 
         session.commit()
 
-        form = DateTimeWithNumRunsForm(data={'base_date': max_date,
-                                             'num_runs': num_runs})
+        form = DatePeriodForm(data={'start_date': start_date,
+                                    'end_date': end_date})
         chart.buildcontent()
         cum_chart.buildcontent()
         s_index = cum_chart.htmlcontent.rfind('});')
@@ -2717,17 +2715,16 @@ class Airflow(AirflowViewMixin, BaseView):
         default_dag_run = conf.getint('webserver', 'default_dag_run_display_number')
         dag_id = request.args.get('dag_id')
         dag = dagbag.get_dag(dag_id)
-        base_date = request.args.get('base_date')
-        num_runs = request.args.get('num_runs')
-        num_runs = int(num_runs) if num_runs else default_dag_run
+        start_date = request.args.get('start_date')
+        end_date = request.args.get('end_date')
 
-        if base_date:
-            base_date = timezone.parse(base_date)
+        if start_date:
+            start_date = timezone.parse(start_date)
         else:
-            base_date = dag.latest_execution_date or timezone.utcnow()
+            start_date = dag.latest_execution_date - timedelta(30) if dag.latest_execution_date else timezone.utcnow()
 
-        dates = dag.date_range(base_date, num=-abs(num_runs))
-        min_date = dates[0] if dates else datetime(2000, 1, 1)
+        end_date = timezone.parse(end_date) + timedelta(1) - timedelta(seconds=1) if end_date \
+            else dag.latest_execution_date or timezone.utcnow()
 
         root = request.args.get('root')
         if root:
@@ -2744,8 +2741,8 @@ class Airflow(AirflowViewMixin, BaseView):
         for task in dag.tasks:
             y = []
             x = []
-            for ti in task.get_task_instances(start_date=min_date,
-                                              end_date=base_date,
+            for ti in task.get_task_instances(start_date=start_date,
+                                              end_date=end_date,
                                               session=session):
                 dttm = wwwutils.epoch(ti.execution_date)
                 x.append(dttm)
@@ -2754,14 +2751,14 @@ class Airflow(AirflowViewMixin, BaseView):
                 chart.add_serie(name=task.task_id, x=x, y=y)
 
         tis = dag.get_task_instances(
-            start_date=min_date, end_date=base_date, session=session)
+            start_date=start_date, end_date=end_date, session=session)
         tries = sorted(list({ti.try_number for ti in tis}))
         max_date = max([ti.execution_date for ti in tis]) if tries else None
 
         session.commit()
 
-        form = DateTimeWithNumRunsForm(data={'base_date': max_date,
-                                             'num_runs': num_runs})
+        form = DatePeriodForm(data={'start_date': start_date,
+                                             'end_date': end_date})
 
         chart.buildcontent()
 
@@ -2781,25 +2778,24 @@ class Airflow(AirflowViewMixin, BaseView):
     def landing_times(self, session=None):
         default_dag_run = conf.getint('webserver', 'default_dag_run_display_number')
         dag_id = request.args.get('dag_id')
+        start_date = request.args.get('start_date')
+        end_date = request.args.get('end_date')
+
         dag = dagbag.get_dag(dag_id)
-        base_date = request.args.get('base_date')
-        num_runs = request.args.get('num_runs')
-        num_runs = int(num_runs) if num_runs else default_dag_run
-
-        if base_date:
-            base_date = timezone.parse(base_date)
-        else:
-            base_date = dag.latest_execution_date or timezone.utcnow()
-
-        dates = dag.date_range(base_date, num=-abs(num_runs))
-        min_date = dates[0] if dates else datetime(2000, 1, 1)
-
         root = request.args.get('root')
         if root:
             dag = dag.sub_dag(
                 task_regex=root,
                 include_upstream=True,
                 include_downstream=False)
+
+        if start_date:
+            start_date = timezone.parse(start_date)
+        else:
+            start_date = dag.latest_execution_date - timedelta(30) if dag.latest_execution_date else timezone.utcnow()
+
+        end_date = timezone.parse(end_date) + timedelta(1) - timedelta(seconds=1) if end_date \
+            else dag.latest_execution_date or timezone.utcnow()
 
         chart_height = get_chart_height(dag)
         chart = nvd3.lineChart(
@@ -2809,8 +2805,8 @@ class Airflow(AirflowViewMixin, BaseView):
         for task in dag.tasks:
             y[task.task_id] = []
             x[task.task_id] = []
-            for ti in task.get_task_instances(start_date=min_date,
-                                              end_date=base_date,
+            for ti in task.get_task_instances(start_date=start_date,
+                                              end_date=end_date,
                                               session=session):
                 if ti.end_date:
                     ts = ti.execution_date
@@ -2836,12 +2832,12 @@ class Airflow(AirflowViewMixin, BaseView):
                                 y=scale_time_units(y[task.task_id], y_unit))
 
         tis = dag.get_task_instances(
-            start_date=min_date, end_date=base_date, session=session)
+            start_date=start_date, end_date=end_date, session=session)
         dates = sorted(list({ti.execution_date for ti in tis}))
         max_date = max([ti.execution_date for ti in tis]) if dates else None
 
-        form = DateTimeWithNumRunsForm(data={'base_date': max_date,
-                                             'num_runs': num_runs})
+        form = DatePeriodForm(data={'start_date': start_date,
+                                             'end_date': end_date})
         chart.buildcontent()
         return self.render(
             'airflow/chart.html',
@@ -2905,10 +2901,10 @@ class Airflow(AirflowViewMixin, BaseView):
                 include_upstream=True,
                 include_downstream=False)
 
-        dt_nr_dr_data = get_date_time_num_runs_dag_runs_form_data(request, session, dag)
+        dt_nr_dr_data = get_date_dag_runs_form_data(request, session, dag)
         dttm = dt_nr_dr_data['dttm']
 
-        form = DateTimeWithNumRunsWithDagRunsForm(data=dt_nr_dr_data)
+        form = DispatchDateFormWithDagRunsForm(data=dt_nr_dr_data)
         form.execution_date.choices = dt_nr_dr_data['dr_choices']
 
         tis = [

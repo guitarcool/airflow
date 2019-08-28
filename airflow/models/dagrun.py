@@ -19,6 +19,7 @@
 from typing import Optional, cast
 
 import six
+import pendulum
 from sqlalchemy import (
     Column, Integer, String, Boolean, PickleType, Index, UniqueConstraint, func, DateTime, or_,
     and_
@@ -35,6 +36,7 @@ from airflow.utils.db import provide_session
 from airflow.utils.log.logging_mixin import LoggingMixin
 from airflow.utils.sqlalchemy import UtcDateTime
 from airflow.utils.state import State
+from airflow.utils.timezone import convert_to_specific_tz
 
 
 class DagRun(Base, LoggingMixin):
@@ -91,6 +93,13 @@ class DagRun(Base, LoggingMixin):
     @classmethod
     def id_for_date(cls, date, prefix=ID_FORMAT_PREFIX):
         return prefix.format(date.isoformat()[:19])
+
+    @classmethod
+    def formate_run_id(cls, run_id):
+        id_prefix = run_id.split('__')[0]
+        date_str = run_id.split('__')[1]
+        execution_date = convert_to_specific_tz(pendulum.parse(date_str))
+        return id_prefix + '__' + execution_date.isoformat()
 
     @provide_session
     def refresh_from_db(self, session=None):

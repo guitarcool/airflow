@@ -33,10 +33,21 @@ from dateutil import relativedelta
 from sqlalchemy import event, exc, select
 from sqlalchemy.types import Text, DateTime, TypeDecorator
 
+from airflow.configuration import conf
 from airflow.utils.log.logging_mixin import LoggingMixin
 
 log = LoggingMixin().log
 utc = pendulum.timezone('UTC')
+
+TIMEZONE = pendulum.timezone('UTC')
+try:
+    tz = conf.get("core", "default_timezone")
+    if tz == "system":
+        TIMEZONE = pendulum.local_timezone()
+    else:
+        TIMEZONE = pendulum.timezone(tz)
+except Exception:
+    pass
 
 
 def setup_event_handlers(engine,
@@ -169,9 +180,9 @@ class UtcDateTime(TypeDecorator):
         if value is not None:
             if value.tzinfo is None:
                 value = value.replace(tzinfo=utc)
-            else:
-                value = value.astimezone(utc)
-
+            # else:
+            #     value = value.astimezone(utc)
+            value = value.astimezone(TIMEZONE)
         return value
 
 

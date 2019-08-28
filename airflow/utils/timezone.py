@@ -64,6 +64,15 @@ def utcnow():
     return d
 
 
+def now():
+    """
+    Get the current date and time in TIMEZONE
+    :return:
+    """
+    d = dt.datetime.now(tz=TIMEZONE)
+    return d
+
+
 def utc_epoch():
     """
     Gets the epoch in the users timezone
@@ -93,6 +102,16 @@ def convert_to_utc(value):
         value = pendulum.instance(value, TIMEZONE)
 
     return value.astimezone(utc)
+
+
+def convert_to_specific_tz(value):
+    if not value:
+        return value
+
+    if not is_localized(value):
+        value = pendulum.instance(value, TIMEZONE)
+
+    return value.astimezone(TIMEZONE)
 
 
 def make_aware(value, timezone=None):

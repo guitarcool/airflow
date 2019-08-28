@@ -202,7 +202,7 @@ def duration_f(v, c, m, p):
 def datetime_f(v, c, m, p):
     attr = getattr(m, p)
     dttm = attr.isoformat() if attr else ''
-    if timezone.utcnow().isoformat()[:4] == dttm[:4]:
+    if timezone.now().isoformat()[:4] == dttm[:4]:
         dttm = dttm[5:]
     return Markup("<nobr>{}</nobr>").format(dttm)
 
@@ -368,7 +368,7 @@ def get_date_time_num_runs_dag_runs_form_data(request, session, dag):
     dr_choices = []
     dr_state = None
     for dr in drs:
-        dr_choices.append((dr.execution_date.isoformat(), dr.run_id))
+        dr_choices.append((dr.execution_date.isoformat(), DagRun.formate_run_id(dr.run_id)))
         if dttm == dr.execution_date:
             dr_state = dr.state
 
@@ -393,20 +393,22 @@ def get_date_dag_runs_form_data(request, session, dag):
     if dttm:
         dttm = pendulum.parse(dttm)
     else:
-        dttm = dag.latest_execution_date or timezone.utcnow()
+        dttm = dag.latest_execution_date or timezone.now()
 
     dispatch_date = request.args.get('dispatch_date')
-    dispatch_date = pendulum.parse(dispatch_date).date() if dispatch_date else dttm.date()
+    start_date = timezone.parse(dispatch_date) if dispatch_date else dttm
+    end_date = timezone.parse(dispatch_date) + timedelta(1) - timedelta(seconds=1) if dispatch_date else dttm
     default_dag_run = conf.getint('webserver', 'default_dag_run_display_number')
     num_runs = request.args.get('num_runs')
     num_runs = int(num_runs) if num_runs else default_dag_run
-
     DR = models.DagRun
     drs = (
         session.query(DR)
         .filter(
             DR.dag_id == dag.dag_id,
-            sqla.func.DATE(DR.execution_date) == dispatch_date)
+            DR.execution_date >= start_date,
+            DR.execution_date <= end_date,
+        )
         .order_by(desc(DR.execution_date))
         .limit(num_runs)
         .all()
@@ -414,7 +416,7 @@ def get_date_dag_runs_form_data(request, session, dag):
     dr_choices = []
     dr_state = None
     for dr in drs:
-        dr_choices.append((dr.execution_date.isoformat(), dr.run_id))
+        dr_choices.append((dr.execution_date.isoformat(), DagRun.formate_run_id(dr.run_id)))
         if dttm == dr.execution_date:
             dr_state = dr.state
 
@@ -426,11 +428,14 @@ def get_date_dag_runs_form_data(request, session, dag):
 
     return {
         'dttm': dttm,
-        'dispatch_date': dispatch_date,
+        'dispatch_date': start_date,
         'execution_date': dttm.isoformat(),
         'dr_choices': dr_choices,
         'dr_state': dr_state,
     }
+
+
+
 
 
 class AirflowViewMixin(object):
@@ -1039,8 +1044,6 @@ class Airflow(AirflowViewMixin, BaseView):
 
         metadata = request.args.get('metadata')
         metadata = json.loads(metadata)
-        print('-----------metadata--------------')
-        print(metadata)
         # metadata may be null
         if not metadata:
             metadata = {}
@@ -2185,11 +2188,11 @@ class Airflow(AirflowViewMixin, BaseView):
         num_runs = 365
 
         if start_date:
-            start_date = timezone.parse(start_date, timezone=timezone.utc)
+            start_date = timezone.parse(start_date)
         else:
             start_date = dag.latest_execution_date - timedelta(30) if dag.latest_execution_date else timezone.utcnow()
 
-        end_date = timezone.parse(end_date, timezone=timezone.utc) + timedelta(1) - timedelta(seconds=1) if end_date \
+        end_date = timezone.parse(end_date) + timedelta(1) - timedelta(seconds=1) if end_date \
             else dag.latest_execution_date or timezone.utcnow()
 
         DR = models.DagRun
@@ -2526,10 +2529,9 @@ class Airflow(AirflowViewMixin, BaseView):
 
         if not start_date and not end_date and dag.latest_execution_date:
             start_date = end_date = dag.latest_execution_date.strftime('%Y-%m-%d')
-        start_date = timezone.parse(start_date, timezone=timezone.utc) if start_date else timezone.utcnow()
-        end_date = timezone.parse(end_date, timezone=timezone.utc) + timedelta(1) - timedelta(seconds=1) if end_date \
-            else timezone.utcnow()
-
+        start_date = timezone.parse(start_date) if start_date else timezone.now()
+        end_date = timezone.parse(end_date) + timedelta(1) - timedelta(seconds=1) if end_date \
+            else timezone.now()
         task_instances = []
 
         for ti in dag.get_task_instances(start_date, end_date, state, task_id=task_id, page=current_page,
@@ -2611,7 +2613,7 @@ class Airflow(AirflowViewMixin, BaseView):
             return redirect('/admin/')
 
         if base_date:
-            base_date = pendulum.parse(base_date)
+            base_date = timezone.parse(base_date)
         else:
             base_date = dag.latest_execution_date or timezone.utcnow()
 
@@ -2720,7 +2722,7 @@ class Airflow(AirflowViewMixin, BaseView):
         num_runs = int(num_runs) if num_runs else default_dag_run
 
         if base_date:
-            base_date = pendulum.parse(base_date)
+            base_date = timezone.parse(base_date)
         else:
             base_date = dag.latest_execution_date or timezone.utcnow()
 
@@ -2785,7 +2787,7 @@ class Airflow(AirflowViewMixin, BaseView):
         num_runs = int(num_runs) if num_runs else default_dag_run
 
         if base_date:
-            base_date = pendulum.parse(base_date)
+            base_date = timezone.parse(base_date)
         else:
             base_date = dag.latest_execution_date or timezone.utcnow()
 

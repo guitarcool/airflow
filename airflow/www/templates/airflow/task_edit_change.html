@@ -209,7 +209,7 @@
       <div class="form-group row">
         <label class="col-form-label">周期</label>
         <div class="">
-          {% for i in [[0,"当天"], [1,"每天"], [2,"每周"]] %}
+          {% for i in [1,"每天"], [2,"每周"]] %}
           <input type="radio" name="period_type" class="form-check-input" value="{{i[0]}}" 
             {%-if not etlTask and i[0]==0 or etlTask and etlTask.period_type==i[0] -%}checked{%- endif -%}
           />

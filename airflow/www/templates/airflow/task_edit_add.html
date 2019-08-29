@@ -61,12 +61,7 @@
     height: 80px;
     resize: none;
   }
-  select[name="executetion_token"]~.hour-select {
-    display: none;
-  }
-
-  input[name="period_type"][value="1"]:checked~.hour-select,
-  input[name="period_type"][value="2"]:checked~.hour-select {
+  .hour-select {
     display: none;
   }
 
@@ -201,7 +196,7 @@
         <label class="col-form-label">下载执行标志</label>
         <select name="executetion_token" class="form-control" onchange="toggleExecutetionTokenTime()">
           <option value="0">标志文件</option>
-          <option value="1">文件大小不变</option>
+          <option value="1" selected>文件大小不变</option>
           <option value="2">固定时间之后</option>
         </select>
         <span class="hour-select">
@@ -218,7 +213,7 @@
         <div class="">
           <!-- <input type="radio" name="period_type" class="form-check-input" value="0" checked>
           <label class="form-check-label">当天</label> -->
-          <input type="radio" name="period_type" class="form-check-input" value="1">
+          <input type="radio" name="period_type" class="form-check-input" value="1" checked>
           <label class="form-check-label">每天</label>
           <input type="radio" name="period_type" class="form-check-input" value="2">
           <label class="form-check-label">每周</label>

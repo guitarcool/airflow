@@ -62,12 +62,7 @@
     resize: none;
   }
 
-  select[name="executetion_token"]~.hour-select {
-    display: none;
-  }
-
-  input[name="period_type"][value="1"]:checked~.hour-select,
-  input[name="period_type"][value="2"]:checked~.hour-select {
+  .hour-select {
     display: none;
   }
 
@@ -192,7 +187,7 @@
         <select name="executetion_token" class="form-control" onchange="toggleExecutetionTokenTime()">
           {% for i in [[0,"标志文件"], [1,"文件大小不变"], [2,"固定时间之后"]] %}
             <option value="{{i[0]}}"
-            {%-if not etlTask and i[0]==0 or etlTask and etlTask.flag_to_download==i[0] -%}selected{%- endif -%}
+            {%-if not etlTask and i[0]==1 or etlTask and etlTask.flag_to_download==i[0] -%}selected{%- endif -%}
             >{{i[1]}}</option>
           {% endfor %}
         </select>
@@ -211,7 +206,7 @@
         <div class="">
           {% for i in [1,"每天"], [2,"每周"]] %}
           <input type="radio" name="period_type" class="form-check-input" value="{{i[0]}}" 
-            {%-if not etlTask and i[0]==0 or etlTask and etlTask.period_type==i[0] -%}checked{%- endif -%}
+            {%-if not etlTask and i[0]==1 or etlTask and etlTask.period_type==i[0] -%}checked{%- endif -%}
           />
           <label class="form-check-label">{{i[1]}}</label>
           {% endfor %}

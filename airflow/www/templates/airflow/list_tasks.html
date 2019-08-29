@@ -145,7 +145,11 @@
                     <span class="glyphicon glyphicon-book" aria-hidden="true"></span>
                   </a>
                 </td>
-                <td><a href="{{ url_for("airflow.table_result", dag_id=dag.dag_id, task_id=item.task_id, execution_date=item.execution_date) }}">{{_("Detail")}}</a></td>
+                <td>
+                  {% if item.etl_task_type!=2 %}
+                  <a href="{{ url_for("airflow.table_result", dag_id=dag.dag_id, task_id=item.task_id, execution_date=item.execution_date) }}">{{_("Detail")}}</a>
+                  {% endif %}
+                </td>
             </tr>
         {% endfor %}
       </tbody>

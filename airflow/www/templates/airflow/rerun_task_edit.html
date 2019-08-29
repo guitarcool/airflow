@@ -151,6 +151,7 @@
          :value-format="'object'"
          :placeholder="'请选择'"
          :no-options-text="'当前没有可用选项'"
+         :disabled="disabled"
          @input="onInput"
          @select="onSelect"
          @deselect="onDeselect"
@@ -375,6 +376,7 @@
             valueLock: false,
             selectAllAction: false,
             deselectAllAction: false,
+            disabled: false,
           },
           methods: {
             selectAll:function(){
@@ -567,12 +569,16 @@
   var readonly = false;
 
   {% if etlTask and not etlTask.rerun_status %}
-  var readonly=true;
+  readonly=true;
   {% endif %}
   $(document).ready(function() {
     var f = document.forms["task_edit"];
     if(!!f.task_id.value){
         formType = 1;
+    }
+    if(readonly) {
+      $('#task_edit input,#task_edit select').attr('readonly', true); 
+      multiSelectApp.disabled=true; // 后置依赖项选择
     }
   })
   var requestLock = false;

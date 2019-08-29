@@ -404,6 +404,41 @@
 <script src="{{ url_for('static', filename='d3.v3.min.js') }}"></script>
 <script src="{{ url_for('static', filename='dagre-d3.js') }}"></script>
 <script>
+  function getKeysFromObject(data){
+    var keys = [];
+    var key;
+    var val;
+    if(typeof data === 'object') {
+      for(key in data){
+        val = data[key];
+        keys.push(key);
+        keys = keys.concat(getKeysFromObject(val));
+      }
+    } else {
+      return [];
+    }
+    keys = keys.filter(function(value, index){
+      return keys.indexOf(value) === index;
+    })
+    return keys;
+  }
+  function createEdgeFromObject(data, root){
+    var edges = [];
+    var key;
+    var val;
+    if(typeof data === 'object') {
+      for(key in data){
+        val = data[key];
+        !!root && edges.push({u: root, v: key});
+        edges = edges.concat(createEdgeFromObject(val, key));
+      }
+    } else {
+      return [];
+    }
+    return edges;
+  }
+</script>
+<script>
   var nodes = [];
   var edges = [];
   var arrange = "LR";
@@ -423,6 +458,22 @@
       v: target,
     }
   }
+
+  var taskDownstreams={};
+  var taskDownstreamLabels=[];
+  var taskDownstreamNodes=[];
+  var taskDownstreamEdges=[];
+  var targetLabel = document.forms["task_edit"].task_id.value;
+  {% if task_downstreams %}
+  taskDownstreams = {{task_downstreams|tojson|safe}}
+  {% endif %}
+  taskDownstreamLabels = getKeysFromObject(taskDownstreams);
+  taskDownstreamLabels = taskDownstreamLabels.filter(function(label){
+    return label!=targetLabel;
+  })
+  taskDownstreamNodes = taskDownstreamLabels.map(createNode);
+  taskDownstreamEdges = createEdgeFromObject(taskDownstreams);
+
   $('.dependencies-select').change(refreshGraph);
   $('.dependencies-select').change(toggleDependencyTable);
   $('select[name="etl_task_id"]').change(refreshGraph);
@@ -434,11 +485,15 @@
 
     nodes = [];
     edges = [];
-    nodes.push(createNode(target));
+    var targetNode = createNode(target);
+    targetNode.value.style="fill:#f0ede4; stroke: #080;"
+    nodes.push(targetNode);
     sources.forEach(function(source){
       nodes.push(createNode(source));
       edges.push(createEdge(source, target));
     })
+    nodes = nodes.concat(taskDownstreamNodes);
+    edges = edges.concat(taskDownstreamEdges);
     var layout = dagreD3.layout().rankDir(arrange).nodeSep(15).rankSep(15);
     var renderer = new dagreD3.Renderer();
     var g = dagreD3.json.decode(nodes, edges);

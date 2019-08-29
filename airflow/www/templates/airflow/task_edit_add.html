@@ -485,7 +485,9 @@
 
     nodes = [];
     edges = [];
-    nodes.push(createNode(target));
+    var targetNode = createNode(target);
+    targetNode.value.style="fill:#f0ede4; stroke: #080;"
+    nodes.push(targetNode);
     sources.forEach(function(source){
       nodes.push(createNode(source));
       edges.push(createEdge(source, target));

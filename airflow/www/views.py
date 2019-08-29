@@ -1350,6 +1350,7 @@ class Airflow(AirflowViewMixin, BaseView):
         data_sources = session.query(Connection).order_by(Connection.conn_id).all()
         dds_task_ids = ETLTask.get_dds_task_ids(dag_id)
         deps_selections = etlTask.get_deps_selections()  # list集合 当前任务可选的依赖项ID
+        task_downstreams = dag.get_tasks_downstreams() # 后置依赖项列表
         return self.render(
             'airflow/task_edit_change.html',
             root=root,
@@ -1358,7 +1359,8 @@ class Airflow(AirflowViewMixin, BaseView):
             dataSources=data_sources,
             etlTask=etlTask,
             dds_task_ids=dds_task_ids,
-            deps_selections=deps_selections
+            deps_selections=deps_selections,
+            task_downstreams=task_downstreams
             )
 
     @expose('/taskeditlist')

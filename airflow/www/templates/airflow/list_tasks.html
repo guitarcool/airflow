@@ -51,7 +51,7 @@
       flex-shrink: 1;
       flex-grow: 1;
       display: inline-block;
-      width: 60%;
+      width: 17%;
     }
 
     .filter-form .tabs{
@@ -92,16 +92,14 @@
   </button> -->
   <form method="get" class="filter-form">
     {{ state_token }}
-    <div><span style="width:40%;">开始日期: </span>{{ form.start_date(class_="form-control") }}</div>
-    <div>
+      <span style="width:40%;">开始日期: </span>
+      {{ form.start_date(class_="form-control") }}
       <span style="width:40%;">结束日期: </span>
       {{ form.end_date(class_="form-control") }}
-    </div>
-    <div>
       <span style="width:20%;">任务: </span>
       {{ form.task_id(class_="form-control") }}
-    </div>
-    <div><span style="width:20%;">状态:</span>{{ form.state(class_="form-control") | safe }}</div>
+      <span style="width:20%;">状态:</span>
+      {{ form.state(class_="form-control") | safe }}
     <input type="hidden" name="root" value="{{ root if root else '' }}">
     <input type="hidden" value="{{ dag.dag_id }}" name="dag_id">
     <input name="_csrf_token" type="hidden" value="{{ csrf_token() }}">

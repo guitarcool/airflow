@@ -185,3 +185,6 @@ def _useless():
     _('Execution Date'),
     _('Task Id'),
     _('Dag Id'),
+
+    #form
+    _('upstream_failed'),

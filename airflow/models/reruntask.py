@@ -1,4 +1,3 @@
-
 import os
 from enum import Enum
 from datetime import datetime
@@ -56,7 +55,7 @@ class ReRunTask(Base, LoggingMixin):
 
     @property
     def rerun_dag_id(self):
-        return RERUN_DAG_PREFIX + self.task_id
+        return RERUN_DAG_PREFIX + self.dag_id + '_' + self.task_id
 
     @property
     def rerun_dag_file_path(self):
@@ -115,7 +114,7 @@ class ReRunTask(Base, LoggingMixin):
         dagruns = DagRun.find(dag_id=self.rerun_dag_id)
 
         success_dagruns = []
-        failed_dagruns =[]
+        failed_dagruns = []
         for dagrun in dagruns:
             if dagrun.get_state() == 'success':
                 success_dagruns.append(dagrun)
@@ -179,4 +178,3 @@ class ReRunTask(Base, LoggingMixin):
     #         "task_id={task_id}"
     #         "&dag_id={dag_id}"
     #     ).format(task_id=self.task_id, dag_id=self.dag_id)
-

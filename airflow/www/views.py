@@ -1383,11 +1383,13 @@ class Airflow(AirflowViewMixin, BaseView):
             ).order_by(ETLTask.task_type, ETLTask.task_id).all()
         data_sources = session.query(Connection).order_by(Connection.conn_id).all()
         ds_dict = {data_source.id: data_source.conn_id for data_source in data_sources}
+        task_downstreams = dag.get_tasks_downstreams()
         return self.render(
             'airflow/task_edit_list.html',
             tasks=tasks,
             ds_dict=ds_dict,
-            dag=dag
+            dag=dag,
+            task_downstreams=task_downstreams
             )
 
     @expose('/newtask')
@@ -1411,6 +1413,7 @@ class Airflow(AirflowViewMixin, BaseView):
         # 不同类型任务的可选前置依赖项 deps_selects type: dict key=task_type(int) value=dependencies(list)
         deps_selects = ETLTask.get_deps_selects_for_types(dag_id)
         dds_task_ids = ETLTask.get_dds_task_ids(dag_id)
+        task_downstreams = dag.get_tasks_downstreams()  # Dict key:task_id value:downstreams
         title = "Task Edit"
 
         return self.render(
@@ -1420,7 +1423,8 @@ class Airflow(AirflowViewMixin, BaseView):
             title=title,
             dataSources=data_sources,
             deps_selects=deps_selects,
-            dds_task_ids=dds_task_ids
+            dds_task_ids=dds_task_ids,
+            task_downstreams=task_downstreams
             )
 
     @expose('/delete_task')
@@ -1462,14 +1466,16 @@ class Airflow(AirflowViewMixin, BaseView):
         try:
             dag_id = request.args.get('dag_id')
             task_id = request.form['task_id']
-            if not task_id:
+            sys_id = request.form['sys_id']
+            task_type = request.form['task_type']
+            python_module_name = request.form['python_module_name']
+            if not task_id or (not python_module_name and not sys_id):
                 return wwwutils.json_response({
                     'success': '0',
-                    'message': '任务名不能为空'
+                    'message': '必填字段不能为空'
                 })
-            task_type = request.form['task_type']
+
             conn_id = request.form['conn_id']
-            sys_id = request.form['sys_id']
             src_path = request.form['src_path']
             dst_path = request.form['dst_path']
             flag_to_download = request.form['flag_to_download']
@@ -1478,7 +1484,6 @@ class Airflow(AirflowViewMixin, BaseView):
             period_weekday = request.form['period_day']
             # period_hour = request.form['period_hour']
             dependent_tables = request.form['dependent_tables']
-            python_module_name = request.form['python_module_name']
             dependencies = request.form.getlist('dependencies[]')
             etl_task = session.query(ETLTask).filter(
                 ETLTask.dag_id == dag_id,
@@ -1514,8 +1519,14 @@ class Airflow(AirflowViewMixin, BaseView):
             print('dag_id:%s' % dag_id)
             task_id = request.form['task_id']
             task_type = request.form['task_type']
-            conn_id = request.form['conn_id']
             sys_id = request.form['sys_id']
+            python_module_name = request.form['python_module_name']
+            if not python_module_name and not sys_id:
+                return wwwutils.json_response({
+                    'success': '0',
+                    'message': '必填字段不能为空'
+                })
+            conn_id = request.form['conn_id']
             src_path = request.form['src_path']
             dst_path = request.form['dst_path']
             flag_to_download = request.form['flag_to_download']
@@ -1524,7 +1535,6 @@ class Airflow(AirflowViewMixin, BaseView):
             period_weekday = request.form['period_day']
             # period_hour = request.form['period_hour']
             dependent_tables = request.form['dependent_tables']
-            python_module_name = request.form['python_module_name']
             dependencies = request.form.getlist('dependencies[]')
             etl_task = session.query(ETLTask).filter(
                 ETLTask.dag_id == dag_id,

@@ -386,13 +386,13 @@ msgid "Event Type"
 msgstr ""
 
 #: templates/airflow/chart.html:38 templates/airflow/duration_chart.html:42
-#: templates/airflow/list_tasks.html:117 templates/airflow/tree.html:31
+#: templates/airflow/list_tasks.html:115 templates/airflow/tree.html:31
 #: translates.py:98 translates.py:141
 msgid "Start Date"
 msgstr "开始日期"
 
 #: templates/airflow/chart.html:39 templates/airflow/duration_chart.html:43
-#: templates/airflow/list_tasks.html:118 templates/airflow/tree.html:32
+#: templates/airflow/list_tasks.html:116 templates/airflow/tree.html:32
 #: translates.py:99 translates.py:142
 msgid "End Date"
 msgstr "结束日期"
@@ -836,11 +836,11 @@ msgstr "激活DAG"
 msgid "Delete"
 msgstr "删除"
 
-#: templates/airflow/dag.html:231 templates/airflow/list_tasks.html:167
+#: templates/airflow/dag.html:231 templates/airflow/list_tasks.html:165
 msgid "Filter on this task and upstream "
 msgstr "筛选并上传该task "
 
-#: templates/airflow/dag.html:234 templates/airflow/list_tasks.html:170
+#: templates/airflow/dag.html:234 templates/airflow/list_tasks.html:168
 msgid "on"
 msgstr "打开"
 
@@ -948,7 +948,7 @@ msgid "Mark Success"
 msgstr "标记为成功"
 
 #: templates/airflow/dag.html:384 templates/airflow/dag.html:423
-#: templates/airflow/list_tasks.html:178
+#: templates/airflow/list_tasks.html:176
 msgid "Close"
 msgstr "关闭"
 
@@ -1044,7 +1044,7 @@ msgstr "链接"
 msgid "Trigger Dag"
 msgstr "激活DAG"
 
-#: templates/airflow/dags.html:152 templates/airflow/list_tasks.html:119
+#: templates/airflow/dags.html:152 templates/airflow/list_tasks.html:117
 msgid "Tasks Duration"
 msgstr "task持续时间"
 
@@ -1090,7 +1090,7 @@ msgid "Jump to end"
 msgstr "跳至末尾"
 
 #: templates/airflow/gantt.html:31 templates/airflow/graph.html:56
-#: templates/airflow/list_tasks.html:116
+#: templates/airflow/list_tasks.html:114
 msgid "Dispatch date"
 msgstr ""
 
@@ -1139,35 +1139,35 @@ msgstr "成功"
 msgid "Oops."
 msgstr "出错了。"
 
-#: templates/airflow/list_tasks.html:114
+#: templates/airflow/list_tasks.html:112
 #: templates/airflow/rerun_task_list.html:45
 #: templates/airflow/task_edit_list.html:45
 #: templates/airflow/task_edit_list_rerun.html:45
 msgid "Task"
 msgstr ""
 
-#: templates/airflow/list_tasks.html:115
+#: templates/airflow/list_tasks.html:113
 msgid "Task Type"
 msgstr ""
 
-#: templates/airflow/list_tasks.html:120
+#: templates/airflow/list_tasks.html:118
 msgid "Number of Retries"
 msgstr "重试次数"
 
-#: templates/airflow/list_tasks.html:121
+#: templates/airflow/list_tasks.html:119
 msgid "Status"
 msgstr ""
 
-#: templates/airflow/list_tasks.html:122
+#: templates/airflow/list_tasks.html:120
 #: templates/airflow/task_instance.html:57
 msgid "Log"
 msgstr "日志"
 
-#: templates/airflow/list_tasks.html:123
+#: templates/airflow/list_tasks.html:121
 msgid "Result"
 msgstr "结果"
 
-#: templates/airflow/list_tasks.html:150
+#: templates/airflow/list_tasks.html:148
 #: templates/airflow/task_edit_list_rerun.html:73
 msgid "Detail"
 msgstr "详细"

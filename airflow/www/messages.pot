@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PROJECT VERSION\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2019-08-29 15:05+0800\n"
+"POT-Creation-Date: 2019-08-29 16:01+0800\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -373,13 +373,13 @@ msgid "Event Type"
 msgstr ""
 
 #: templates/airflow/chart.html:38 templates/airflow/duration_chart.html:42
-#: templates/airflow/list_tasks.html:117 templates/airflow/tree.html:31
+#: templates/airflow/list_tasks.html:115 templates/airflow/tree.html:31
 #: translates.py:98 translates.py:141
 msgid "Start Date"
 msgstr ""
 
 #: templates/airflow/chart.html:39 templates/airflow/duration_chart.html:43
-#: templates/airflow/list_tasks.html:118 templates/airflow/tree.html:32
+#: templates/airflow/list_tasks.html:116 templates/airflow/tree.html:32
 #: translates.py:99 translates.py:142
 msgid "End Date"
 msgstr ""
@@ -821,11 +821,11 @@ msgstr ""
 msgid "Delete"
 msgstr ""
 
-#: templates/airflow/dag.html:231 templates/airflow/list_tasks.html:167
+#: templates/airflow/dag.html:231 templates/airflow/list_tasks.html:165
 msgid "Filter on this task and upstream "
 msgstr ""
 
-#: templates/airflow/dag.html:234 templates/airflow/list_tasks.html:170
+#: templates/airflow/dag.html:234 templates/airflow/list_tasks.html:168
 msgid "on"
 msgstr ""
 
@@ -933,7 +933,7 @@ msgid "Mark Success"
 msgstr ""
 
 #: templates/airflow/dag.html:384 templates/airflow/dag.html:423
-#: templates/airflow/list_tasks.html:178
+#: templates/airflow/list_tasks.html:176
 msgid "Close"
 msgstr ""
 
@@ -1021,7 +1021,7 @@ msgstr ""
 msgid "Trigger Dag"
 msgstr ""
 
-#: templates/airflow/dags.html:152 templates/airflow/list_tasks.html:119
+#: templates/airflow/dags.html:152 templates/airflow/list_tasks.html:117
 msgid "Tasks Duration"
 msgstr ""
 
@@ -1067,7 +1067,7 @@ msgid "Jump to end"
 msgstr ""
 
 #: templates/airflow/gantt.html:31 templates/airflow/graph.html:56
-#: templates/airflow/list_tasks.html:116
+#: templates/airflow/list_tasks.html:114
 msgid "Dispatch date"
 msgstr ""
 
@@ -1116,35 +1116,35 @@ msgstr ""
 msgid "Oops."
 msgstr ""
 
-#: templates/airflow/list_tasks.html:114
+#: templates/airflow/list_tasks.html:112
 #: templates/airflow/rerun_task_list.html:45
 #: templates/airflow/task_edit_list.html:45
 #: templates/airflow/task_edit_list_rerun.html:45
 msgid "Task"
 msgstr ""
 
-#: templates/airflow/list_tasks.html:115
+#: templates/airflow/list_tasks.html:113
 msgid "Task Type"
 msgstr ""
 
-#: templates/airflow/list_tasks.html:120
+#: templates/airflow/list_tasks.html:118
 msgid "Number of Retries"
 msgstr ""
 
-#: templates/airflow/list_tasks.html:121
+#: templates/airflow/list_tasks.html:119
 msgid "Status"
 msgstr ""
 
-#: templates/airflow/list_tasks.html:122
+#: templates/airflow/list_tasks.html:120
 #: templates/airflow/task_instance.html:57
 msgid "Log"
 msgstr ""
 
-#: templates/airflow/list_tasks.html:123
+#: templates/airflow/list_tasks.html:121
 msgid "Result"
 msgstr ""
 
-#: templates/airflow/list_tasks.html:150
+#: templates/airflow/list_tasks.html:148
 #: templates/airflow/task_edit_list_rerun.html:73
 msgid "Detail"
 msgstr ""

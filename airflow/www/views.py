@@ -1574,6 +1574,8 @@ class Airflow(AirflowViewMixin, BaseView):
         rerun_tasks = session.query(ReRunTask).filter(
                 ReRunTask.dag_id == dag_id
             ).order_by(ReRunTask.task_id).all()
+
+        rerun_tasks = sorted(rerun_tasks, key=lambda t: ReRunTask.Status[t.rerun_status])
         return self.render(
             'airflow/rerun_task_list.html',
             root=root,
@@ -1689,10 +1691,10 @@ class Airflow(AirflowViewMixin, BaseView):
             etl_task_id = request.form['etl_task_id']
             rerun_start_date = request.form['rerun_start_date']
             rerun_end_date = request.form['rerun_end_date']
-            rerun_downstreams = request.form['rerun_downstreams']
+            rerun_downstreams = request.form.getlist('rerun_downstreams[]')
             rerun_task = session.query(ReRunTask).filter(
                 ReRunTask.dag_id == dag_id,
-                ReRunTask.id == task_id,
+                ReRunTask.task_id == task_id,
             ).first()
             rerun_task.update(etl_task_id, rerun_start_date, rerun_end_date, rerun_downstreams)
             rerun_task.create_or_update_rerun_dag()

@@ -143,6 +143,8 @@
   <div class="form-group row">
     <label class="col-form-label">任务类型</label>
     <br/>
+    <input type="radio" name="task_type" class="form-check-input" value="3">
+    <label class="form-check-label">预处置任务</label>
     <input type="radio" name="task_type" class="form-check-input" value="0" checked>
     <label class="form-check-label">下载任务</label>
     <input type="radio" name="task_type" class="form-check-input" value="1">
@@ -304,6 +306,12 @@
       <div class="form-group row dependent-tables-2">
         <label class="col-form-label">依赖表</label>
         <input type="text" class="form-control" placeholder="以逗号作为分隔符" name="dependent_tables_2"></input>
+      </div>
+    </div>
+    <div class="switch-option type-3">
+      <div class="form-group row">
+        <label class="col-form-label label-required">python脚本</label>
+        <input type="text" class="form-control" name="python_file_path_3"></input>      
       </div>
     </div>
   </div>

@@ -1415,6 +1415,9 @@ class Airflow(AirflowViewMixin, BaseView):
         # 不同类型任务的可选前置依赖项 deps_selects type: dict key=task_type(int) value=dependencies(list)
         deps_selects = ETLTask.get_deps_selects_for_types(dag_id)
         dds_task_ids = ETLTask.dds_task_ids(dag_id)
+        default_val = {
+            'conn_name': ETLTask.DEFAULT_CONN_NAME
+        }
         title = "Task Edit"
 
         return self.render(
@@ -1424,8 +1427,9 @@ class Airflow(AirflowViewMixin, BaseView):
             title=title,
             dataSources=data_sources,
             deps_selects=deps_selects,
-            dds_task_ids=dds_task_ids
-            )
+            dds_task_ids=dds_task_ids,
+            default_val=default_val
+        )
 
     @expose('/delete_task')
     @login_required
@@ -1440,9 +1444,9 @@ class Airflow(AirflowViewMixin, BaseView):
         task = dag.get_task(task_id)
         downstream_ids = list(task.downstream_task_ids)
         downstream_tasks = session.query(ETLTask).filter(
-                                ETLTask.dag_id == dag_id,
-                                ETLTask.task_id.in_(downstream_ids)
-                             ).all()
+            ETLTask.dag_id == dag_id,
+            ETLTask.task_id.in_(downstream_ids)
+        ).all()
         for task in downstream_tasks:
             task.dependencies = [d for d in task.dependencies if d != task_id]
         session.commit()
@@ -1457,6 +1461,18 @@ class Airflow(AirflowViewMixin, BaseView):
         return wwwutils.json_response({
             'success': '1'
         })
+
+    @expose('/init_tasks')
+    @login_required
+    @wwwutils.action_logging
+    def init_tasks(self):
+        dag_id = request.args.get('dag_id')
+        init_etl_sys = conf.get('core', 'init_etl_sys', fallback=None)
+        sys_ids = eval(init_etl_sys) if init_etl_sys else []
+        ETLTask.create_ods_dds_tasks(dag_id, sys_ids)
+        self.refresh()
+        flash('初始化任务完毕' "success")
+        return redirect('/admin/')
 
     @expose('/add_task', methods=['POST'])
     @login_required
@@ -4175,6 +4191,3 @@ class DagModelView(wwwutils.SuperUserMixin, ModelView):
             .get_count_query()\
             .filter(models.DagModel.is_active)\
             .filter(~models.DagModel.is_subdag)
-
-
-

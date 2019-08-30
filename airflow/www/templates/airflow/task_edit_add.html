@@ -174,7 +174,7 @@
         <label class="col-form-label">数据源名称</label>
         <select name="data_source" class="form-control">
           {% for source in dataSources %}
-          <option value="{{source.id}}">{{source.conn_id}}</option>
+          <option value="{{source.id}}" {% if source.conn_id==default_val['conn_name'] %} selected {% endif %}>{{source.conn_id}}</option>
           {% endfor %}
         </select>
       </div>

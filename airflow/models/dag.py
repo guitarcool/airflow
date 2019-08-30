@@ -498,6 +498,9 @@ class DAG(BaseDag, LoggingMixin):
         """
         query = session.query(ETLTask).filter(ETLTask.dag_id == self.dag_id).order_by(ETLTask.task_id)
         tasks = query.all()
+        # 如果该DAG不存在任务，则创建预处置任务
+        if not tasks:
+            tasks = ETLTask.create_pre_tasks(self.dag_id)
         return tasks
 
     def get_downstreams(self, task):

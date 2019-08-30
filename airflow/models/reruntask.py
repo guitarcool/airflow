@@ -13,17 +13,6 @@ from airflow.api.common.experimental import delete_dag
 from airflow.models import Base, ID_LEN, DagRun, DagBag, DagModel
 from airflow.utils.db import provide_session
 
-RERUN_DAG_PREFIX = 'rerun__'
-RERUN_TEMPLATE_PACKAGE = 'airflow.dags'
-RERUN_TEMPLATE_FILE_NAME = 'rerun_dag.j2'
-
-
-class RerunState(Enum):
-    NeverExecuted = 0
-    Running = 1
-    Succeed = 2
-    Failed = 3
-
 
 class ReRunTask(Base, LoggingMixin):
     """
@@ -38,6 +27,16 @@ class ReRunTask(Base, LoggingMixin):
     rerun_start_date = Column(String(20))
     rerun_end_date = Column(String(20))
     _rerun_downstreams = Column('rerun_downstreams', String(1000))
+
+    DAG_PREFIX = 'rerun__'
+    TEMPLATE_PACKAGE = 'airflow.dags'
+    TEMPLATE_FILE_NAME = 'rerun_dag.j2'
+    Status = {
+        '未执行': 0,
+        '正在执行': 1,
+        '执行成功': 2,
+        '执行失败': 3
+    }
 
     def __init__(self, task_id, dag_id, etl_task_id, rerun_start_date, rerun_end_date, rerun_downstreams):
         self.task_id = task_id
@@ -55,7 +54,7 @@ class ReRunTask(Base, LoggingMixin):
 
     @property
     def rerun_dag_id(self):
-        return RERUN_DAG_PREFIX + self.dag_id + '_' + self.task_id
+        return ReRunTask.DAG_PREFIX + self.dag_id + '_' + self.task_id
 
     @property
     def rerun_dag_file_path(self):
@@ -78,8 +77,8 @@ class ReRunTask(Base, LoggingMixin):
         :return:
         """
         # 创建DAG python文件
-        env = Environment(loader=PackageLoader(RERUN_TEMPLATE_PACKAGE))
-        template = env.get_template(RERUN_TEMPLATE_FILE_NAME)
+        env = Environment(loader=PackageLoader(ReRunTask.TEMPLATE_PACKAGE))
+        template = env.get_template(ReRunTask.TEMPLATE_FILE_NAME)
         rerun_task_ids = [self.etl_task_id]
         rerun_task_ids.extend(self.rerun_downstreams)
         content = template.render(dag_id=self.rerun_dag_id, base_dag_id=self.dag_id,

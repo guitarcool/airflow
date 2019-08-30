@@ -516,15 +516,16 @@ class DAG(BaseDag, LoggingMixin):
         else:
             return ''
 
-    def get_tasks_downstreams(self):
+    def get_tasks_downstreams(self, tasks=[]):
         """ Returns the downstream relations of each task in the given DAG. For display the dependencies in a tree
         :return:
         :rtype: dict{task_id:downstreams_dict}
                 task_id str
                 downstreams_dict dict {task_id:downstreams_dict}
         """
+        if tasks:
+            return {task.task_id: self.get_downstreams(task) for task in tasks}
         return {task.task_id: self.get_downstreams(task) for task in self.tasks if not task.upstream_list}
-
 
 
     @property

@@ -1342,15 +1342,16 @@ class Airflow(AirflowViewMixin, BaseView):
         task_id = request.args.get('task_id')
         root = request.args.get('root', '')
         dag = dagbag.get_dag(dag_id)
+        task = dag.get_task(task_id)
         etlTask = session.query(ETLTask).filter(
                 ETLTask.dag_id == dag_id,
                 ETLTask.task_id == task_id,
             ).first()
         title = "Task Edit"
         data_sources = session.query(Connection).order_by(Connection.conn_id).all()
-        dds_task_ids = ETLTask.get_dds_task_ids(dag_id)
+        dds_task_ids = ETLTask.dds_task_ids(dag_id)
         deps_selections = etlTask.get_deps_selections()  # list集合 当前任务可选的依赖项ID
-        task_downstreams = dag.get_tasks_downstreams() # 后置依赖项列表
+        task_downstreams = dag.get_tasks_downstreams([task])  # Dict key:task_id value:downstreams
         return self.render(
             'airflow/task_edit_change.html',
             root=root,
@@ -1385,13 +1386,12 @@ class Airflow(AirflowViewMixin, BaseView):
             ).order_by(ETLTask.task_type, ETLTask.task_id).all()
         data_sources = session.query(Connection).order_by(Connection.conn_id).all()
         ds_dict = {data_source.id: data_source.conn_id for data_source in data_sources}
-        task_downstreams = dag.get_tasks_downstreams()
+
         return self.render(
             'airflow/task_edit_list.html',
             tasks=tasks,
             ds_dict=ds_dict,
-            dag=dag,
-            task_downstreams=task_downstreams
+            dag=dag
             )
 
     @expose('/newtask')
@@ -1414,8 +1414,7 @@ class Airflow(AirflowViewMixin, BaseView):
         data_sources = session.query(Connection).order_by(Connection.conn_id).all()
         # 不同类型任务的可选前置依赖项 deps_selects type: dict key=task_type(int) value=dependencies(list)
         deps_selects = ETLTask.get_deps_selects_for_types(dag_id)
-        dds_task_ids = ETLTask.get_dds_task_ids(dag_id)
-        task_downstreams = dag.get_tasks_downstreams()  # Dict key:task_id value:downstreams
+        dds_task_ids = ETLTask.dds_task_ids(dag_id)
         title = "Task Edit"
 
         return self.render(
@@ -1425,8 +1424,7 @@ class Airflow(AirflowViewMixin, BaseView):
             title=title,
             dataSources=data_sources,
             deps_selects=deps_selects,
-            dds_task_ids=dds_task_ids,
-            task_downstreams=task_downstreams
+            dds_task_ids=dds_task_ids
             )
 
     @expose('/delete_task')

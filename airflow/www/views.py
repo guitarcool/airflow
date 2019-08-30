@@ -2587,6 +2587,7 @@ class Airflow(AirflowViewMixin, BaseView):
             item['task_id'] = ti.task_id
             item['state'] = zh_state_token(ti.state)
             item['result'] = ti.get_result()
+            item['try_number'] = ti.try_number - 1
             task = copy.copy(dag.get_task(ti.task_id))
             item['etl_task_type'] = task.etl_task_type
             for attr_name in attr_renderer:

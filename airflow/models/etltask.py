@@ -88,6 +88,7 @@ class ETLTask(Base, LoggingMixin):
     task_type = Column(Integer())
     conn_id = Column(Integer())
     sys_id = Column(String(20))
+    sys_type = Column(Integer())
     src_path = Column(String(100))
     dst_path = Column(String(100))
     flag_to_download = Column(Integer())

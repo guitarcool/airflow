@@ -254,6 +254,9 @@
           <button id="btn_ti" type="button" class="btn btn-primary">
             {{_('Task Instances')}}
           </button> -->
+          <button id="btn_table_result" type="button" class="btn btn-primary">
+            {{_('Table Result')}}
+          </button>
           <button id="btn_log" type="button" class="btn btn-primary">
             {{_('View Log')}}
           </button>
@@ -575,6 +578,14 @@ function updateQueryStringParameter(uri, key, value) {
       url = "{{ url_for('airflow.taskedit') }}" +
         "?task_id=" + encodeURIComponent(task_id) +
         "&dag_id=" + encodeURIComponent(dag_id);
+      window.location = url;
+    });
+
+    $("#btn_table_result").click(function(){
+      url = "{{ url_for('airflow.table_result') }}" +
+        "?task_id=" + encodeURIComponent(task_id) +
+        "&dag_id=" + encodeURIComponent(dag_id) +
+        "&execution_date=" + encodeURIComponent(execution_date);
       window.location = url;
     });
 

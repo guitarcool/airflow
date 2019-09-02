@@ -14,7 +14,7 @@ ENV TERM linux
 # Airflow
 ARG AIRFLOW_VERSION=1.10.4
 ARG AIRFLOW_USER_HOME=/usr/local/airflow
-ARG AIRFLOW_DEPS="crypto celery postgres hive jdbc mysql ssh"
+ARG AIRFLOW_DEPS="crypto celery"
 ARG PYTHON_DEPS="six bit_array thriftpy thrift_sasl sasl impyla PyHive hdfs xlrd request"
 ENV AIRFLOW_HOME=${AIRFLOW_USER_HOME}
 ENV AIRFLOW_GPL_UNIDECODE yes
@@ -53,11 +53,14 @@ RUN set -ex \
     && locale-gen \
     && update-locale LANG=en_US.UTF-8 LC_ALL=en_US.UTF-8 \
     && useradd -ms /bin/bash -d ${AIRFLOW_USER_HOME} airflow \
-    && pip install -U pip setuptools wheel \
+    && pip install -U pip \
     && pip install pytz \
     && pip install pyOpenSSL \
     && pip install ndg-httpsclient \
     && pip install pyasn1 \
+    && pip install setuptools \
+    && pip install wheel \
+    && pip install mysqldb \
     && pip install 'redis==3.2' \
     && if [ -n "${AIRFLOW_DEPS}" ]; then pip install ${AIRFLOW_DEPS}; fi \
     && if [ -n "${PYTHON_DEPS}" ]; then pip install ${PYTHON_DEPS}; fi \
@@ -74,7 +77,9 @@ RUN set -ex \
 
 COPY ./resource/entrypoint.sh /entrypoint.sh
 COPY ./resource/unrar /usr/bin/unrar
-COPY ./airflow-builder-env/lib/python3.6/site-packages /usr/lib64/python3.6/
+COPY . /tmp/airflow/
+
+RUN cd /tmp/airflow && pip install . && rm -rf /tmp/airflow
 
 RUN chown -R airflow: ${AIRFLOW_USER_HOME}
 

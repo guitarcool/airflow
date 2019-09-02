@@ -12,9 +12,9 @@ ENV DEBIAN_FRONTEND noninteractive
 ENV TERM linux
 
 # Airflow
-ARG AIRFLOW_VERSION=1.10.4
+ARG AIRFLOW_VERSION=1.10.3
 ARG AIRFLOW_USER_HOME=/usr/local/airflow
-ARG AIRFLOW_DEPS="crypto celery"
+ARG AIRFLOW_DEPS="crypto,celery,mysql,ldap,ssh"
 ARG PYTHON_DEPS="six bit_array thriftpy thrift_sasl sasl impyla PyHive hdfs xlrd request"
 ENV AIRFLOW_HOME=${AIRFLOW_USER_HOME}
 ENV AIRFLOW_GPL_UNIDECODE yes
@@ -60,9 +60,7 @@ RUN set -ex \
     && pip install pyasn1 \
     && pip install setuptools \
     && pip install wheel \
-    && pip install mysqldb \
     && pip install 'redis==3.2' \
-    && if [ -n "${AIRFLOW_DEPS}" ]; then pip install ${AIRFLOW_DEPS}; fi \
     && if [ -n "${PYTHON_DEPS}" ]; then pip install ${PYTHON_DEPS}; fi \
     && apt-get purge --auto-remove -yqq $buildDeps \
     && apt-get autoremove -yqq --purge \
@@ -79,7 +77,10 @@ COPY ./resource/entrypoint.sh /entrypoint.sh
 COPY ./resource/unrar /usr/bin/unrar
 COPY . /tmp/airflow/
 
-RUN cd /tmp/airflow && pip install . && rm -rf /tmp/airflow
+RUN cd /tmp/airflow \
+    && if [ -n "${AIRFLOW_DEPS}" ]; then pip install -e .[${AIRFLOW_DEPS}]; fi \
+    && pip install . \
+    && rm -rf /tmp/airflow
 
 RUN chown -R airflow: ${AIRFLOW_USER_HOME}
 

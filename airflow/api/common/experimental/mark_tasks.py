@@ -87,6 +87,9 @@ def set_state(
     :param session: database session
     :return: list of tasks that have been created and updated
     """
+    if not tasks:
+        return []
+
     if not timezone.is_localized(execution_date):
         raise ValueError("Received non-localized date {}".format(execution_date))
 
@@ -249,6 +252,11 @@ def get_execution_dates(dag, execution_date, future, past):
     start_date = execution_date if not past else start_date
     if dag.schedule_interval == '@once':
         dates = [start_date]
+    elif not dag.schedule_interval:
+        # If schedule_interval is None, need to look at existing DagRun if the user wants future or
+        # past runs.
+        dag_runs = dag.get_dagruns_between(start_date=start_date, end_date=end_date)
+        dates = sorted({d.execution_date for d in dag_runs})
     else:
         dates = dag.date_range(start_date=start_date, end_date=end_date)
     return dates

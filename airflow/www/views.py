@@ -1073,7 +1073,7 @@ class Airflow(AirflowViewMixin, BaseView):
                 message = logs[0] if try_number is not None else logs
                 return jsonify(message=message, metadata=metadata)
 
-            filename_template = conf.get('core', 'LOG_ETL_FILENAME_TEMPLATE')
+            filename_template = conf.get('core', 'LOG_ETL_FILENAME_TEMPLATE', fallback='')
             attachment_filename = render_log_filename(
                 etl_task=etl_task,
                 try_number="all" if try_number is None else try_number,
@@ -1342,15 +1342,16 @@ class Airflow(AirflowViewMixin, BaseView):
         task_id = request.args.get('task_id')
         root = request.args.get('root', '')
         dag = dagbag.get_dag(dag_id)
+        task = dag.get_task(task_id)
         etlTask = session.query(ETLTask).filter(
                 ETLTask.dag_id == dag_id,
                 ETLTask.task_id == task_id,
             ).first()
         title = "Task Edit"
         data_sources = session.query(Connection).order_by(Connection.conn_id).all()
-        dds_task_ids = ETLTask.get_dds_task_ids(dag_id)
+        dds_task_ids = ETLTask.dds_task_ids(dag_id)
         deps_selections = etlTask.get_deps_selections()  # list集合 当前任务可选的依赖项ID
-        task_downstreams = dag.get_tasks_downstreams() # 后置依赖项列表
+        task_downstreams = dag.get_tasks_downstreams([task])  # Dict key:task_id value:downstreams
         return self.render(
             'airflow/task_edit_change.html',
             root=root,
@@ -1385,13 +1386,12 @@ class Airflow(AirflowViewMixin, BaseView):
             ).order_by(ETLTask.task_type, ETLTask.task_id).all()
         data_sources = session.query(Connection).order_by(Connection.conn_id).all()
         ds_dict = {data_source.id: data_source.conn_id for data_source in data_sources}
-        task_downstreams = dag.get_tasks_downstreams()
+
         return self.render(
             'airflow/task_edit_list.html',
             tasks=tasks,
             ds_dict=ds_dict,
-            dag=dag,
-            task_downstreams=task_downstreams
+            dag=dag
             )
 
     @expose('/newtask')
@@ -1414,8 +1414,10 @@ class Airflow(AirflowViewMixin, BaseView):
         data_sources = session.query(Connection).order_by(Connection.conn_id).all()
         # 不同类型任务的可选前置依赖项 deps_selects type: dict key=task_type(int) value=dependencies(list)
         deps_selects = ETLTask.get_deps_selects_for_types(dag_id)
-        dds_task_ids = ETLTask.get_dds_task_ids(dag_id)
-        task_downstreams = dag.get_tasks_downstreams()  # Dict key:task_id value:downstreams
+        dds_task_ids = ETLTask.dds_task_ids(dag_id)
+        default_val = {
+            'conn_name': ETLTask.DEFAULT_CONN_NAME
+        }
         title = "Task Edit"
 
         return self.render(
@@ -1426,8 +1428,8 @@ class Airflow(AirflowViewMixin, BaseView):
             dataSources=data_sources,
             deps_selects=deps_selects,
             dds_task_ids=dds_task_ids,
-            task_downstreams=task_downstreams
-            )
+            default_val=default_val
+        )
 
     @expose('/delete_task')
     @login_required
@@ -1442,9 +1444,9 @@ class Airflow(AirflowViewMixin, BaseView):
         task = dag.get_task(task_id)
         downstream_ids = list(task.downstream_task_ids)
         downstream_tasks = session.query(ETLTask).filter(
-                                ETLTask.dag_id == dag_id,
-                                ETLTask.task_id.in_(downstream_ids)
-                             ).all()
+            ETLTask.dag_id == dag_id,
+            ETLTask.task_id.in_(downstream_ids)
+        ).all()
         for task in downstream_tasks:
             task.dependencies = [d for d in task.dependencies if d != task_id]
         session.commit()
@@ -1459,6 +1461,18 @@ class Airflow(AirflowViewMixin, BaseView):
         return wwwutils.json_response({
             'success': '1'
         })
+
+    @expose('/init_tasks')
+    @login_required
+    @wwwutils.action_logging
+    def init_tasks(self):
+        dag_id = request.args.get('dag_id')
+        init_etl_sys = conf.get('core', 'init_etl_sys', fallback=None)
+        sys_ids = eval(init_etl_sys) if init_etl_sys else []
+        ETLTask.create_ods_dds_tasks(dag_id, sys_ids)
+        self.refresh()
+        flash('初始化任务完毕' "success")
+        return redirect('/admin/')
 
     @expose('/add_task', methods=['POST'])
     @login_required
@@ -1574,6 +1588,8 @@ class Airflow(AirflowViewMixin, BaseView):
         rerun_tasks = session.query(ReRunTask).filter(
                 ReRunTask.dag_id == dag_id
             ).order_by(ReRunTask.task_id).all()
+
+        rerun_tasks = sorted(rerun_tasks, key=lambda t: ReRunTask.Status[t.rerun_status])
         return self.render(
             'airflow/rerun_task_list.html',
             root=root,
@@ -1689,10 +1705,10 @@ class Airflow(AirflowViewMixin, BaseView):
             etl_task_id = request.form['etl_task_id']
             rerun_start_date = request.form['rerun_start_date']
             rerun_end_date = request.form['rerun_end_date']
-            rerun_downstreams = request.form['rerun_downstreams']
+            rerun_downstreams = request.form.getlist('rerun_downstreams[]')
             rerun_task = session.query(ReRunTask).filter(
                 ReRunTask.dag_id == dag_id,
-                ReRunTask.id == task_id,
+                ReRunTask.task_id == task_id,
             ).first()
             rerun_task.update(etl_task_id, rerun_start_date, rerun_end_date, rerun_downstreams)
             rerun_task.create_or_update_rerun_dag()
@@ -2571,6 +2587,7 @@ class Airflow(AirflowViewMixin, BaseView):
             item['task_id'] = ti.task_id
             item['state'] = zh_state_token(ti.state)
             item['result'] = ti.get_result()
+            item['try_number'] = ti.try_number - 1
             task = copy.copy(dag.get_task(ti.task_id))
             item['etl_task_type'] = task.etl_task_type
             for attr_name in attr_renderer:
@@ -4175,6 +4192,3 @@ class DagModelView(wwwutils.SuperUserMixin, ModelView):
             .get_count_query()\
             .filter(models.DagModel.is_active)\
             .filter(~models.DagModel.is_subdag)
-
-
-

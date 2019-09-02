@@ -24,6 +24,7 @@ from datetime import timedelta
 from datetime import datetime
 from enum import Enum
 
+from airflow.configuration import conf
 from airflow.utils import timezone
 from sqlalchemy import (
     Column, Integer, String, Boolean, PickleType, Index, UniqueConstraint, func, DateTime, or_,
@@ -36,8 +37,8 @@ from airflow.models.xcom import XCOM_RETURN_KEY
 from airflow.utils.db import provide_session
 from airflow.utils.log.logging_mixin import LoggingMixin
 from airflow.models.connection import Connection
-# from etl.ods import zjrcb_ftp_loader
-# from etl.dds import control
+from etl.ods import zjrcb_ftp_loader
+from etl.dds import control
 
 from airflow.utils.trigger_rule import TriggerRule
 
@@ -51,6 +52,7 @@ class ETLTaskType(Enum):
     DownloadTask = 0
     LoadDDSTask = 1
     ApplicationTask = 2
+    PreTask = 3
 
 
 class FlagToDownload(Enum):
@@ -70,7 +72,6 @@ class Weekday(Enum):
 
 
 class PeriodType(Enum):
-    Today = 0
     Daily = 1
     Weekly = 2
 
@@ -87,6 +88,7 @@ class ETLTask(Base, LoggingMixin):
     task_type = Column(Integer())
     conn_id = Column(Integer())
     sys_id = Column(String(20))
+    sys_type = Column(Integer())
     src_path = Column(String(100))
     dst_path = Column(String(100))
     flag_to_download = Column(Integer())
@@ -102,13 +104,19 @@ class ETLTask(Base, LoggingMixin):
         Index('ti_period', period_type, period_hour),
     )
 
-    def __init__(self, task_id, dag_id, task_type, conn_id, sys_id, src_path, dst_path, flag_to_download,
-                 time_to_download, period_type, period_weekday, dependent_tables, python_module_name, dependencies):
+    DEFAULT_SRC_PATH = conf.get('core', 'default_src_path', fallback='/home/sjff/sdata/S-999000/{system}/ADD')
+    DEFAULT_DST_PATH = conf.get('core', 'default_dest_path', fallback='/opt/ecreditpal-etl/{system}/ADD')
+    DEFAULT_CONN_NAME = conf.get('core', 'default_conn_name', fallback='default_ftp')
+    DEFAULT_PRE_TASK = ['pre_base', 'pre_tbl_diff']
+
+    def __init__(self, task_id, dag_id, task_type, conn_id=None, sys_id='', src_path='', dst_path='',
+                 flag_to_download=1, time_to_download='', period_type=1, period_weekday=1, dependent_tables='',
+                 python_module_name='', dependencies=[]):
         self.task_id = task_id.strip()
         self.dag_id = dag_id
         self.task_type = task_type
         self.conn_id = conn_id
-        self.sys_id = sys_id
+        self.sys_id = sys_id.strip()
         self.src_path = src_path
         self.dst_path = dst_path
         self.flag_to_download = flag_to_download
@@ -117,8 +125,11 @@ class ETLTask(Base, LoggingMixin):
         self.period_weekday = period_weekday
         # self.period_hour = period_hour
         self.dependent_tables = dependent_tables
-        self.python_module_name = python_module_name
+        self.python_module_name = python_module_name.strip()
         self.dependencies = dependencies
+        if int(task_type) == ETLTaskType.DownloadTask.value:
+            self.src_path = src_path if src_path else ETLTask.DEFAULT_SRC_PATH.format(system=self.sys_id)
+            self.dst_path = dst_path if dst_path else ETLTask.DEFAULT_DST_PATH.format(system=self.sys_id)
 
     def update(self, task_type, conn_id, sys_id, src_path, dst_path, flag_to_download, time_to_download, period_type,
                period_weekday, dependent_tables, python_module_name, dependencies):
@@ -196,16 +207,52 @@ class ETLTask(Base, LoggingMixin):
         return conn
 
     @staticmethod
-    def get_dds_task_ids(dag_id):
+    @provide_session
+    def default_conn_id(session):
+        conn = session.query(Connection).filter(
+            Connection.conn_id == ETLTask.DEFAULT_CONN_NAME,
+        ).first()
+        return conn.id if conn else None
+
+    @staticmethod
+    @provide_session
+    def create_ods_dds_tasks(dag_id, sys_ids, session=None):
+        if not ETLTask.download_task_ids(dag_id):
+            tasks = []
+            for sys_id in sys_ids:
+                ods_task = ETLTask('ods_%s' % sys_id, dag_id, ETLTaskType.DownloadTask.value, sys_id=sys_id,
+                                   conn_id=ETLTask.default_conn_id(), dependencies=ETLTask.DEFAULT_PRE_TASK)
+                dds_task = ETLTask('dds_%s' % sys_id, dag_id, ETLTaskType.LoadDDSTask.value, sys_id=sys_id,
+                                   dependencies=['ods_%s' % sys_id])
+                tasks.append(ods_task)
+                tasks.append(dds_task)
+            session.add_all(tasks)
+            session.commit()
+
+    @staticmethod
+    @provide_session
+    def create_pre_tasks(dag_id, session=None):
+        pre_tasks = [ETLTask(task_id=tid, dag_id=dag_id, task_type=ETLTaskType.PreTask.value) for tid in
+                     ETLTask.DEFAULT_PRE_TASK]
+        session.add_all(pre_tasks)
+        session.commit()
+        return pre_tasks
+
+    @staticmethod
+    def dds_task_ids(dag_id):
         return ETLTask.get_task_ids(dag_id=dag_id, task_type=ETLTaskType.LoadDDSTask.value)
 
     @staticmethod
-    def get_download_task_ids(dag_id):
+    def download_task_ids(dag_id):
         return ETLTask.get_task_ids(dag_id=dag_id, task_type=ETLTaskType.DownloadTask.value)
 
     @staticmethod
-    def get_apply_task_ids(dag_id):
+    def apply_task_ids(dag_id):
         return ETLTask.get_task_ids(dag_id=dag_id, task_type=ETLTaskType.ApplicationTask.value)
+
+    @staticmethod
+    def pre_task_ids(dag_id):
+        return ETLTask.get_task_ids(dag_id=dag_id, task_type=ETLTaskType.PreTask.value)
 
     @staticmethod
     @provide_session
@@ -218,10 +265,11 @@ class ETLTask(Base, LoggingMixin):
 
     @staticmethod
     def get_deps_selects_for_types(dag_id):
-        deps_selects = {ETLTaskType.DownloadTask.value: [],
-                        ETLTaskType.LoadDDSTask.value: ETLTask.get_download_task_ids(dag_id),
-                        ETLTaskType.ApplicationTask.value: ETLTask.get_dds_task_ids(
-                            dag_id) + ETLTask.get_apply_task_ids(dag_id)}
+        deps_selects = {ETLTaskType.PreTask.value: [],
+                        ETLTaskType.DownloadTask.value: ETLTask.pre_task_ids(dag_id),
+                        ETLTaskType.LoadDDSTask.value: ETLTask.download_task_ids(dag_id),
+                        ETLTaskType.ApplicationTask.value: ETLTask.dds_task_ids(
+                            dag_id) + ETLTask.apply_task_ids(dag_id)}
         return deps_selects
 
     def depent_on_dds_task(self):
@@ -229,7 +277,7 @@ class ETLTask(Base, LoggingMixin):
         是否依赖DDS加载任务
         :return: bool
         """
-        return set(self.dependencies) & set(ETLTask.get_dds_task_ids(self.dag_id))
+        return set(self.dependencies) & set(ETLTask.dds_task_ids(self.dag_id))
 
     def depent_on_dds_tbls(self):
         return self.task_type == ETLTaskType.ApplicationTask.value and self.depent_on_dds_task() and self.dependent_tables
@@ -253,7 +301,9 @@ class ETLTask(Base, LoggingMixin):
         :return:
         """
         self._log.info('etl_date:' + etl_date)
-        if self.task_type == ETLTaskType.DownloadTask.value:
+        if self.task_type == ETLTaskType.PreTask.value:
+            result = self._exec_pre_task(etl_date, ti)
+        elif self.task_type == ETLTaskType.DownloadTask.value:
             result = self._exec_download(etl_date, ti)
         elif self.task_type == ETLTaskType.LoadDDSTask.value:
             result = self._exec_load_dds(etl_date, ti)
@@ -261,20 +311,39 @@ class ETLTask(Base, LoggingMixin):
             result = self._exec_apply_task(etl_date, ti)
         return result
 
+    def _exec_pre_task(self, etl_date, ti):
+        module_name = self.python_module_name
+        module = importlib.import_module(module_name)
+        if module and hasattr(module, 'run'):
+            if module.run.__code__.co_argcount == 0:
+                module.run()
+            elif module.run.__code__.co_argcount == 1:
+                module.run(etl_date)
+            else:
+                raise Exception(
+                    'incorrect python module call: run func of this module has more then one parameter.')
+        else:
+            raise Exception(
+                'incorrect python module name: module is not exist or cannot found the run func of this module.')
+        return 'success'
+
     def _exec_download(self, etl_date, ti):
-        self._log.info('下载任务开始执行')
+        self._log.info('start to execute download task.')
         if self.period_type == PeriodType.Weekly.value and timezone.now().weekday() + 1 != self.period_weekday:
-            self._log.info('未到执行周期，本次任务不执行')
+            self._log.info('This task is not executed for it has not reached the scheduling cycle.')
             return 'skiped'
         # conn = self.get_connection()
-        # result = zjrcb_ftp_loader.run_ods(system=self.sys_id, src_path=self.src_path, dst_path=self.dst_path,
-        #                          check_mode=self.flag_to_download, tbls_ignored_errors=self.tbls_ignored_errors,
-        #                          ftp_host=conn.host, ftp_port=conn.port, ftp_username=conn.login,
-        #                         ftp_password=conn.get_password(), etl_date=etl_date)
-        result = {'success': ['t',  't1', 't2', 't3', 't4', 't5', 't6', 't7','t8', 't9', 't10', 't11', 't12'],
-                  'failed': [],
-                  'unprocessed': ['tb1']
-                  }
+        # load_config = {
+        #     'ftp_ip': conn.host,
+        #     'ftp_port': conn.port,
+        #     'src_path': self.src_path,
+        #     'dst_path': self.dst_path,
+        #     'ftp_username': conn.login,
+        #     'ftp_password': conn.get_password(),
+        #     'load_all': False,
+        # }
+        # result = zjrcb_ftp_loader.run_ods(system=self.sys_id, etl_date=etl_date, load_config=load_config)
+        result = zjrcb_ftp_loader.run_ods(self.sys_id, etl_date)
         if result['failed']:
             ti.xcom_push(key=XCOM_RETURN_KEY, value=result)
             raise Exception('tables %s load ods failed :' % result['failed'])
@@ -282,15 +351,15 @@ class ETLTask(Base, LoggingMixin):
             return result
 
     def _exec_load_dds(self, etl_date, ti):
-        self._log.info('DDS加载任务开始执行')
-        # result = control.load_dds_sys(self.sys_id, etl_date)
-        result = {'success': ['t',  't1', 't2', 't3', 't4', 't5', 't6', 't7','t8', 't9', 't10', 't11', 't12'],
-                  'failed': ['tbl_name5', 'tbl_name6', 'tbl_name7', 'tbl_name8'],
-                  'unprocessed': ['tb1']
-                  }
+        self._log.info('start to execute load dds task.')
+        result = control.load_dds_sys(self.sys_id, etl_date)
+        # result = {'success': ['t', 't1', 't2', 't3', 't4', 't5', 't6', 't7', 't8', 't9', 't10', 't11', 't12'],
+        #           'failed': ['tbl_name5', 'tbl_name6', 'tbl_name7', 'tbl_name8'],
+        #           'unprocessed': ['tb1']
+        #           }
         if result['failed']:
             ti.xcom_push(key=XCOM_RETURN_KEY, value=result)
-            raise Exception('tables %s load ods failed :' % result['failed'])
+            raise Exception('tables %s load dds failed :' % result['failed'])
         else:
             return result
 
@@ -304,22 +373,27 @@ class ETLTask(Base, LoggingMixin):
         :return:
         """
 
-        self._log.info('应用任务开始执行')
+        self._log.info('start to execute application task.')
         if self.depent_on_dds_tbls():
             # 1.获取依赖任务的所有返回结果，
             deps_results = ti.xcom_pull(task_ids=self.dependencies)
             # 2.若结果对象数目与依赖任务数不一致，则说明存在某个依赖的任务执行过程出现异常，当前任务需终止。
             if len(deps_results) != len(self.dependencies):
-                raise Exception('dependent task execution failed')
+                raise Exception('dependent task execution failed.')
             # 3.若任务依赖的表存在于返回结果执行失败的表中，当前任务需终止。
             failed_tbls = []
             for result in deps_results:
                 if type(result) == dict and result['failed']:
                     failed_tbls.extend(result['failed'])
             if set(failed_tbls) & set(self.get_dependent_tbls_list()):
-                raise Exception('dependent table execution failed')
+                raise Exception('dependent table [%s] execution failed.' % self.dependent_tables)
 
         # module_name = 'etl.udm.' + os.path.splitext(self.python_module_name)[0]
-        # udm = importlib.import_module(module_name)
-        # udm.run(etl_date)
+        module_name = self.python_module_name
+        module = importlib.import_module(module_name)
+        if module and hasattr(module, 'run'):
+            module.run(etl_date)
+        else:
+            raise Exception(
+                'incorrect python module name: module is not exist or cannot found the run func of this module.')
         return 'success'

@@ -13,7 +13,7 @@ local_tz = pendulum.timezone("Asia/Shanghai")
 _log = logging.getLogger("airflow.task")
 
 dag_args = {
-    'owner': time.strftime('%Y.%m.%d', time.localtime(time.time())),
+    'owner': 'hyrcb',
     'depends_on_past': False,
     'start_date': datetime(2019, 5, 29, tzinfo=local_tz),
     'email': ['airflow@example.com'],
@@ -36,6 +36,7 @@ def func(etl_task, **kwargs):
     _log.info(etl_date)
     ti = kwargs['ti']
     return etl_task.execute(etl_date, ti)
+
 
 etl_tasks = main_dag.etl_tasks()
 

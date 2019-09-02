@@ -498,6 +498,9 @@ class DAG(BaseDag, LoggingMixin):
         """
         query = session.query(ETLTask).filter(ETLTask.dag_id == self.dag_id).order_by(ETLTask.task_id)
         tasks = query.all()
+        # 如果该DAG不存在任务，则创建预处置任务
+        if not tasks:
+            tasks = ETLTask.create_pre_tasks(self.dag_id)
         return tasks
 
     def get_downstreams(self, task):
@@ -516,15 +519,16 @@ class DAG(BaseDag, LoggingMixin):
         else:
             return ''
 
-    def get_tasks_downstreams(self):
+    def get_tasks_downstreams(self, tasks=[]):
         """ Returns the downstream relations of each task in the given DAG. For display the dependencies in a tree
         :return:
         :rtype: dict{task_id:downstreams_dict}
                 task_id str
                 downstreams_dict dict {task_id:downstreams_dict}
         """
+        if tasks:
+            return {task.task_id: self.get_downstreams(task) for task in tasks}
         return {task.task_id: self.get_downstreams(task) for task in self.tasks if not task.upstream_list}
-
 
 
     @property
@@ -718,6 +722,24 @@ class DAG(BaseDag, LoggingMixin):
             .first())
 
         return dagrun
+
+    @provide_session
+    def get_dagruns_between(self, start_date, end_date, session=None):
+        """
+        Returns the list of dag runs between start_date (inclusive) and end_date (inclusive).
+         :param start_date: The starting execution date of the DagRun to find.
+        :param end_date: The ending execution date of the DagRun to find.
+        :param session:
+        :return: The list of DagRuns found.
+        """
+        dagruns = (
+            session.query(DagRun)
+                .filter(
+                DagRun.dag_id == self.dag_id,
+                DagRun.execution_date >= start_date,
+                DagRun.execution_date <= end_date)
+                .all())
+        return dagruns
 
     @provide_session
     def _get_latest_execution_date(self, session=None):

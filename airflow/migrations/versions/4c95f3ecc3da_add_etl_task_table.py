@@ -41,6 +41,7 @@ def upgrade():
                     sa.Column('task_type', sa.Integer, nullable=False),
                     sa.Column('conn_id', sa.Integer, nullable=True),
                     sa.Column('sys_id', sa.String(length=20), nullable=True),
+                    sa.Column('sys_type', sa.Integer, nullable=True),
                     sa.Column('src_path', sa.String(length=100), nullable=True),
                     sa.Column('dst_path', sa.String(length=100), nullable=True),
 

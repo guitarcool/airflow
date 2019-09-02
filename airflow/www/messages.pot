@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PROJECT VERSION\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2019-08-29 16:01+0800\n"
+"POT-Creation-Date: 2019-09-02 20:10+0800\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -25,7 +25,7 @@ msgstr ""
 msgid "DAGs"
 msgstr ""
 
-#: app.py:109 templates/airflow/query.html:31 views.py:3229
+#: app.py:109 templates/airflow/query.html:31 views.py:3258
 msgid "Ad Hoc Query"
 msgstr ""
 
@@ -65,7 +65,7 @@ msgstr ""
 msgid "Users"
 msgstr ""
 
-#: app.py:131 translates.py:32 views.py:3968
+#: app.py:131 translates.py:32 views.py:3997
 msgid "Connections"
 msgstr ""
 
@@ -312,6 +312,7 @@ msgstr ""
 #: templates/airflow/rerun_task_edit.html:80
 #: templates/airflow/rerun_task_edit.html:87
 #: templates/airflow/rerun_task_master.html:35
+#: templates/airflow/task_edit_change.html:128
 #: templates/airflow/task_edit_master.html:35 translates.py:79
 msgid "Create"
 msgstr ""
@@ -527,7 +528,7 @@ msgstr ""
 msgid "Sys Id"
 msgstr ""
 
-#: translates.py:169 views.py:3967
+#: translates.py:169 views.py:3996
 msgid "Connection"
 msgstr ""
 
@@ -600,103 +601,103 @@ msgstr ""
 msgid "table result"
 msgstr ""
 
-#: views.py:1264 views.py:1756
+#: views.py:1264 views.py:1784
 msgid "Task [{}.{}] doesn't seem to exist at the moment"
 msgstr ""
 
-#: views.py:1816
+#: views.py:1844
 msgid "Only works with the Celery or Kubernetes executors, sorry"
 msgstr ""
 
-#: views.py:1832
+#: views.py:1860
 msgid "Could not queue task instance for execution, dependencies not met: {}"
 msgstr ""
 
-#: views.py:1845
+#: views.py:1873
 msgid "Sent {} to the message queue, it should start any moment now."
 msgstr ""
 
-#: views.py:1885
+#: views.py:1913
 msgid "Cannot find dag {}"
 msgstr ""
 
-#: views.py:1893
+#: views.py:1921
 msgid "This run_id {} already exists"
 msgstr ""
 
-#: views.py:1907
+#: views.py:1935
 msgid "Triggered {}, it should start any moment now."
 msgstr ""
 
-#: views.py:1921
+#: views.py:1949
 msgid "{0} task instances have been cleared"
 msgstr ""
 
-#: views.py:1932
+#: views.py:1960
 msgid "No task instances to clear"
 msgstr ""
 
-#: views.py:2107
+#: views.py:2135
 msgid "Cannot find DAG: {}"
 msgstr ""
 
-#: views.py:2111
+#: views.py:2139
 msgid "Cannot find task {} in DAG {}"
 msgstr ""
 
-#: views.py:2122
+#: views.py:2150
 msgid "Marked {} on {} task instances"
 msgstr ""
 
-#: views.py:2362 views.py:2472
+#: views.py:2390 views.py:2500
 msgid "Left->Right"
 msgstr ""
 
-#: views.py:2363 views.py:2473
+#: views.py:2391 views.py:2501
 msgid "Right->Left"
 msgstr ""
 
-#: views.py:2364 views.py:2474
+#: views.py:2392 views.py:2502
 msgid "Top->Bottom"
 msgstr ""
 
-#: views.py:2365 views.py:2475
+#: views.py:2393 views.py:2503
 msgid "Bottom->Top"
 msgstr ""
 
-#: views.py:2381 views.py:2491
+#: views.py:2409 views.py:2519
 msgid "No tasks found"
 msgstr ""
 
-#: views.py:2893
+#: views.py:2922
 msgid "DAG [{}] is now fresh as a daisy"
 msgstr ""
 
-#: views.py:2901
+#: views.py:2930
 msgid "All DAGs are now up to date"
 msgstr ""
 
-#: views.py:3690
+#: views.py:3719
 msgid "Are you sure you want to delete selected records?"
 msgstr ""
 
-#: views.py:3717
+#: views.py:3746
 msgid "{count} dag runs were set to running"
 msgstr ""
 
-#: views.py:3742
+#: views.py:3771
 msgid "{count} dag runs and {altered_ti_count} task instances were set to failed"
 msgstr ""
 
-#: views.py:3768
+#: views.py:3797
 msgid "{count} dag runs and {altered_ti_count} task instances were set to success"
 msgstr ""
 
-#: templates/airflow/dag.html:306 templates/airflow/dag.html:411 views.py:3869
+#: templates/airflow/dag.html:309 templates/airflow/dag.html:414 views.py:3898
 msgid "Clear"
 msgstr ""
 
-#: views.py:3870
+#: views.py:3899
 msgid ""
 "Are you sure you want to clear the state of the selected task instance(s)"
 " and set their dagruns to the running state?"
@@ -833,8 +834,9 @@ msgstr ""
 msgid "Zoom into Sub DAG"
 msgstr ""
 
-#: templates/airflow/dag.html:246 templates/airflow/dag.html:404
+#: templates/airflow/dag.html:246 templates/airflow/dag.html:407
 #: templates/airflow/rerun_task_edit.html:83
+#: templates/airflow/task_edit_change.html:131
 msgid "Edit"
 msgstr ""
 
@@ -846,104 +848,108 @@ msgstr ""
 msgid "Rendered"
 msgstr ""
 
-#: templates/airflow/dag.html:258
+#: templates/airflow/dag.html:258 templates/airflow/task_instance.html:54
+msgid "Table Result"
+msgstr ""
+
+#: templates/airflow/dag.html:261
 msgid "View Log"
 msgstr ""
 
-#: templates/airflow/dag.html:262
+#: templates/airflow/dag.html:265
 msgid "Download Log (by attempts)"
 msgstr ""
 
-#: templates/airflow/dag.html:268
+#: templates/airflow/dag.html:271
 msgid "View Logs in Elasticsearch (by attempts)"
 msgstr ""
 
-#: templates/airflow/dag.html:288
+#: templates/airflow/dag.html:291
 msgid "Ignores all non-critical dependencies, including task state and task_deps"
 msgstr ""
 
-#: templates/airflow/dag.html:290
+#: templates/airflow/dag.html:293
 msgid "Ignore All Deps"
 msgstr ""
 
-#: templates/airflow/dag.html:292
+#: templates/airflow/dag.html:295
 msgid "Ignore previous success/failure"
 msgstr ""
 
-#: templates/airflow/dag.html:294
+#: templates/airflow/dag.html:297
 msgid "Ignore Task State"
 msgstr ""
 
-#: templates/airflow/dag.html:297
+#: templates/airflow/dag.html:300
 msgid ""
 "Disregard the task-specific dependencies, e.g. status of upstream task "
 "instances and depends_on_past"
 msgstr ""
 
-#: templates/airflow/dag.html:299
+#: templates/airflow/dag.html:302
 msgid "Ignore Task Deps"
 msgstr ""
 
-#: templates/airflow/dag.html:310
+#: templates/airflow/dag.html:313
 msgid "Also include past task instances when clearing this one"
 msgstr ""
 
-#: templates/airflow/dag.html:312 templates/airflow/dag.html:342
-#: templates/airflow/dag.html:365
+#: templates/airflow/dag.html:315 templates/airflow/dag.html:345
+#: templates/airflow/dag.html:368
 msgid "Past"
 msgstr ""
 
-#: templates/airflow/dag.html:315
+#: templates/airflow/dag.html:318
 msgid "Also include future task instances when clearing this one"
 msgstr ""
 
-#: templates/airflow/dag.html:317 templates/airflow/dag.html:346
-#: templates/airflow/dag.html:369
+#: templates/airflow/dag.html:320 templates/airflow/dag.html:349
+#: templates/airflow/dag.html:372
 msgid "Future"
 msgstr ""
 
-#: templates/airflow/dag.html:320
+#: templates/airflow/dag.html:323
 msgid "Also include upstream dependencies"
 msgstr ""
 
-#: templates/airflow/dag.html:322 templates/airflow/dag.html:350
-#: templates/airflow/dag.html:373
+#: templates/airflow/dag.html:325 templates/airflow/dag.html:353
+#: templates/airflow/dag.html:376
 msgid "Upstream"
 msgstr ""
 
-#: templates/airflow/dag.html:325
+#: templates/airflow/dag.html:328
 msgid "Also include downstream dependencies"
 msgstr ""
 
-#: templates/airflow/dag.html:327 templates/airflow/dag.html:354
-#: templates/airflow/dag.html:377
+#: templates/airflow/dag.html:330 templates/airflow/dag.html:357
+#: templates/airflow/dag.html:380
 msgid "Downstream"
 msgstr ""
 
-#: templates/airflow/dag.html:331
+#: templates/airflow/dag.html:334
 msgid "Recursive"
 msgstr ""
 
-#: templates/airflow/dag.html:337 templates/airflow/dag.html:414
+#: templates/airflow/dag.html:340 templates/airflow/dag.html:417
 msgid "Mark Failed"
 msgstr ""
 
-#: templates/airflow/dag.html:360 templates/airflow/dag.html:417
+#: templates/airflow/dag.html:363 templates/airflow/dag.html:420
 msgid "Mark Success"
 msgstr ""
 
-#: templates/airflow/dag.html:384 templates/airflow/dag.html:423
+#: templates/airflow/dag.html:387 templates/airflow/dag.html:426
 #: templates/airflow/list_tasks.html:176
 msgid "Close"
 msgstr ""
 
-#: templates/airflow/dag.html:536 templates/airflow/dags.html:255
-#: templates/airflow/rerun_task_list.html:139
+#: templates/airflow/dag.html:539 templates/airflow/dags.html:255
+#: templates/airflow/rerun_task_list.html:145
 #: templates/airflow/task_edit_list_rerun.html:140
 msgid "Are you sure you want to run '\"+dag_id+\"' now?"
 msgstr ""
 
-#: templates/airflow/dag.html:544 templates/airflow/dags.html:263
+#: templates/airflow/dag.html:547 templates/airflow/dags.html:263
 msgid ""
 "Are you sure you want to delete '\"+dag_id+\"' now?\n"
 "        This option will delete ALL metadata, DAG runs, etc.\n"
@@ -1117,7 +1123,7 @@ msgid "Oops."
 msgstr ""
 
 #: templates/airflow/list_tasks.html:112
-#: templates/airflow/rerun_task_list.html:45
+#: templates/airflow/rerun_task_list.html:49
 #: templates/airflow/task_edit_list.html:45
 #: templates/airflow/task_edit_list_rerun.html:45
 msgid "Task"
@@ -1165,6 +1171,7 @@ msgstr ""
 #: templates/airflow/rerun_task_edit.html:83
 #: templates/airflow/rerun_task_edit.html:87
 #: templates/airflow/rerun_task_master.html:35
+#: templates/airflow/task_edit_change.html:128
 #: templates/airflow/task_edit_master.html:35
 msgid "Create New Record"
 msgstr ""
@@ -1200,10 +1207,6 @@ msgstr ""
 
 #: templates/airflow/task_instance.html:51
 msgid "Rendered Template"
-msgstr ""
-
-#: templates/airflow/task_instance.html:54
-msgid "Table Result"
 msgstr ""
 
 #: templates/airflow/task_instance.html:60

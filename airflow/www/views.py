@@ -1073,7 +1073,7 @@ class Airflow(AirflowViewMixin, BaseView):
                 message = logs[0] if try_number is not None else logs
                 return jsonify(message=message, metadata=metadata)
 
-            filename_template = conf.get('core', 'LOG_ETL_FILENAME_TEMPLATE')
+            filename_template = conf.get('core', 'LOG_ETL_FILENAME_TEMPLATE', fallback='')
             attachment_filename = render_log_filename(
                 etl_task=etl_task,
                 try_number="all" if try_number is None else try_number,

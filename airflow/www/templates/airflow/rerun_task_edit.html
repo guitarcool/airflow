@@ -618,7 +618,7 @@
         $('#task_edit_alert_success').fadeIn(100).delay(3000).fadeOut(100);
       }
       function _requestFailHandler(message){
-        $('#task_edit_alert_error .content').text(message||formType==0?'添加失败':'修改失败');
+        $('#task_edit_alert_error .content').text(message||(formType==0?'添加失败':'修改失败'));
         $('#task_edit_alert_error').fadeIn(100).delay(3000).fadeOut(100);
       }
 

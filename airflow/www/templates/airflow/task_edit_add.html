@@ -171,6 +171,16 @@
         <input type="text" class="form-control" name="sys_id_0" required>
       </div>
       <div class="form-group row">
+        <label class="col-form-label">系统类型</label>
+        <select name="sys_type_0" class="form-control" onchange="toggleExecutetionTokenTime()">
+          {% for i in [[1,"省联社下发系统"], [2,"行内自建系统"]] %}
+            <option value="{{i[0]}}"
+            {%-if i[0]==1 -%}selected{%- endif -%}
+            >{{i[1]}}</option>
+          {% endfor %}
+        </select>
+      </div>
+      <div class="form-group row">
         <label class="col-form-label">数据源名称</label>
         <select name="data_source" class="form-control">
           {% for source in dataSources %}
@@ -188,7 +198,7 @@
       </div> -->
       <div class="form-group row">
         <label class="col-form-label">目标地址</label>
-        <input type="text" class="form-control" name="target_address" required>
+        <input type="text" class="form-control" name="target_address_0" required>
       </div>
       <!-- <div class="form-group row">
         <label class="col-form-label">目标表</label>
@@ -296,6 +306,20 @@
       <div class="form-group row">
         <label class="col-form-label label-required">系统ID</label>
         <input type="text" name="sys_id_1" class="form-control"/>
+      </div>
+      <div class="form-group row">
+        <label class="col-form-label">系统类型</label>
+        <select name="sys_type_1" class="form-control" onchange="toggleExecutetionTokenTime()">
+          {% for i in [[1,"省联社下发系统"], [2,"行内自建系统"]] %}
+            <option value="{{i[0]}}"
+            {%-if i[0]==1 -%}selected{%- endif -%}
+            >{{i[1]}}</option>
+          {% endfor %}
+        </select>
+      </div>
+      <div class="form-group row">
+        <label class="col-form-label">目标地址</label>
+        <input type="text" class="form-control" name="target_address_1" required>
       </div>
     </div>
     <div class="switch-option type-2">
@@ -409,8 +433,9 @@
       task_type: f.task_type.value,
       conn_id: f.data_source.value,
       sys_id: f['sys_id_'+taskType] && f['sys_id_'+taskType].value || '',
+      sys_type: f['sys_type_'+taskType] && f['sys_type_'+taskType].value || '',
       src_path: f.source_address.value,
-      dst_path: f.target_address.value,
+      dst_path: f['target_address_'+taskType] && f['target_address_'+taskType].value || '',
       flag_to_download: f.executetion_token.value,
       time_to_download: f.check_mode_remk.value,
       period_type: f.period_type.value,

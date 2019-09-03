@@ -466,12 +466,26 @@
       var tempOptions;
       flatOptions = [];
       var shownOptions = [];
+      function flatFilter(value, index, arr){
+        var isUnique=true;
+        var i;
+        var item;
+        for(i=0; i<index; i++){
+          item = arr[i];
+          if(item.label===value.label && item.depth===value.depth){
+            isUnique=false;
+          }
+        }
+        return isUnique;
+      }
       for(i=0; i<sourceOptions.length; i++){
         sourceOption = sourceOptions[i];
         tempOptions = flatDownStreamOptionData(sourceOption.children)
         flatOptions = tempOptions && flatOptions.concat(tempOptions) || flatOptions;
         shownOptions = !!sourceOption.children ? shownOptions.concat(sourceOption.children) : shownOptions;
       }
+      shownOptions = shownOptions.filter(flatFilter);
+      flatOptions = flatOptions.filter(flatFilter);
       shownFlatOptions = flatDownStreamOptionData(shownOptions);
       multiSelectApp.options = shownOptions;
       multiSelectApp.value = flatOptions.filter(function(option){

@@ -126,7 +126,7 @@
             <tr>
                 <td onclick="call_modal('{{item.task_id}}', '{{item.execution_date}}', '{{item.try_number}}')"><a >{{item.task_id}}</a></td>
                 <td>
-                  {% for i in [[0,"下载任务"], [1,"DDS加载任务"], [2,"应用任务"]] %}
+                  {% for i in [[0,"下载任务"], [1,"DDS加载任务"], [2,"应用任务"], [3,"预处置任务"]] %}
                     {% if item.etl_task_type==i[0] %}
                       {{i[1]}}
                     {% endif %}

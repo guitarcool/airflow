@@ -27,7 +27,9 @@ graft airflow/www_rbac
 graft airflow/www_rbac/static
 graft airflow/www_rbac/templates
 graft airflow/www_rbac/translations
+graft airflow/www/translations
 graft airflow/_vendor/
+include airflow/www/babel.cfg
 include airflow/alembic.ini
 graft scripts/systemd
 graft scripts/upstart

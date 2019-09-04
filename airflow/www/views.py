@@ -1415,9 +1415,7 @@ class Airflow(AirflowViewMixin, BaseView):
         # 不同类型任务的可选前置依赖项 deps_selects type: dict key=task_type(int) value=dependencies(list)
         deps_selects = ETLTask.get_deps_selects_for_types(dag_id)
         dds_task_ids = ETLTask.dds_task_ids(dag_id)
-        default_val = {
-            'conn_name': ETLTask.DEFAULT_CONN_NAME
-        }
+        default_val = ETLTask.default_val()
         title = "Task Edit"
 
         return self.render(
@@ -1481,8 +1479,9 @@ class Airflow(AirflowViewMixin, BaseView):
     def add_task(self, session=None):
         try:
             dag_id = request.args.get('dag_id')
-            task_id = request.form['task_id']
-            sys_id = request.form['sys_id']
+            task_id = request.form['task_id'].strip()
+            sys_id = request.form['sys_id'].strip()
+            sys_type = request.form['sys_type']
             task_type = request.form['task_type']
             python_module_name = request.form['python_module_name']
             if not task_id or (not python_module_name and not sys_id):
@@ -1511,7 +1510,7 @@ class Airflow(AirflowViewMixin, BaseView):
                     'message': '任务[%s.%s]已经存在' % (dag_id, task_id)
                 })
             else:
-                etl_task = ETLTask(task_id, dag_id, task_type, conn_id, sys_id, src_path, dst_path,
+                etl_task = ETLTask(task_id, dag_id, task_type, conn_id, sys_id, sys_type, src_path, dst_path,
                                    flag_to_download, time_to_download, period_type, period_weekday,
                                    dependent_tables, python_module_name, dependencies)
                 session.add(etl_task)
@@ -1536,6 +1535,7 @@ class Airflow(AirflowViewMixin, BaseView):
             task_id = request.form['task_id']
             task_type = request.form['task_type']
             sys_id = request.form['sys_id']
+            sys_type = request.form['sys_type']
             python_module_name = request.form['python_module_name']
             if not python_module_name and not sys_id:
                 return wwwutils.json_response({
@@ -1556,8 +1556,9 @@ class Airflow(AirflowViewMixin, BaseView):
                 ETLTask.dag_id == dag_id,
                 ETLTask.task_id == task_id,
             ).first()
-            etl_task.update(task_type, conn_id, sys_id, src_path, dst_path, flag_to_download, time_to_download,
-                            period_type, period_weekday, dependent_tables, python_module_name, dependencies)
+            etl_task.update(task_type, conn_id, sys_id, sys_type, src_path, dst_path, flag_to_download,
+                            time_to_download, period_type, period_weekday, dependent_tables, python_module_name,
+                            dependencies)
             session.commit()
 
             self.refresh()
@@ -1631,7 +1632,7 @@ class Airflow(AirflowViewMixin, BaseView):
     @provide_session
     def add_rerun_task(self, session=None):
         dag_id = request.form['dag_id']
-        task_id = request.form['task_id']
+        task_id = request.form['task_id'].strip()
         if not task_id:
             return wwwutils.json_response({
                 'success': '0',

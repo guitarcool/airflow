@@ -76,6 +76,11 @@ class PeriodType(Enum):
     Weekly = 2
 
 
+class SystemType(Enum):
+    SLSXF = 1
+    HNZJ = 2
+
+
 class ETLTask(Base, LoggingMixin):
     """
     ETLTask store the config information of a etl task .
@@ -103,13 +108,18 @@ class ETLTask(Base, LoggingMixin):
     __table_args__ = (
         Index('ti_period', period_type, period_hour),
     )
-
+    DEFAULT_CONN_NAME = conf.get('core', 'default_conn_name', fallback='default_ftp')
     DEFAULT_SRC_PATH = conf.get('core', 'default_src_path', fallback='/home/sjff/sdata/S-999000/{system}/ADD')
     DEFAULT_DST_PATH = conf.get('core', 'default_dest_path', fallback='/opt/ecreditpal-etl/{system}/ADD')
-    DEFAULT_CONN_NAME = conf.get('core', 'default_conn_name', fallback='default_ftp')
+
+    DEFAULT_HNZJ_CONN_NAME = conf.get('core', 'default_hnzj_conn_name', fallback='default_ftp')
+    DEFAULT_HNZJ_SRC_PATH = conf.get('core', 'default_hnzj_src_path',
+                                     fallback='/home/sjff/hadoop/import/{system}/ALL')
+    DEFAULT_HNZJ_DST_PATH = conf.get('core', 'default_hnzj_dest_path', fallback='/opt/ecreditpal-etl/{system}/ALL')
+
     DEFAULT_PRE_TASK = ['pre_base', 'pre_tbl_diff']
 
-    def __init__(self, task_id, dag_id, task_type, conn_id=None, sys_id='', src_path='', dst_path='',
+    def __init__(self, task_id, dag_id, task_type, conn_id=None, sys_id='', sys_type=1, src_path='', dst_path='',
                  flag_to_download=1, time_to_download='', period_type=1, period_weekday=1, dependent_tables='',
                  python_module_name='', dependencies=[]):
         self.task_id = task_id.strip()
@@ -117,34 +127,40 @@ class ETLTask(Base, LoggingMixin):
         self.task_type = task_type
         self.conn_id = conn_id
         self.sys_id = sys_id.strip()
-        self.src_path = src_path
-        self.dst_path = dst_path
+        self.sys_type = sys_type if sys_type.strip() else SystemType.SLSXF.value
+        self.src_path = src_path.strip()
+        self.dst_path = dst_path.strip()
         self.flag_to_download = flag_to_download
-        self.time_to_download = time_to_download
+        self.time_to_download = time_to_download.strip()
         self.period_type = period_type
         self.period_weekday = period_weekday
         # self.period_hour = period_hour
-        self.dependent_tables = dependent_tables
+        self.dependent_tables = dependent_tables.replace('，', ',').strip()
         self.python_module_name = python_module_name.strip()
         self.dependencies = dependencies
         if int(task_type) == ETLTaskType.DownloadTask.value:
-            self.src_path = src_path if src_path else ETLTask.DEFAULT_SRC_PATH.format(system=self.sys_id)
-            self.dst_path = dst_path if dst_path else ETLTask.DEFAULT_DST_PATH.format(system=self.sys_id)
+            if not src_path:
+                self.src_path = ETLTask.default_src_path(sys_type).format(system=self.sys_id.upper())
+            if not dst_path:
+                self.dst_path = ETLTask.default_dst_path(sys_type).format(system=self.sys_id.upper())
+        if int(task_type) == ETLTaskType.LoadDDSTask.value and not dst_path:
+            self.dst_path = ETLTask.default_dst_path(sys_type).format(system=self.sys_id.upper())
 
-    def update(self, task_type, conn_id, sys_id, src_path, dst_path, flag_to_download, time_to_download, period_type,
-               period_weekday, dependent_tables, python_module_name, dependencies):
+    def update(self, task_type, conn_id, sys_id, sys_type, src_path, dst_path, flag_to_download, time_to_download,
+               period_type, period_weekday, dependent_tables, python_module_name, dependencies):
         self.task_type = task_type
         self.conn_id = conn_id
-        self.sys_id = sys_id
-        self.src_path = src_path
-        self.dst_path = dst_path
+        self.sys_id = sys_id.strip()
+        self.sys_type = sys_type if sys_type.strip() else SystemType.SLSXF.value
+        self.src_path = src_path.strip()
+        self.dst_path = dst_path.strip()
         self.flag_to_download = flag_to_download
         self.time_to_download = time_to_download
         self.period_type = period_type
         self.period_weekday = period_weekday
         # self.period_hour = period_hour
-        self.dependent_tables = dependent_tables
-        self.python_module_name = python_module_name
+        self.dependent_tables = dependent_tables.replace('，', ',').strip()
+        self.python_module_name = python_module_name.strip()
         self.dependencies = dependencies
 
     @property
@@ -160,6 +176,35 @@ class ETLTask(Base, LoggingMixin):
     @dependencies.setter
     def dependencies(self, dependencies_list):
         self._dependencies = ','.join(dependencies_list) if dependencies_list else ''
+
+    @staticmethod
+    def default_src_path(sys_type):
+        return ETLTask.DEFAULT_SRC_PATH if int(sys_type) == SystemType.SLSXF.value \
+                    else ETLTask.DEFAULT_HNZJ_SRC_PATH
+
+    @staticmethod
+    def default_dst_path(sys_type):
+        return ETLTask.DEFAULT_DST_PATH if int(sys_type) == SystemType.SLSXF.value \
+                    else ETLTask.DEFAULT_HNZJ_DST_PATH
+
+    @staticmethod
+    def default_val():
+        """
+        获取创建任务时表单填入的默认值，key：sys_type(int) value：default_form_values(Dict)
+        :return: Dict
+        """
+        default_val = {}
+        default_val[SystemType.SLSXF.value] = {
+            'conn_name': ETLTask.DEFAULT_CONN_NAME,
+            'src_path': ETLTask.DEFAULT_SRC_PATH,
+            'dst_path': ETLTask.DEFAULT_DST_PATH
+        }
+        default_val[SystemType.HNZJ.value] = {
+            'conn_name': ETLTask.DEFAULT_HNZJ_CONN_NAME,
+            'src_path': ETLTask.DEFAULT_HNZJ_SRC_PATH,
+            'dst_path': ETLTask.DEFAULT_HNZJ_DST_PATH
+        }
+        return default_val
 
     def get_deps_selections(self):
         """
@@ -221,9 +266,10 @@ class ETLTask(Base, LoggingMixin):
             tasks = []
             for sys_id in sys_ids:
                 ods_task = ETLTask('ods_%s' % sys_id, dag_id, ETLTaskType.DownloadTask.value, sys_id=sys_id,
-                                   conn_id=ETLTask.default_conn_id(), dependencies=ETLTask.DEFAULT_PRE_TASK)
+                                   sys_type=SystemType.SLSXF.value, conn_id=ETLTask.default_conn_id(),
+                                   dependencies=ETLTask.DEFAULT_PRE_TASK)
                 dds_task = ETLTask('dds_%s' % sys_id, dag_id, ETLTaskType.LoadDDSTask.value, sys_id=sys_id,
-                                   dependencies=['ods_%s' % sys_id])
+                                   sys_type=SystemType.SLSXF.value, dependencies=['ods_%s' % sys_id])
                 tasks.append(ods_task)
                 tasks.append(dds_task)
             session.add_all(tasks)
@@ -280,7 +326,8 @@ class ETLTask(Base, LoggingMixin):
         return set(self.dependencies) & set(ETLTask.dds_task_ids(self.dag_id))
 
     def depent_on_dds_tbls(self):
-        return self.task_type == ETLTaskType.ApplicationTask.value and self.depent_on_dds_task() and self.dependent_tables
+        return self.task_type == ETLTaskType.ApplicationTask.value and self.depent_on_dds_task() \
+               and self.dependent_tables
 
     def get_trigger_rule(self):
         """
@@ -312,7 +359,9 @@ class ETLTask(Base, LoggingMixin):
         return result
 
     def _exec_pre_task(self, etl_date, ti):
-        module_name = self.python_module_name
+        module_name = self.python_module_name.strip()
+        if not module_name:
+            return 'skiped'
         module = importlib.import_module(module_name)
         if module and hasattr(module, 'run'):
             if module.run.__code__.co_argcount == 0:
@@ -340,7 +389,7 @@ class ETLTask(Base, LoggingMixin):
         #     'dst_path': self.dst_path,
         #     'ftp_username': conn.login,
         #     'ftp_password': conn.get_password(),
-        #     'load_all': False,
+        #     'load_all': False if self.sys_type == SystemType.SLSXF.value else True
         # }
         # result = zjrcb_ftp_loader.run_ods(system=self.sys_id, etl_date=etl_date, load_config=load_config)
         result = zjrcb_ftp_loader.run_ods(self.sys_id, etl_date)
@@ -352,6 +401,11 @@ class ETLTask(Base, LoggingMixin):
 
     def _exec_load_dds(self, etl_date, ti):
         self._log.info('start to execute load dds task.')
+        # load_config = {
+        #     'dst_path': self.dst_path,
+        #     'load_all': False if self.sys_type == SystemType.SLSXF.value else True
+        # }
+        # result = control.load_dds_sys(self.sys_id, etl_date, load_config=load_config)
         result = control.load_dds_sys(self.sys_id, etl_date)
         # result = {'success': ['t', 't1', 't2', 't3', 't4', 't5', 't6', 't7', 't8', 't9', 't10', 't11', 't12'],
         #           'failed': ['tbl_name5', 'tbl_name6', 'tbl_name7', 'tbl_name8'],

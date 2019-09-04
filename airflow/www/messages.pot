@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PROJECT VERSION\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2019-09-02 20:10+0800\n"
+"POT-Creation-Date: 2019-09-04 18:22+0800\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -25,7 +25,7 @@ msgstr ""
 msgid "DAGs"
 msgstr ""
 
-#: app.py:109 templates/airflow/query.html:31 views.py:3258
+#: app.py:109 templates/airflow/query.html:31 views.py:3259
 msgid "Ad Hoc Query"
 msgstr ""
 
@@ -65,7 +65,7 @@ msgstr ""
 msgid "Users"
 msgstr ""
 
-#: app.py:131 translates.py:32 views.py:3997
+#: app.py:131 translates.py:32 views.py:3998
 msgid "Connections"
 msgstr ""
 
@@ -528,7 +528,7 @@ msgstr ""
 msgid "Sys Id"
 msgstr ""
 
-#: translates.py:169 views.py:3996
+#: translates.py:169 views.py:3997
 msgid "Connection"
 msgstr ""
 
@@ -575,6 +575,10 @@ msgstr ""
 msgid "upstream_failed"
 msgstr ""
 
+#: translates.py:192
+msgid "unprocessed"
+msgstr ""
+
 #: validators.py:40
 #, python-format
 msgid "Invalid field name '%s'."
@@ -601,103 +605,103 @@ msgstr ""
 msgid "table result"
 msgstr ""
 
-#: views.py:1264 views.py:1784
+#: views.py:1264 views.py:1785
 msgid "Task [{}.{}] doesn't seem to exist at the moment"
 msgstr ""
 
-#: views.py:1844
+#: views.py:1845
 msgid "Only works with the Celery or Kubernetes executors, sorry"
 msgstr ""
 
-#: views.py:1860
+#: views.py:1861
 msgid "Could not queue task instance for execution, dependencies not met: {}"
 msgstr ""
 
-#: views.py:1873
+#: views.py:1874
 msgid "Sent {} to the message queue, it should start any moment now."
 msgstr ""
 
-#: views.py:1913
+#: views.py:1914
 msgid "Cannot find dag {}"
 msgstr ""
 
-#: views.py:1921
+#: views.py:1922
 msgid "This run_id {} already exists"
 msgstr ""
 
-#: views.py:1935
+#: views.py:1936
 msgid "Triggered {}, it should start any moment now."
 msgstr ""
 
-#: views.py:1949
+#: views.py:1950
 msgid "{0} task instances have been cleared"
 msgstr ""
 
-#: views.py:1960
+#: views.py:1961
 msgid "No task instances to clear"
 msgstr ""
 
-#: views.py:2135
+#: views.py:2136
 msgid "Cannot find DAG: {}"
 msgstr ""
 
-#: views.py:2139
+#: views.py:2140
 msgid "Cannot find task {} in DAG {}"
 msgstr ""
 
-#: views.py:2150
+#: views.py:2151
 msgid "Marked {} on {} task instances"
 msgstr ""
 
-#: views.py:2390 views.py:2500
+#: views.py:2391 views.py:2501
 msgid "Left->Right"
 msgstr ""
 
-#: views.py:2391 views.py:2501
+#: views.py:2392 views.py:2502
 msgid "Right->Left"
 msgstr ""
 
-#: views.py:2392 views.py:2502
+#: views.py:2393 views.py:2503
 msgid "Top->Bottom"
 msgstr ""
 
-#: views.py:2393 views.py:2503
+#: views.py:2394 views.py:2504
 msgid "Bottom->Top"
 msgstr ""
 
-#: views.py:2409 views.py:2519
+#: views.py:2410 views.py:2520
 msgid "No tasks found"
 msgstr ""
 
-#: views.py:2922
+#: views.py:2923
 msgid "DAG [{}] is now fresh as a daisy"
 msgstr ""
 
-#: views.py:2930
+#: views.py:2931
 msgid "All DAGs are now up to date"
 msgstr ""
 
-#: views.py:3719
+#: views.py:3720
 msgid "Are you sure you want to delete selected records?"
 msgstr ""
 
-#: views.py:3746
+#: views.py:3747
 msgid "{count} dag runs were set to running"
 msgstr ""
 
-#: views.py:3771
+#: views.py:3772
 msgid "{count} dag runs and {altered_ti_count} task instances were set to failed"
 msgstr ""
 
-#: views.py:3797
+#: views.py:3798
 msgid "{count} dag runs and {altered_ti_count} task instances were set to success"
 msgstr ""
 
-#: templates/airflow/dag.html:309 templates/airflow/dag.html:414 views.py:3898
+#: templates/airflow/dag.html:414 views.py:3899
 msgid "Clear"
 msgstr ""
 
-#: views.py:3899
+#: views.py:3900
 msgid ""
 "Are you sure you want to clear the state of the selected task instance(s)"
 " and set their dagruns to the running state?"
@@ -888,6 +892,10 @@ msgstr ""
 
 #: templates/airflow/dag.html:302
 msgid "Ignore Task Deps"
+msgstr ""
+
+#: templates/airflow/dag.html:309
+msgid "Clear State"
 msgstr ""
 
 #: templates/airflow/dag.html:313

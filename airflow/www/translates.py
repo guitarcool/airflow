@@ -188,3 +188,5 @@ def _useless():
 
     #form
     _('upstream_failed'),
+
+    _('unprocessed'),

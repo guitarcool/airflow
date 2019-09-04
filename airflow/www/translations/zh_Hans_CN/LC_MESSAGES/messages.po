@@ -26,7 +26,7 @@ msgstr ""
 msgid "DAGs"
 msgstr ""
 
-#: app.py:109 templates/airflow/query.html:31 views.py:3258
+#: app.py:109 templates/airflow/query.html:31 views.py:3259
 msgid "Ad Hoc Query"
 msgstr "查询"
 
@@ -66,7 +66,7 @@ msgstr "管理员"
 msgid "Users"
 msgstr "用户"
 
-#: app.py:131 translates.py:32 views.py:3997
+#: app.py:131 translates.py:32 views.py:3998
 msgid "Connections"
 msgstr "数据源"
 
@@ -543,7 +543,7 @@ msgstr "下载配置"
 msgid "Sys Id"
 msgstr "系统Id"
 
-#: translates.py:169 views.py:3996
+#: translates.py:169 views.py:3997
 msgid "Connection"
 msgstr "数据源"
 
@@ -590,6 +590,10 @@ msgstr "值"
 msgid "upstream_failed"
 msgstr "前置依赖失败"
 
+#: translates.py:192
+msgid "unprocessed"
+msgstr "未执行"
+
 #: validators.py:40
 #, python-format
 msgid "Invalid field name '%s'."
@@ -616,103 +620,103 @@ msgstr "重试日志"
 msgid "table result"
 msgstr "表执行结果"
 
-#: views.py:1264 views.py:1784
+#: views.py:1264 views.py:1785
 msgid "Task [{}.{}] doesn't seem to exist at the moment"
 msgstr "Task [{}.{}] 当前不存在"
 
-#: views.py:1844
+#: views.py:1845
 msgid "Only works with the Celery or Kubernetes executors, sorry"
 msgstr "对不起，只能由Celery或Kubernetes的程序执行"
 
-#: views.py:1860
+#: views.py:1861
 msgid "Could not queue task instance for execution, dependencies not met: {}"
 msgstr "不能将Task实例加入到执行队列中，依赖缺失: {}"
 
-#: views.py:1873
+#: views.py:1874
 msgid "Sent {} to the message queue, it should start any moment now."
 msgstr "发送 {} 到消息队列，随时可以开始."
 
-#: views.py:1913
+#: views.py:1914
 msgid "Cannot find dag {}"
 msgstr "找不到 dag {}"
 
-#: views.py:1921
+#: views.py:1922
 msgid "This run_id {} already exists"
 msgstr "run_id {} 已存在"
 
-#: views.py:1935
+#: views.py:1936
 msgid "Triggered {}, it should start any moment now."
 msgstr "激活 {}, 该操作随时会开始."
 
-#: views.py:1949
+#: views.py:1950
 msgid "{0} task instances have been cleared"
 msgstr "{0} Task 实例已经清除"
 
-#: views.py:1960
+#: views.py:1961
 msgid "No task instances to clear"
 msgstr "没有可清除的Task实例"
 
-#: views.py:2135
+#: views.py:2136
 msgid "Cannot find DAG: {}"
 msgstr "找不到DAG:{}"
 
-#: views.py:2139
+#: views.py:2140
 msgid "Cannot find task {} in DAG {}"
 msgstr "无法找到Task {} (位于DAG {})"
 
-#: views.py:2150
+#: views.py:2151
 msgid "Marked {} on {} task instances"
 msgstr "将 {} 标记于 {} Task实例"
 
-#: views.py:2390 views.py:2500
+#: views.py:2391 views.py:2501
 msgid "Left->Right"
 msgstr "左->右"
 
-#: views.py:2391 views.py:2501
+#: views.py:2392 views.py:2502
 msgid "Right->Left"
 msgstr "右->左"
 
-#: views.py:2392 views.py:2502
+#: views.py:2393 views.py:2503
 msgid "Top->Bottom"
 msgstr "上->下"
 
-#: views.py:2393 views.py:2503
+#: views.py:2394 views.py:2504
 msgid "Bottom->Top"
 msgstr "下->上"
 
-#: views.py:2409 views.py:2519
+#: views.py:2410 views.py:2520
 msgid "No tasks found"
 msgstr "找不到Task"
 
-#: views.py:2922
+#: views.py:2923
 msgid "DAG [{}] is now fresh as a daisy"
 msgstr "DAG [{}] 已更新"
 
-#: views.py:2930
+#: views.py:2931
 msgid "All DAGs are now up to date"
 msgstr "所有DAG都已更新"
 
-#: views.py:3719
+#: views.py:3720
 msgid "Are you sure you want to delete selected records?"
 msgstr "你确定要删除这些记录吗?"
 
-#: views.py:3746
+#: views.py:3747
 msgid "{count} dag runs were set to running"
 msgstr "{count} dag运行状态设为运行中"
 
-#: views.py:3771
+#: views.py:3772
 msgid "{count} dag runs and {altered_ti_count} task instances were set to failed"
 msgstr "{count} dag 运行切 {altered_ti_count} Task instances were set to failed"
 
-#: views.py:3797
+#: views.py:3798
 msgid "{count} dag runs and {altered_ti_count} task instances were set to success"
 msgstr "{count}个DAG，{altered_ti_count}个task实例已设为成功状态"
 
-#: templates/airflow/dag.html:309 templates/airflow/dag.html:414 views.py:3898
+#: templates/airflow/dag.html:414 views.py:3899
 msgid "Clear"
 msgstr "清除"
 
-#: views.py:3899
+#: views.py:3900
 msgid ""
 "Are you sure you want to clear the state of the selected task instance(s)"
 " and set their dagruns to the running state?"
@@ -904,6 +908,10 @@ msgstr "忽略Task声明的依赖项，如Task实例上传状态和之前的依�
 #: templates/airflow/dag.html:302
 msgid "Ignore Task Deps"
 msgstr "忽略Task依赖项"
+
+#: templates/airflow/dag.html:309
+msgid "Clear State"
+msgstr "清除状态"
 
 #: templates/airflow/dag.html:313
 msgid "Also include past task instances when clearing this one"

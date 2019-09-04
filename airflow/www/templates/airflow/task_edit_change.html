@@ -167,7 +167,7 @@
       </div>
       <div class="form-group row">
         <label class="col-form-label">系统类型</label>
-        <select name="sys_type_0" class="form-control" onchange="toggleExecutetionTokenTime()">
+        <select name="sys_type_0" class="form-control">
           {% for i in [[1,"省联社下发系统"], [2,"行内自建系统"]] %}
             <option value="{{i[0]}}"
             {%-if not etlTask and i[0]==1 or etlTask and etlTask.sys_type==i[0] -%}selected{%- endif -%}
@@ -181,7 +181,7 @@
         <select name="data_source" class="form-control">
           {% for source in dataSources %}
           <option value="{{source.id}}"
-            {%-if etlTask.conn_id==source.id -%}selected{%- endif -%}>{{source.conn_id}}</option>
+            {%-if etlTask.conn_id==source.id  -%}selected{%- endif -%}>{{source.conn_id}}</option>
           {% endfor %}
         </select>
       </div>
@@ -250,7 +250,7 @@
       </div>
       <div class="form-group row">
         <label class="col-form-label">系统类型</label>
-        <select name="sys_type_1" class="form-control" onchange="toggleExecutetionTokenTime()">
+        <select name="sys_type_1" class="form-control">
           {% for i in [[1,"省联社下发系统"], [2,"行内自建系统"]] %}
             <option value="{{i[0]}}"
             {%-if not etlTask and i[0]==1 or etlTask and etlTask.sys_type==i[0] -%}selected{%- endif -%}
@@ -531,6 +531,70 @@
     var g = dagreD3.json.decode(nodes, edges);
     renderer.layout(layout).run(g, d3.select("#dig"));
   }
+</script>
+<script>
+(function(){
+  var pathTemplates={};
+  var srcPathTemplate={};
+  var dstPathTemplate={};
+  {% if default_val %}
+  pathTemplates={{default_val|tojson|safe}};
+  {% endif %}
+  function setPathFromSysId(type) {
+    var sys_type=$('select[name="sys_type_'+type+'"]').val();
+    var sys_id=$('input[name="sys_id_'+type+'"]').val();
+    sys_id=sys_id&&sys_id.toUpperCase()||'';
+    srcPathTemplate[sys_type] && $('.type-'+type+' input[name^="source_address"]').val(
+      srcPathTemplate[sys_type].replace('{system}', sys_id)
+    )
+    dstPathTemplate[sys_type] && $('.type-'+type+' input[name^="target_address"]').val(
+      dstPathTemplate[sys_type].replace('{system}', sys_id)
+    )
+  }
+  function refreshTemplate(type) {
+    // var sys_type=$('select[name="sys_type_'+type+'"]').val();
+    // var sys_id=$('input[name="sys_id_'+type+'"]').val();
+    // if(isNaN(sys_id)) return;
+    // var srcPath = $('.type-'+type+' input[name^="source_address"]').val();
+    // var dstPath = $('.type-'+type+' input[name^="target_address"]').val();
+    // !!srcPath && srcPathTemplate[sys_type]&&(srcPathTemplate[sys_type]=srcPath.replace(new RegExp('(\b'+sys_id.toUpperCase()+'\b)'), '{system}'));
+    // !!dstPath && dstPathTemplate[sys_type]&&(dstPathTemplate[sys_type]=dstPath.replace(new RegExp('(\b'+sys_id.toUpperCase()+'\b)'), '{system}'));
+  }
+  function resetTemplate(type){
+    var sys_type=$('select[name="sys_type_'+type+'"]').val();
+    if(isNaN(sys_type)) return;
+    var key;
+    var val;
+    for(key in pathTemplates){
+      val = pathTemplates[key];
+      srcPathTemplate[key]=val.src_path;
+      dstPathTemplate[key]=val.dst_path;
+    }
+    setPathFromSysId(type);
+  }
+  $('input[name="sys_id_0"]').on('input', function(){
+    setPathFromSysId(0);
+  })
+  $('input[name="sys_id_1"]').on('input', function(){
+    setPathFromSysId(1);
+  })
+  $('select[name="sys_type_0"]').change(function(event){
+    resetTemplate(0);
+  })
+  $('select[name="sys_type_1"]').change(function(event){
+    resetTemplate(1);
+  })
+  $('.type-0 input[name^="source_address"], .type-0 input[name^="target_address"]')
+  .change(function(event){
+    refreshTemplate(0);
+  })
+  $('.type-1 input[name^="source_address"], .type-1 input[name^="target_address"]')
+  .change(function(event){
+    refreshTemplate(0);
+  })
+  resetTemplate(0);
+  resetTemplate(1);
+})()
 </script>
 {{ super() }}
 {% endblock %}

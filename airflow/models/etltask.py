@@ -127,7 +127,7 @@ class ETLTask(Base, LoggingMixin):
         self.task_type = task_type
         self.conn_id = conn_id
         self.sys_id = sys_id.strip()
-        self.sys_type = sys_type if sys_type.strip() else SystemType.SLSXF.value
+        self.sys_type = sys_type if sys_type else SystemType.SLSXF.value
         self.src_path = src_path.strip()
         self.dst_path = dst_path.strip()
         self.flag_to_download = flag_to_download
@@ -151,7 +151,7 @@ class ETLTask(Base, LoggingMixin):
         self.task_type = task_type
         self.conn_id = conn_id
         self.sys_id = sys_id.strip()
-        self.sys_type = sys_type if sys_type.strip() else SystemType.SLSXF.value
+        self.sys_type = sys_type if sys_type else SystemType.SLSXF.value
         self.src_path = src_path.strip()
         self.dst_path = dst_path.strip()
         self.flag_to_download = flag_to_download
@@ -381,16 +381,17 @@ class ETLTask(Base, LoggingMixin):
         if self.period_type == PeriodType.Weekly.value and timezone.now().weekday() + 1 != self.period_weekday:
             self._log.info('This task is not executed for it has not reached the scheduling cycle.')
             return 'skiped'
-        # conn = self.get_connection()
-        # load_config = {
-        #     'ftp_ip': conn.host,
-        #     'ftp_port': conn.port,
-        #     'src_path': self.src_path,
-        #     'dst_path': self.dst_path,
-        #     'ftp_username': conn.login,
-        #     'ftp_password': conn.get_password(),
-        #     'load_all': False if self.sys_type == SystemType.SLSXF.value else True
-        # }
+        conn = self.get_connection()
+        load_config = {
+            'ftp_ip': conn.host,
+            'ftp_port': conn.port,
+            'src_path': self.src_path,
+            'dst_path': self.dst_path,
+            'ftp_username': conn.login,
+            'ftp_password': conn.get_password(),
+            'load_all': False if self.sys_type == SystemType.SLSXF.value else True
+        }
+        self._log.info(load_config)
         # result = zjrcb_ftp_loader.run_ods(system=self.sys_id, etl_date=etl_date, load_config=load_config)
         result = zjrcb_ftp_loader.run_ods(self.sys_id, etl_date)
         if result['failed']:
@@ -401,16 +402,13 @@ class ETLTask(Base, LoggingMixin):
 
     def _exec_load_dds(self, etl_date, ti):
         self._log.info('start to execute load dds task.')
-        # load_config = {
-        #     'dst_path': self.dst_path,
-        #     'load_all': False if self.sys_type == SystemType.SLSXF.value else True
-        # }
+        load_config = {
+            'dst_path': self.dst_path,
+            'load_all': False if self.sys_type == SystemType.SLSXF.value else True
+        }
+        self._log.info(load_config)
         # result = control.load_dds_sys(self.sys_id, etl_date, load_config=load_config)
         result = control.load_dds_sys(self.sys_id, etl_date)
-        # result = {'success': ['t', 't1', 't2', 't3', 't4', 't5', 't6', 't7', 't8', 't9', 't10', 't11', 't12'],
-        #           'failed': ['tbl_name5', 'tbl_name6', 'tbl_name7', 'tbl_name8'],
-        #           'unprocessed': ['tb1']
-        #           }
         if result['failed']:
             ti.xcom_push(key=XCOM_RETURN_KEY, value=result)
             raise Exception('tables %s load dds failed :' % result['failed'])
@@ -442,8 +440,9 @@ class ETLTask(Base, LoggingMixin):
             if set(failed_tbls) & set(self.get_dependent_tbls_list()):
                 raise Exception('dependent table [%s] execution failed.' % self.dependent_tables)
 
-        # module_name = 'etl.udm.' + os.path.splitext(self.python_module_name)[0]
         module_name = self.python_module_name
+        if not module_name:
+            return 'skiped'
         module = importlib.import_module(module_name)
         if module and hasattr(module, 'run'):
             module.run(etl_date)

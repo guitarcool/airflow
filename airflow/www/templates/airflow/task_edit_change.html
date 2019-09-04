@@ -570,7 +570,6 @@
       srcPathTemplate[key]=val.src_path;
       dstPathTemplate[key]=val.dst_path;
     }
-    setPathFromSysId(type);
   }
   $('input[name="sys_id_0"]').on('input', function(){
     setPathFromSysId(0);
@@ -580,9 +579,11 @@
   })
   $('select[name="sys_type_0"]').change(function(event){
     resetTemplate(0);
+    setPathFromSysId(0);
   })
   $('select[name="sys_type_1"]').change(function(event){
     resetTemplate(1);
+    setPathFromSysId(1);
   })
   $('.type-0 input[name^="source_address"], .type-0 input[name^="target_address"]')
   .change(function(event){

@@ -1160,9 +1160,9 @@ class Airflow(AirflowViewMixin, BaseView):
         states = ['success', 'failed', 'unprocessed'] if not state else [state]
         all_tbl_infos = []
         if type(result) == dict:
-            for state in states:
-                tbl_names = result.get(state, [])
-                all_tbl_infos = all_tbl_infos + [(name, zh_state_token(state)) for name in tbl_names if tbl_name_search in name]
+            for s in states:
+                tbl_names = result.get(s, [])
+                all_tbl_infos = all_tbl_infos + [(name, zh_state_token(s)) for name in tbl_names if tbl_name_search in name]
 
         num_of_all_tbl_infos = len(all_tbl_infos)
         tbl_infos_per_page = PAGE_SIZE
@@ -1171,7 +1171,6 @@ class Airflow(AirflowViewMixin, BaseView):
         end = start + tbl_infos_per_page
         tbl_infos = sorted(all_tbl_infos, key=lambda t: t[0], reverse=False)
         tbl_infos = tbl_infos[start:end]
-
         form_data = {
             'table_name': tbl_name_search,
             'state': state,

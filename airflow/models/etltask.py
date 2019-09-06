@@ -37,8 +37,6 @@ from airflow.models.xcom import XCOM_RETURN_KEY
 from airflow.utils.db import provide_session
 from airflow.utils.log.logging_mixin import LoggingMixin
 from airflow.models.connection import Connection
-from etl.ods import zjrcb_ftp_loader
-from etl.dds import control
 
 from airflow.utils.trigger_rule import TriggerRule
 
@@ -118,6 +116,13 @@ class ETLTask(Base, LoggingMixin):
     DEFAULT_HNZJ_DST_PATH = conf.get('core', 'default_hnzj_dest_path',
                                      fallback='/home/airflow/ecreditpal-etl/{system}/ALL')
 
+    TBL_DIFF_TASK_NAME = conf.get('core', 'tbl_diff_task_name', fallback='ods_ods')
+    DEFAULT_TBL_DIFF_CONN_NAME = conf.get('core', 'default_tbl_diff_conn_name', fallback='default_ftp')
+    DEFAULT_TBL_DIFF_SRC_PATH = conf.get('core', 'default_tbl_diff_src_path',
+                                     fallback='/home/sjff/sdata/S-999000/%(system)s/ALL')
+    DEFAULT_TBL_DIFF_DST_PATH = conf.get('core', 'default_tbl_diff_dest_path',
+                                     fallback='/home/airflow/ecreditpal-etl/%(system)s/ALL')
+
     DEFAULT_PRE_TASK = ['pre_base', 'pre_tbl_diff']
 
     def __init__(self, task_id, dag_id, task_type, conn_id=None, sys_id='', sys_type=1, src_path='', dst_path='',
@@ -144,6 +149,9 @@ class ETLTask(Base, LoggingMixin):
                 self.src_path = ETLTask.default_src_path(sys_type).format(system=self.sys_id.upper())
             if not dst_path:
                 self.dst_path = ETLTask.default_dst_path(sys_type).format(system=self.sys_id.upper())
+            if self.task_id == ETLTask.TBL_DIFF_TASK_NAME:
+                self.src_path = ETLTask.DEFAULT_TBL_DIFF_SRC_PATH
+                self.dst_path = ETLTask.DEFAULT_TBL_DIFF_DST_PATH
         if int(task_type) == ETLTaskType.LoadDDSTask.value and not dst_path:
             self.dst_path = ETLTask.default_dst_path(sys_type).format(system=self.sys_id.upper())
 
@@ -393,8 +401,15 @@ class ETLTask(Base, LoggingMixin):
             'load_all': False if self.sys_type == SystemType.SLSXF.value else True
         }
         self._log.info(load_config)
-        # result = zjrcb_ftp_loader.run_ods(system=self.sys_id, etl_date=etl_date, load_config=load_config)
-        result = zjrcb_ftp_loader.run_ods(self.sys_id, etl_date)
+
+        if self.task_id == ETLTask.TBL_DIFF_TASK_NAME:  # 自动变更的ODS加载任务
+            from etl.table_diff import table_diff_runner
+            result = table_diff_runner.load_all_data(etl_date)
+        else:
+            from etl.ods import zjrcb_ftp_loader
+            result = zjrcb_ftp_loader.run_ods(self.sys_id, etl_date)
+            # result = zjrcb_ftp_loader.run_ods(system=self.sys_id, etl_date=etl_date, load_config=load_config)
+
         if type(result) != dict:
             return 'invalidate result type'
         if result['failed']:
@@ -410,8 +425,11 @@ class ETLTask(Base, LoggingMixin):
             'load_all': False if self.sys_type == SystemType.SLSXF.value else True
         }
         self._log.info(load_config)
+
+        from etl.dds import control
         # result = control.load_dds_sys(self.sys_id, etl_date, load_config=load_config)
         result = control.load_dds_sys(self.sys_id, etl_date)
+
         if type(result) != dict:
             return 'invalidate result type'
         if result['failed']:

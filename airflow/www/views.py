@@ -2579,7 +2579,7 @@ class Airflow(AirflowViewMixin, BaseView):
         task_instances = []
 
         for ti in dag.get_task_instances(start_date, end_date, state, task_id=task_id, page=current_page,
-                                         page_size=tis_per_page, session=session):
+                                         page_size=tis_per_page, sort_attr=sort_attr, session=session):
             item = alchemy_to_dict(ti)
             item['dispatch_date'] = ti.execution_date.strftime('%Y-%m-%d') if ti.execution_date else ''
             item['start_date'] = ti.start_date.strftime('%Y-%m-%dT%H:%M:%S') if ti.start_date else ''
@@ -2595,7 +2595,6 @@ class Airflow(AirflowViewMixin, BaseView):
                     source = getattr(task, attr_name)
                     item['code'] = attr_renderer[attr_name](source)
             task_instances.append(item)
-
         tasks = {
             t.task_id: {
                 'dag_id': t.dag_id,
@@ -2618,7 +2617,6 @@ class Airflow(AirflowViewMixin, BaseView):
 
         return self.render(
             'airflow/list_tasks.html',
-            operators=sorted({op.__class__ for op in dag.tasks}, key=lambda x: x.__name__),
             root=root,
             dag=dag,
             form=form,

@@ -110,12 +110,13 @@ class ETLTask(Base, LoggingMixin):
     )
     DEFAULT_CONN_NAME = conf.get('core', 'default_conn_name', fallback='default_ftp')
     DEFAULT_SRC_PATH = conf.get('core', 'default_src_path', fallback='/home/sjff/sdata/S-999000/{system}/ADD')
-    DEFAULT_DST_PATH = conf.get('core', 'default_dest_path', fallback='/opt/ecreditpal-etl/{system}/ADD')
+    DEFAULT_DST_PATH = conf.get('core', 'default_dest_path', fallback='/home/airflow/ecreditpal-etl/{system}/ADD')
 
     DEFAULT_HNZJ_CONN_NAME = conf.get('core', 'default_hnzj_conn_name', fallback='default_ftp')
     DEFAULT_HNZJ_SRC_PATH = conf.get('core', 'default_hnzj_src_path',
-                                     fallback='/home/sjff/hadoop/import/{system}/ALL')
-    DEFAULT_HNZJ_DST_PATH = conf.get('core', 'default_hnzj_dest_path', fallback='/opt/ecreditpal-etl/{system}/ALL')
+                                     fallback='/home/hyrcb/hadoop/import/{system}/ALL')
+    DEFAULT_HNZJ_DST_PATH = conf.get('core', 'default_hnzj_dest_path',
+                                     fallback='/home/airflow/ecreditpal-etl/{system}/ALL')
 
     DEFAULT_PRE_TASK = ['pre_base', 'pre_tbl_diff']
 
@@ -394,9 +395,11 @@ class ETLTask(Base, LoggingMixin):
         self._log.info(load_config)
         # result = zjrcb_ftp_loader.run_ods(system=self.sys_id, etl_date=etl_date, load_config=load_config)
         result = zjrcb_ftp_loader.run_ods(self.sys_id, etl_date)
+        if type(result) != dict:
+            return 'invalidate result type'
         if result['failed']:
             ti.xcom_push(key=XCOM_RETURN_KEY, value=result)
-            raise Exception('tables %s load ods failed :' % result['failed'])
+            raise Exception('tables %s load ods failed.' % result['failed'])
         else:
             return result
 
@@ -409,9 +412,11 @@ class ETLTask(Base, LoggingMixin):
         self._log.info(load_config)
         # result = control.load_dds_sys(self.sys_id, etl_date, load_config=load_config)
         result = control.load_dds_sys(self.sys_id, etl_date)
+        if type(result) != dict:
+            return 'invalidate result type'
         if result['failed']:
             ti.xcom_push(key=XCOM_RETURN_KEY, value=result)
-            raise Exception('tables %s load dds failed :' % result['failed'])
+            raise Exception('tables %s load dds failed.' % result['failed'])
         else:
             return result
 

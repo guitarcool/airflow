@@ -22,7 +22,7 @@
 
 {% block head_css %}
 {{ super() }}
-<link href="https://cdn.bootcss.com/bootstrap-multiselect/0.9.15/css/bootstrap-multiselect.css" rel="stylesheet">
+<link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='bootstrap-multiselect.css') }}">
 <link href="{{ admin_static.url(filename='vendor/bootstrap-daterangepicker/daterangepicker-bs2.css') }}"
   rel="stylesheet">
 <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='dagre.css') }}">
@@ -300,8 +300,8 @@
 </form>
 {% endblock %}
 {% block tail %}
-<script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-datepicker/1.9.0/js/bootstrap-datepicker.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-datepicker/1.9.0/locales/bootstrap-datepicker.zh-CN.min.js"></script>
+<script src="{{url_for('appbuilder.static',filename='datepicker/bootstrap-datepicker.js')}}"></script>
+<script src="{{url_for('static',filename='bootstrap-datepicker.zh-CN.js')}}"></script>
 <script src="{{ url_for('static', filename='bootstrap-multiselect.min.js') }}"></script>
 <script>
   var nowTime = new Date()

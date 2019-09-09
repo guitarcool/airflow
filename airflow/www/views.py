@@ -1342,13 +1342,16 @@ class Airflow(AirflowViewMixin, BaseView):
         root = request.args.get('root', '')
         dag = dagbag.get_dag(dag_id)
         task = dag.get_task(task_id)
+
+        etl_dag_id = dag_id.split('__')[1] if dag_id.startswith('rerun__') else dag_id
         etlTask = session.query(ETLTask).filter(
-                ETLTask.dag_id == dag_id,
+                ETLTask.dag_id == etl_dag_id,
                 ETLTask.task_id == task_id,
             ).first()
+        dds_task_ids = ETLTask.dds_task_ids(etl_dag_id)
         title = "Task Edit"
         data_sources = session.query(Connection).order_by(Connection.conn_id).all()
-        dds_task_ids = ETLTask.dds_task_ids(dag_id)
+
         deps_selections = etlTask.get_deps_selections()  # list集合 当前任务可选的依赖项ID
         task_downstreams = dag.get_tasks_downstreams([task])  # Dict key:task_id value:downstreams
         return self.render(

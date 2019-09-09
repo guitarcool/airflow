@@ -9,7 +9,6 @@ from sqlalchemy import (
 )
 
 from airflow import LoggingMixin, settings, models
-from airflow.api.common.experimental import delete_dag
 from airflow.models import Base, ID_LEN, DagRun, DagBag, DagModel
 from airflow.utils.db import provide_session
 
@@ -54,7 +53,7 @@ class ReRunTask(Base, LoggingMixin):
 
     @property
     def rerun_dag_id(self):
-        return ReRunTask.DAG_PREFIX + self.dag_id + '_' + self.task_id
+        return ReRunTask.DAG_PREFIX + self.dag_id + '__' + self.task_id
 
     @property
     def rerun_dag_file_path(self):
@@ -97,6 +96,7 @@ class ReRunTask(Base, LoggingMixin):
         self.log.info('删除%s文件' % self.rerun_dag_file_path)
         os.remove(self.rerun_dag_file_path)
         # 2.调用dag删除接口
+        from airflow.api.common.experimental import delete_dag
         delete_dag.delete_dag(self.rerun_dag_id)
 
     @property

@@ -344,11 +344,12 @@ class ETLTask(Base, LoggingMixin):
     def get_trigger_rule(self):
         """
         根据任务不同类型获取不同的触发规则：
-        如果任务为应用任务且依赖于DDS任务并指定了依赖的表，则触发规则为TriggerRule.ALL_DONE(上游任务执行完毕，无论成功或失败)
-        否则 为TriggerRule.ALL_SUCCESS
+        1.任务为应用任务且依赖于DDS任务并指定了依赖的表，触发规则为TriggerRule.ALL_DONE(上游任务执行完毕，无论成功或失败)
+        2.任务为DDS加载任务，触发规则为TriggerRule.ALL_DONE
+        3.其他任务为TriggerRule.ALL_SUCCESS
         :return: trigger_rule
         """
-        if self.depent_on_dds_tbls():
+        if self.task_type == ETLTaskType.LoadDDSTask.value or self.depent_on_dds_tbls():
             return TriggerRule.ALL_DONE
         else:
             return TriggerRule.ALL_SUCCESS
@@ -435,6 +436,14 @@ class ETLTask(Base, LoggingMixin):
 
         if type(result) != dict:
             return 'invalidate result type'
+
+        # 获取依赖任务的所有返回结果
+        deps_results = ti.xcom_pull(task_ids=self.dependencies)
+        for ret in deps_results:
+            if type(ret) == dict and ret['failed']:
+                # 如ODS任务中存在失败的表，将失败的表添加到DDS执行结果
+                result['failed'].extend(ret['failed'])
+
         if result['failed']:
             ti.xcom_push(key=XCOM_RETURN_KEY, value=result)
             raise Exception('tables %s load dds failed.' % result['failed'])
@@ -445,15 +454,16 @@ class ETLTask(Base, LoggingMixin):
         """
         执行应用类任务, 分两种情况：
             1.应用任务依赖DDS任务（指定了依赖表），触发规则为ALL_DONE，需先根据DDS任务结果判断表依赖条件是否满足
-            2.应用任务不依赖DDS任务，触发规则为ALL_SUCCESS，直接执行相应脚本
+            2.应用任务不依赖DDS任务，触发规则为ALL_SUCCESS，依赖关系Airflow维护
         :param etl_date: ETL日期
         :param deps_results: 依赖任务的执行结果
         :return:
         """
 
         self._log.info('start to execute application task.')
-        if self.depent_on_dds_tbls():
-            # 1.获取依赖任务的所有返回结果，
+        # 重跑DAG中应用任务的触发规则为ALL_SUCCESS
+        if not ti.dag_id.startswith('rerun__') and self.depent_on_dds_tbls():
+            # 1.获取依赖任务的所有返回结果
             deps_results = ti.xcom_pull(task_ids=self.dependencies)
             # 2.若结果对象数目与依赖任务数不一致，则说明存在某个依赖的任务执行过程出现异常，当前任务需终止。
             if len(deps_results) != len(self.dependencies):

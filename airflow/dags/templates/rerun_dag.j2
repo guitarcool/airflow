@@ -1,4 +1,5 @@
 import time
+import logging
 from airflow.models import DAG, dag
 from airflow.operators.python_operator import PythonOperator
 from datetime import datetime
@@ -11,6 +12,7 @@ END_DATE = '{{end_date}}'
 RERUN_TASK_IDS = "{{rerun_task_ids}}"
 
 local_tz = pendulum.timezone("Asia/Shanghai")
+_log = logging.getLogger("airflow.task")
 
 
 dag_args = {
@@ -22,6 +24,7 @@ dag_args = {
     'email_on_failure': False,
     'email_on_retry': False,
     'retries': 0,
+    'provide_context': True,
 }
 
 main_dag = DAG(
@@ -33,18 +36,25 @@ main_dag = DAG(
     base_dag_id=BASE_DAG_ID
 )
 
+def func(etl_task, **kwargs):
+    etl_date = kwargs['ds']
+    _log.info(etl_date)
+    ti = kwargs['ti']
+    return etl_task.execute(etl_date, ti)
 
 etl_tasks = dag.get_etl_tasks(dag_id=BASE_DAG_ID)
 rerun_etl_tasks = [etl_task for etl_task in etl_tasks if etl_task.task_id in eval(RERUN_TASK_IDS)]
 
 task_dict = {}  # type: Dict[str, ETLTask]
 
+
 for t in rerun_etl_tasks:
     task = PythonOperator(
         task_id=t.task_id.strip(),
         etl_task_type=t.task_type,
-        python_callable=t.execute,
-        op_kwargs={'etl_date': '{{ds}}'},
+        python_callable=func,
+        op_kwargs={'etl_task': t},
+        provide_context=True,
         dag=main_dag)
     task_dict[t.task_id] = task
 

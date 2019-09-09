@@ -473,8 +473,9 @@ class ETLTask(Base, LoggingMixin):
             for result in deps_results:
                 if type(result) == dict and result['failed']:
                     failed_tbls.extend(result['failed'])
-            if set(failed_tbls) & set(self.get_dependent_tbls_list()):
-                raise Exception('dependent table [%s] execution failed.' % self.dependent_tables)
+            dep_fail_tbls = set(failed_tbls) & set(self.get_dependent_tbls_list())
+            if dep_fail_tbls:
+                raise Exception('dependent table %s execution failed.' % str(dep_fail_tbls))
 
         module_name = self.python_module_name
         if not module_name:

@@ -8,26 +8,26 @@ from datetime import timedelta
 from datetime import datetime
 import pendulum
 
-DAG_NAME = 'hy_demo'
+DAG_NAME = 'hyrcb_dw_scheduler'
 local_tz = pendulum.timezone("Asia/Shanghai")
 _log = logging.getLogger("airflow.task")
 
 dag_args = {
     'owner': 'hyrcb',
     'depends_on_past': False,
-    'start_date': datetime(2019, 5, 29, tzinfo=local_tz),
+    'start_date': datetime(2019, 9, 6, tzinfo=local_tz),
     'email': ['airflow@example.com'],
     'email_on_failure': False,
     'email_on_retry': False,
     'retries': 0,
     'retry_delay': timedelta(minutes=15),
     'provide_context': True,
-}
+   }
 
 main_dag = DAG(
     dag_id=DAG_NAME,
     default_args=dag_args,
-    schedule_interval=None,
+    schedule_interval='00 05 * * *',
 )
 
 
@@ -36,7 +36,6 @@ def func(etl_task, **kwargs):
     _log.info(etl_date)
     ti = kwargs['ti']
     return etl_task.execute(etl_date, ti)
-
 
 etl_tasks = main_dag.etl_tasks()
 

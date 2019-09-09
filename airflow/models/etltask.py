@@ -125,6 +125,8 @@ class ETLTask(Base, LoggingMixin):
 
     DEFAULT_PRE_TASK = ['pre_base', 'pre_tbl_diff']
 
+    ODS_DEFAULT_PRE_TASK = ['pre_tbl_diff']
+
     def __init__(self, task_id, dag_id, task_type, conn_id=None, sys_id='', sys_type=1, src_path='', dst_path='',
                  flag_to_download=1, time_to_download='', period_type=1, period_weekday=1, dependent_tables='',
                  python_module_name='', dependencies=[]):
@@ -276,7 +278,7 @@ class ETLTask(Base, LoggingMixin):
             for sys_id in sys_ids:
                 ods_task = ETLTask('ods_%s' % sys_id, dag_id, ETLTaskType.DownloadTask.value, sys_id=sys_id,
                                    sys_type=SystemType.SLSXF.value, conn_id=ETLTask.default_conn_id(),
-                                   dependencies=ETLTask.DEFAULT_PRE_TASK)
+                                   dependencies=ETLTask.ODS_DEFAULT_PRE_TASK)
                 dds_task = ETLTask('dds_%s' % sys_id, dag_id, ETLTaskType.LoadDDSTask.value, sys_id=sys_id,
                                    sys_type=SystemType.SLSXF.value, dependencies=['ods_%s' % sys_id])
                 tasks.append(ods_task)
@@ -289,6 +291,7 @@ class ETLTask(Base, LoggingMixin):
     def create_pre_tasks(dag_id, session=None):
         pre_tasks = [ETLTask(task_id=tid, dag_id=dag_id, task_type=ETLTaskType.PreTask.value) for tid in
                      ETLTask.DEFAULT_PRE_TASK]
+        pre_tasks[1].dependencies = [ETLTask.DEFAULT_PRE_TASK[0]]
         session.add_all(pre_tasks)
         session.commit()
         return pre_tasks
@@ -320,7 +323,7 @@ class ETLTask(Base, LoggingMixin):
 
     @staticmethod
     def get_deps_selects_for_types(dag_id):
-        deps_selects = {ETLTaskType.PreTask.value: [],
+        deps_selects = {ETLTaskType.PreTask.value: ETLTask.pre_task_ids(dag_id),
                         ETLTaskType.DownloadTask.value: ETLTask.pre_task_ids(dag_id),
                         ETLTaskType.LoadDDSTask.value: ETLTask.download_task_ids(dag_id),
                         ETLTaskType.ApplicationTask.value: ETLTask.dds_task_ids(

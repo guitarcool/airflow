@@ -1465,7 +1465,7 @@ class Airflow(AirflowViewMixin, BaseView):
     def init_tasks(self):
         dag_id = request.args.get('dag_id')
         init_etl_sys = conf.get('core', 'init_etl_sys', fallback=None)
-        sys_ids = eval(init_etl_sys) if init_etl_sys else []
+        sys_ids = eval(init_etl_sys.lower()) if init_etl_sys else []
         ETLTask.create_ods_dds_tasks(dag_id, sys_ids)
         self.refresh()
         flash('初始化任务完毕' "success")
